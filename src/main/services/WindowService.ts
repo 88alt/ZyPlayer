@@ -1,5 +1,4 @@
 import { join } from 'node:path';
-import url from 'node:url';
 
 import { loggerService } from '@logger';
 import { appLocale } from '@main/services/AppLocale';
@@ -766,16 +765,8 @@ export class WindowService {
     if (!isPackaged && process.env.ELECTRON_RENDERER_URL) {
       mainWindow.loadURL(`${process.env.ELECTRON_RENDERER_URL}/#/player`);
     } else {
-      mainWindow.loadURL(
-        url.format({
-          pathname: join(import.meta.dirname, '../renderer/index.html'),
-          protocol: 'file:',
-          slashes: true,
-          hash: 'player',
-        }),
-      );
+      mainWindow.loadFile(join(import.meta.dirname, '../renderer/index.html'), { hash: 'player' });
     }
-
     return mainWindow;
   }
 
@@ -834,14 +825,7 @@ export class WindowService {
     if (!isPackaged && process.env.ELECTRON_RENDERER_URL) {
       mainWindow.loadURL(`${process.env.ELECTRON_RENDERER_URL}/#/browser`);
     } else {
-      mainWindow.loadURL(
-        url.format({
-          pathname: join(import.meta.dirname, '../renderer/index.html'),
-          protocol: 'file:',
-          slashes: true,
-          hash: 'browser',
-        }),
-      );
+      mainWindow.loadFile(join(import.meta.dirname, '../renderer/index.html'), { hash: 'browser' });
     }
 
     return mainWindow;
