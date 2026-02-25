@@ -5,7 +5,7 @@ import { APP_PUBLIC_PATH } from '@main/utils/path';
 import { request } from '@main/utils/request';
 import { SITE_LOGGER_MAP, SITE_TYPE } from '@shared/config/film';
 import LruCache from '@shared/modules/lrucache';
-import { isJson } from '@shared/modules/validate';
+import { isJson, isJsonStr } from '@shared/modules/validate';
 import type {
   ICmsCategory,
   ICmsCategoryOptions,
@@ -24,6 +24,7 @@ import type {
   ICmsSearchOptions,
   IConstructorOptions,
 } from '@shared/types/cms';
+import JSON5 from 'json5';
 import type { Pool } from 'workerpool';
 import workerpool from 'workerpool';
 
@@ -126,14 +127,18 @@ class T3CatopenAdapter {
   }
 
   public async init(): Promise<ICmsInit> {
+    let ext: string = this.ext;
+
     const { data: code } = await request.request({
       url: this.api,
       method: 'GET',
     });
 
+    if (isJsonStr(ext)) ext = JSON5.parse(ext);
+
     await this.execCtx('init', {
       id: this.id,
-      ext: this.ext,
+      ext,
       code,
       libPath: join(APP_PUBLIC_PATH, 't3Catopen'),
     });

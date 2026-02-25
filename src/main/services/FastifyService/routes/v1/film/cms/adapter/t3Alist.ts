@@ -1,4 +1,5 @@
 import { request } from '@main/utils/request';
+import { isJsonStr } from '@shared/modules/validate';
 import type {
   ICmsCategory,
   ICmsCategoryOptions,
@@ -51,16 +52,6 @@ interface IUser {
   password: string;
 }
 
-const isJsonStr = (value: unknown): boolean => {
-  if (typeof value !== 'string' || value?.trim()?.length === 0) return false;
-  try {
-    JSON5.parse(value);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 /**
  * @see https://github.com/AlistGo/alist-doc/blob/main/docs/api.md -v2
  * @see https://alist-public.apifox.cn/327961242e0 - v3
@@ -84,15 +75,13 @@ class T3AlistAdapter {
   async init(): Promise<ICmsInit> {
     let ext: string = this.ext;
     let source: ISource = { name: '', server: '' };
+
     if (ext.startsWith('http')) {
       const { data } = await request.request({ url: ext, method: 'GET', responseType: 'text' });
       ext = data;
     }
-    try {
-      source = JSON5.parse(ext);
-    } catch {
-      // ignore
-    }
+
+    if (isJsonStr(ext)) source = JSON5.parse(ext);
 
     const {
       name,
