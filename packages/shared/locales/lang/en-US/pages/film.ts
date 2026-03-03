@@ -16,6 +16,7 @@ export default {
     noEffectiveSearchSource:
       'No effective search data source, please check the data source search configuration and search mode',
     noDetailInfo: 'Detail data is missing or incorrect',
+    noSupportAction: 'Current operation is not supported',
   },
   field: {
     name: 'Name',

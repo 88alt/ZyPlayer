@@ -1,3 +1,12 @@
+import type {
+  CMS_ACTION_SPECIAL_ID_TYPE,
+  CMS_ACTION_TYPE,
+  ICmsActionButtonType,
+  ICmsActionFormType,
+  ICmsActionInputType,
+  ICmsActionSpecialIdType,
+  ICmsActionType,
+} from '@shared/config/cmsAction';
 import type { IModels } from '@shared/types/db';
 
 export type IConstructorOptions = Omit<IModels['site'], 'categories'> & {
@@ -31,6 +40,12 @@ export interface ICmsSearchOptions {
 export interface ICmsPlayOptions {
   flag: string;
   play: string;
+}
+
+export interface ICmsActionOptions {
+  action: string;
+  value: string | Record<string, any>;
+  timeout?: number;
 }
 
 export type ICmsProxyOptions = Record<string, string>;
@@ -137,6 +152,157 @@ export interface ICmsPlay {
   };
 }
 
+export interface ICmsActionCommon {
+  actionId: ICmsActionSpecialIdType | string;
+  type?: ICmsActionType;
+  button?: ICmsActionButtonType | boolean;
+  reset?: boolean;
+  canceledOnTouchOutside?: boolean;
+  title?: string;
+  keep?: boolean;
+
+  /** receive only */
+  width?: number;
+  height?: number;
+  dimAmount?: number;
+  bottom?: number;
+
+  imageUrl?: string;
+  imageHeight?: number;
+  imageClickCoord?: boolean;
+  qrcode?: string;
+  qrcodeSize?: string;
+
+  timeout?: number;
+  httpTimeout?: number;
+
+  initAction?: string;
+  initValue?: string;
+  cancelAction?: string;
+  cancelValue?: string;
+}
+
+export interface ICmsActionOptionItem {
+  name: string;
+  action: string;
+  selected?: boolean;
+}
+export type ICmsActionOption = ICmsActionOptionItem[] | string[];
+
+export interface ICmsActionFormField {
+  id: string;
+  name: string;
+  value?: string;
+  tip?: string;
+  msg?: string;
+  column?: number;
+  selectData?: string;
+
+  /** receive only */
+  selectWidth?: number;
+  selectColumn?: number;
+
+  quickSelect?: boolean;
+  onlyQuickSelect?: boolean;
+  multiSelect?: boolean;
+  inputType?: ICmsActionInputType;
+  multiLine?: number;
+  help?: string;
+  validation?: string;
+
+  option?: ICmsActionOption;
+  selectedIndex?: number;
+}
+
+export interface ICmsActionForm extends ICmsActionCommon, ICmsActionFormField {
+  type: ICmsActionFormType;
+  input?: ICmsActionFormField[];
+}
+
+export type ICmsActionMsgbox =
+  | (ICmsActionCommon & {
+      type: typeof CMS_ACTION_TYPE.MSGBOX;
+      msg: string;
+      htmlMsg?: never;
+    })
+  | (ICmsActionCommon & {
+      type: typeof CMS_ACTION_TYPE.MSGBOX;
+      msg?: never;
+      htmlMsg: string;
+    });
+
+export interface ICmsActionHelp extends ICmsActionCommon {
+  type: typeof CMS_ACTION_TYPE.HELP;
+  data: Record<string, string>;
+}
+
+export interface ICmsActionBrowser extends ICmsActionCommon {
+  type: typeof CMS_ACTION_TYPE.BROWSER | typeof CMS_ACTION_TYPE.WEBVIEW;
+  url: string;
+  browserHeight?: number;
+  browserWidth?: number;
+}
+
+export type ICmsActionBase = ICmsActionForm | ICmsActionMsgbox | ICmsActionHelp | ICmsActionBrowser;
+
+export interface ICmsActionSpecialBase {
+  actionId: ICmsActionSpecialIdType;
+}
+
+export interface ICmsActionSpecialSelfSearch {
+  actionId: typeof CMS_ACTION_SPECIAL_ID_TYPE.SELF_SEARCH;
+  skey: string;
+  name: string;
+  tid: string;
+  flag: string;
+  folder: string | Array<{ name: string; id: string; flag: string }>;
+  msg: string;
+}
+export interface ICmsActionSpecialDetail extends ICmsActionSpecialBase {
+  actionId: typeof CMS_ACTION_SPECIAL_ID_TYPE.DETAIL;
+  skey: string;
+  ids: string;
+}
+
+export interface ICmsActionSpecialKtvPlayer extends ICmsActionSpecialBase {
+  actionId: typeof CMS_ACTION_SPECIAL_ID_TYPE.KTVPLAYER;
+  name: string;
+  id: string;
+}
+
+export interface ICmsActionSpecialRefreshList extends ICmsActionSpecialBase {
+  actionId: typeof CMS_ACTION_SPECIAL_ID_TYPE.REFRESH_LIST;
+  listTab: string;
+}
+
+export interface ICmsActionSpecialCopy extends ICmsActionSpecialBase {
+  actionId: typeof CMS_ACTION_SPECIAL_ID_TYPE.COPY;
+  content: string;
+}
+
+export interface ICmsActionSpecialKeep extends ICmsActionSpecialBase {
+  actionId: typeof CMS_ACTION_SPECIAL_ID_TYPE.KEEP;
+  msg: string;
+  reset: boolean;
+}
+
+export type ICmsActionSpecial =
+  | ICmsActionSpecialSelfSearch
+  | ICmsActionSpecialDetail
+  | ICmsActionSpecialKtvPlayer
+  | ICmsActionSpecialRefreshList
+  | ICmsActionSpecialCopy
+  | ICmsActionSpecialKeep;
+
+export type ICmsActionPayload = ICmsActionBase | ICmsActionSpecial;
+
+export interface ICmsActionEnvelope {
+  action: ICmsActionPayload;
+  toast?: string;
+}
+
+export type ICmsAction = ICmsActionPayload | ICmsActionEnvelope | string;
+
 export type ICmsProxy = [number, string, string] | [];
 
 export type ICmsRunMian = any;
@@ -156,6 +322,7 @@ export interface ICms {
   detail: (doc: ICmsDetailOptions) => Promise<ICmsDetail>;
   search: (doc: ICmsSearchOptions) => Promise<ICmsSearch>;
   play: (doc: ICmsPlayOptions) => Promise<ICmsPlay>;
+  action: (doc: ICmsActionOptions) => Promise<ICmsAction>;
   proxy: (doc: ICmsProxyOptions) => Promise<ICmsProxy>;
   runMian: (doc: ICmsRunMianOptions) => Promise<ICmsRunMian>;
 }
