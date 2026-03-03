@@ -1,6 +1,8 @@
 import { request } from '@main/utils/request';
 import { buildUrl } from '@shared/modules/headers';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -189,6 +191,18 @@ class T4CatvodAdapter {
     };
 
     return res;
+  }
+
+  async action(doc: ICmsActionOptions): Promise<ICmsAction> {
+    const { action, value, timeout } = doc || {};
+    const { data: resp } = await request.request({
+      url: buildUrl(this.api, `/action`),
+      method: 'POST',
+      data: { action, value },
+      ...(timeout && timeout > 0 ? { timeout } : {}),
+    });
+
+    return resp;
   }
 
   async proxy(_doc: ICmsProxyOptions): Promise<ICmsProxy> {

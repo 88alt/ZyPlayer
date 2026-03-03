@@ -6,6 +6,8 @@ import { SITE_LOGGER_MAP, SITE_TYPE } from '@shared/config/film';
 import LruCache from '@shared/modules/lrucache';
 import { isJson } from '@shared/modules/validate';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -34,6 +36,7 @@ interface IWorkerOptionsMap {
   detail: ICmsDetailOptions;
   play: ICmsPlayOptions;
   search: ICmsSearchOptions;
+  action: ICmsActionOptions;
   proxy: ICmsProxyOptions;
   runMain: ICmsRunMianOptions;
 }
@@ -46,6 +49,7 @@ interface IWorkerResultMap {
   detail: ICmsDetail;
   play: ICmsPlay & { parse_extra?: string; js?: string; header?: Record<string, any> };
   search: ICmsSearch;
+  action: ICmsAction;
   proxy: ICmsProxy;
   runMain: ICmsRunMian;
 }
@@ -281,6 +285,12 @@ class T3DrpyAdapter {
     };
 
     return res;
+  }
+
+  async action(doc: ICmsActionOptions): Promise<ICmsAction> {
+    const { action, value, timeout } = doc || {};
+    const resp = await this.execCtx('action', { action, value, timeout });
+    return resp;
   }
 
   async proxy(doc: ICmsProxyOptions): Promise<ICmsProxy> {

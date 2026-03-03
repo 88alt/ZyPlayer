@@ -1,5 +1,7 @@
 import { request } from '@main/utils/request';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -223,6 +225,19 @@ class T4DrpyJs0Adapter {
     };
 
     return res;
+  }
+
+  async action(doc: ICmsActionOptions): Promise<ICmsAction> {
+    const { action, value, timeout } = doc || {};
+
+    const { data: resp } = await request.request({
+      url: this.api,
+      method: 'GET',
+      params: { ac: 'action', action, value },
+      ...(timeout && timeout > 0 ? { timeout } : {}),
+    });
+
+    return resp;
   }
 
   async proxy(_doc: ICmsProxyOptions): Promise<ICmsProxy> {

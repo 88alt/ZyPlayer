@@ -1,6 +1,8 @@
 import { request } from '@main/utils/request';
 import { isJsonStr } from '@shared/modules/validate';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -281,6 +283,10 @@ class T3AlistAdapter {
   async play(doc: ICmsPlayOptions): Promise<ICmsPlay> {
     const { play } = doc || {};
     return { parse: 0, url: play };
+  }
+
+  async action(_doc: ICmsActionOptions): Promise<ICmsAction> {
+    return '';
   }
 
   async proxy(_doc: ICmsProxyOptions): Promise<ICmsProxy> {

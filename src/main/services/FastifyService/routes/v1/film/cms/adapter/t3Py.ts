@@ -7,6 +7,8 @@ import { request } from '@main/utils/request';
 import { SITE_LOGGER_MAP, SITE_TYPE } from '@shared/config/film';
 import { isJson } from '@shared/modules/validate';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -389,6 +391,12 @@ export class T3PyAdapter {
     };
 
     return res;
+  }
+
+  async action(doc: ICmsActionOptions): Promise<ICmsAction> {
+    const { action, value, timeout } = doc || {};
+    const resp = await this.execCtx('actionContent', [action, value, timeout]);
+    return resp;
   }
 
   async proxy(doc: ICmsProxyOptions): Promise<ICmsProxy> {

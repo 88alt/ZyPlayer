@@ -1,6 +1,9 @@
 import { request } from '@main/utils/request';
 import { base64 } from '@shared/modules/crypto';
+import { isJson } from '@shared/modules/validate';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -223,6 +226,19 @@ class T4ServerAdapter {
     };
 
     return res;
+  }
+
+  async action(doc: ICmsActionOptions): Promise<ICmsAction> {
+    const { action, value: rawValue, timeout } = doc || {};
+    const value = isJson(rawValue) ? JSON.stringify(rawValue) : rawValue;
+    const { data: resp } = await request.request({
+      url: this.api,
+      method: 'GET',
+      params: { ac: 'action', action, value },
+      ...(timeout && timeout > 0 ? { timeout } : {}),
+    });
+
+    return resp;
   }
 
   async proxy(_doc: ICmsProxyOptions): Promise<ICmsProxy> {

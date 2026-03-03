@@ -1,6 +1,8 @@
 import { request } from '@main/utils/request';
 import { buildUrl, getHome } from '@shared/modules/headers';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -349,6 +351,10 @@ class T3AppYsV2Adapter {
       parse: +!/\.(?:m3u8|mp4|mpd|flv|mkv)$/i.test(play),
     };
     return res;
+  }
+
+  async action(_doc: ICmsActionOptions): Promise<ICmsAction> {
+    return '';
   }
 
   async proxy(_doc: ICmsProxyOptions): Promise<ICmsProxy> {

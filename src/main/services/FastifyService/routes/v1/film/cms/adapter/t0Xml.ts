@@ -1,5 +1,7 @@
 import { request } from '@main/utils/request';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -281,6 +283,10 @@ class T0XmlAdapter {
         return { parse: 1, url: parseUrl + play };
       }
     }
+  }
+
+  async action(_doc: ICmsActionOptions): Promise<ICmsAction> {
+    return '';
   }
 
   async proxy(_doc: ICmsProxyOptions): Promise<ICmsProxy> {

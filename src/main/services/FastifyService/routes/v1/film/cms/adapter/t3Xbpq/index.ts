@@ -6,6 +6,8 @@ import { SITE_LOGGER_MAP, SITE_TYPE } from '@shared/config/film';
 import { hash } from '@shared/modules/crypto';
 import { getHome, urlResolve } from '@shared/modules/headers';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -1530,6 +1532,10 @@ class T3XbpqAdapter {
     // logger.info(playobj);
 
     return playobj;
+  }
+
+  async action(_doc: ICmsActionOptions): Promise<ICmsAction> {
+    return '';
   }
 
   async proxy(_doc: ICmsProxyOptions): Promise<ICmsProxy> {

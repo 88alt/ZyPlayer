@@ -7,6 +7,8 @@ import { request } from '@main/utils/request';
 import { SITE_LOGGER_MAP, SITE_TYPE } from '@shared/config/film';
 import { getHome } from '@shared/modules/headers';
 import type {
+  ICmsAction,
+  ICmsActionOptions,
   ICmsCategory,
   ICmsCategoryOptions,
   ICmsDetail,
@@ -579,6 +581,10 @@ class T3XyqAdapter {
     const { play } = doc || {};
     const parse = /\.(?:m3u8|mp4|mpd|flv|mkv)/.test(play) ? 0 : 1;
     return { url: play, parse };
+  }
+
+  async action(_doc: ICmsActionOptions): Promise<ICmsAction> {
+    return '';
   }
 
   async proxy(_doc: ICmsProxyOptions): Promise<ICmsProxy> {

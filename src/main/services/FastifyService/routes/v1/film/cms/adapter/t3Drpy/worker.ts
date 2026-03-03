@@ -3,7 +3,7 @@ import workerpool from 'workerpool';
 
 import drpy from './drpy2.min';
 
-const { category, detail, home, homeVod, init, play, proxy, search } = drpy;
+const { action, category, detail, home, homeVod, init, play, proxy, search } = drpy;
 
 ['log', 'info', 'warn', 'error', 'debug'].forEach((method) => {
   const level = method === 'log' ? 'verbose' : method;
@@ -59,6 +59,15 @@ const handlers: Record<string, (options?: Record<string, any>) => Promise<any>> 
   async search(options) {
     const { wd, page } = options!;
     const resp = search(wd, false, page);
+    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    return res;
+  },
+
+  async action(options) {
+    const { action: method, value, timeout } = options!;
+    if (timeout && timeout > 0) globalThis.variable = { timeout };
+    else delete globalThis.variable?.timeout;
+    const resp = action(method, value);
     const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
     return res;
   },

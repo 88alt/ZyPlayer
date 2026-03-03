@@ -1,5 +1,6 @@
 import { dbService } from '@main/services/DbService';
 import {
+  getActionSchema,
   getCategorySchema,
   getCheckSchema,
   getDetailSchema,
@@ -21,6 +22,7 @@ import {
   isString,
 } from '@shared/modules/validate';
 import type {
+  ICmsAction,
   ICmsCategory,
   ICmsDetail,
   ICmsHome,
@@ -258,6 +260,25 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         headers: isObject(resp?.headers) && !isObjectEmpty(resp.headers) ? resp.headers : {},
         script: isObject(resp?.script) && !isObjectEmpty(resp.script) ? resp.script : {},
       } as ICmsPlay;
+
+      return { code: 0, msg: 'ok', data: res };
+    },
+  );
+
+  fastify.get(
+    `/${API_PREFIX}/action`,
+    { schema: getActionSchema },
+    async (
+      req: FastifyRequest<{
+        Querystring: { uuid: string; action: string; value: string | Record<string, any>; timeout?: number };
+      }>,
+    ) => {
+      const { uuid, action, value, timeout } = req.query || {};
+
+      const adapter = await prepare(uuid);
+      const resp = await adapter.action({ action, value, timeout });
+
+      const res = resp as ICmsAction;
 
       return { code: 0, msg: 'ok', data: res };
     },

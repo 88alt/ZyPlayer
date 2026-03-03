@@ -249,6 +249,30 @@ export const getPlaySchema = {
   },
 };
 
+export const getActionSchema = {
+  tags: [API_PREFIX],
+  summary: 'Get cms action',
+  description: 'Cms action.',
+  querystring: Type.Object({
+    uuid: Type.String({ format: 'uuid', description: 'cms uuid' }),
+    action: Type.String({ description: 'action key' }),
+    value: Type.Optional(
+      Type.Union([Type.String(), Type.Record(Type.String(), Type.Any())], { description: 'action value' }),
+    ),
+    timeout: Type.Optional(Type.Integer({ format: 'int32', description: 'action timeout, unit is second' })),
+  }),
+  response: {
+    200: createHttpSuccessResponseSchema(
+      Type.Optional(Type.Union([Type.String(), Type.Record(Type.String(), Type.Any())])),
+      { description: 'Successful Operation' },
+    ),
+    default: {
+      description: 'Unexpected Error',
+      $ref: Schema.ApiReponseError,
+    },
+  },
+};
+
 export const getProxySchema = {
   tags: [API_PREFIX],
   summary: 'Get cms proxy',
