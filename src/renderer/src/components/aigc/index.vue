@@ -342,7 +342,7 @@ const getSetting = async () => {
   }
 };
 
-const reloadConfig = async (eventData: { source: string; data: any }) => {
+const reloadConfig = async ({ data: eventData }) => {
   const { source } = eventData;
   if (source === emitterSource.LAYOUT_HEADER_QUICK) return;
 

@@ -140,7 +140,7 @@ onActivated(() => {
   emitter.on(emitterChannel.REFRESH_PLUGIN_CONFIG, reloadConfig);
 });
 
-const reloadConfig = async (eventData: { source: string; data: any }) => {
+const reloadConfig = async ({ data: eventData }) => {
   const { source } = eventData;
   if (source === emitterSource.SETTING_TABLE) return;
 

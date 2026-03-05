@@ -312,7 +312,7 @@ const handlePopupVisible = (_visible: boolean, context: PopupVisibleChangeContex
   }
 };
 
-const reloadConfig = async (eventData: { source: string; data: any }) => {
+const reloadConfig = async ({ data: eventData }) => {
   const { source } = eventData;
   if (source === emitterSource.LAYOUT_HEADER_SEARCH) return;
 
@@ -325,11 +325,11 @@ const reloadConfig = async (eventData: { source: string; data: any }) => {
   await getFilmConf();
 };
 
-const reloadKwConfig = async (eventData: { source: string; data: any }) => {
-  const { source, data } = eventData;
+const reloadKwConfig = async ({ data: eventData }) => {
+  const { source, data: kw } = eventData;
   if (source === emitterSource.LAYOUT_HEADER_SEARCH) return;
 
-  searchValue.value = data;
+  searchValue.value = kw;
 };
 </script>
 <style lang="less" scoped>

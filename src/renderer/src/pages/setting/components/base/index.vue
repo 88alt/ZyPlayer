@@ -398,7 +398,7 @@ const setup = () => {
   onIpcListener();
 };
 
-const reloadConfig = async (eventData: { source: string; data: any }) => {
+const reloadConfig = async ({ data: eventData }) => {
   const { source } = eventData;
   if (source === emitterSource.SETTING_BASE) return;
 

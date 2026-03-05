@@ -282,7 +282,7 @@ const defaultConfig = () => {
   config.value.default = {} as IModels['analyze'];
 };
 
-const reloadConfig = async (eventData: { source: string; data: any }) => {
+const reloadConfig = async ({ data: eventData }) => {
   const { source } = eventData;
   if (source === emitterSource.PAGE_SHOW) return;
 
@@ -300,7 +300,7 @@ const onNavChange = async (id: string) => {
   }
 };
 
-const onSearchRecommend = (eventData: { source: string; data: any }) => {
+const onSearchRecommend = ({ data: eventData }) => {
   const { source, data: kw } = eventData;
   if (source === emitterSource.PAGE_SHOW) return;
 

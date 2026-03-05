@@ -200,7 +200,7 @@ class OPlayerAdapter {
             'zh-TW': ZH_TW,
           } as any);
           player.on(['next'], () => {
-            emitter.emit(emitterChannel.COMP_MULTI_PLAYER_PLAYNEXT);
+            emitter.emit(emitterChannel.COMP_MULTI_PLAYER_PLAYNEXT, {});
           });
           return player;
         },

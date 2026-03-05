@@ -582,7 +582,7 @@ const handleSearch = async () => {
   infiniteId.value = Date.now();
 };
 
-const onSearchRecommend = (eventData: { source: string; data: any }) => {
+const onSearchRecommend = async ({ data: eventData }) => {
   const {
     source,
     data: { kw, group, filter },
@@ -639,7 +639,7 @@ const defaultConfig = () => {
   config.value.default = {} as IModels['site'];
 };
 
-const reloadConfig = async (eventData: { source: string; data: any }) => {
+const reloadConfig = async ({ data: eventData }) => {
   const { source } = eventData;
   if (source === emitterSource.PAGE_SHOW) return;
 

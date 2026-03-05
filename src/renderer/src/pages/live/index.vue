@@ -329,7 +329,7 @@ const handleSearch = async () => {
   infiniteId.value = Date.now();
 };
 
-const onSearchRecommend = (eventData: { source: string; data: any }) => {
+const onSearchRecommend = ({ data: eventData }) => {
   const { source, data: kw } = eventData;
   if (source === emitterSource.PAGE_SHOW) return;
 
@@ -432,7 +432,7 @@ const defaultConfig = () => {
   config.value.default = {} as IModels['iptv'];
 };
 
-const reloadConfig = async (eventData: { source: string; data: any }) => {
+const reloadConfig = async ({ data: eventData }) => {
   const { source } = eventData;
   if (source === emitterSource.PAGE_SHOW) return;
 
