@@ -15,11 +15,11 @@ export type IConstructorOptions = Omit<IModels['site'], 'categories'> & {
 
 // input options
 
-export type ICmsInitOptions = any;
+export type ICmsInitOptions = unknown;
 
-// export interface ICmsHomeOptions {}
+export type ICmsHomeOptions = void;
 
-// export interface ICmsHomeVodOptions {}
+export type ICmsHomeVodOptions = void;
 
 export interface ICmsCategoryOptions {
   tid: string;
@@ -314,20 +314,44 @@ export interface IRecMatch {
   vod_name: string;
 }
 
-export interface ICms {
-  init: () => Promise<void>;
-  home: () => Promise<ICmsHome>;
-  homeVod: () => Promise<ICmsHomeVod>;
-  category: (doc: ICmsCategoryOptions) => Promise<ICmsCategory>;
-  detail: (doc: ICmsDetailOptions) => Promise<ICmsDetail>;
-  search: (doc: ICmsSearchOptions) => Promise<ICmsSearch>;
-  play: (doc: ICmsPlayOptions) => Promise<ICmsPlay>;
-  action: (doc: ICmsActionOptions) => Promise<ICmsAction>;
-  proxy: (doc: ICmsProxyOptions) => Promise<ICmsProxy>;
-  runMian: (doc: ICmsRunMianOptions) => Promise<ICmsRunMian>;
+export interface ICmsParams {
+  init: ICmsInitOptions;
+  home: ICmsHomeOptions;
+  homeVod: ICmsHomeVodOptions;
+  category: ICmsCategoryOptions;
+  detail: ICmsDetailOptions;
+  search: ICmsSearchOptions;
+  play: ICmsPlayOptions;
+  action: ICmsActionOptions;
+  proxy: ICmsProxyOptions;
+  runMain: ICmsRunMianOptions;
 }
 
+export interface ICmsResult {
+  init: ICmsInit;
+  home: ICmsHome;
+  homeVod: ICmsHomeVod;
+  category: ICmsCategory;
+  detail: ICmsDetail;
+  play: ICmsPlay;
+  search: ICmsSearch;
+  action: ICmsAction;
+  proxy: ICmsProxy;
+  runMain: ICmsRunMian;
+}
+
+export type ICmsMethodName = keyof ICmsResult;
+
+export type ICms = {
+  [K in ICmsMethodName]: [ICmsParams[K]] extends [void]
+    ? () => Promise<ICmsResult[K]>
+    : [undefined] extends [ICmsParams[K]]
+      ? (doc?: Exclude<ICmsParams[K], undefined>) => Promise<ICmsResult[K]>
+      : (doc: ICmsParams[K]) => Promise<ICmsResult[K]>;
+};
+
 export type ICmsAdapter = ICms & {
+  destroy?: () => Promise<void> | void;
   prepare?: () => Promise<void> | void;
   terminate?: () => Promise<void> | void;
 };

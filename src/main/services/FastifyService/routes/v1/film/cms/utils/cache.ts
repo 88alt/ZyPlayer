@@ -23,6 +23,8 @@ import {
   T4DrpysAdapter,
 } from '../adapter';
 
+const logger = loggerService.withContext(LOG_MODULE.FILM_CMS);
+
 const CMS_ADAPTER_MAP = {
   [SITE_TYPE.T0_XML]: T0Adapter,
   [SITE_TYPE.T1_JSON]: T1Adapter,
@@ -38,10 +40,42 @@ const CMS_ADAPTER_MAP = {
   [SITE_TYPE.T3_CATOPEN]: T3CatopenAdapter,
 };
 
-const CACHE_LIMIT = 10;
+class WorkLruCache<K = string, V = ICmsAdapter> extends LruCache<K, V> {
+  put(key: K, value: V): V {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.capacity) {
+      const firstKey = this.cache.keys().next().value;
 
-const logger = loggerService.withContext(LOG_MODULE.FILM_CMS);
-const lruCache = new LruCache<string, ICmsAdapter>(CACHE_LIMIT);
+      const pool = this.cache.get(firstKey!) as ICmsAdapter;
+      pool?.destroy?.();
+
+      this.cache.delete(this.cache.keys().next().value!);
+    }
+    this.cache.set(key, value);
+    return value;
+  }
+
+  delete(key: K): boolean {
+    if (!this.cache.has(key)) return false;
+
+    const pool = this.cache.get(key!) as ICmsAdapter;
+    pool?.destroy?.();
+
+    super.delete(key);
+    return true;
+  }
+
+  clear(): void {
+    const keys = [...this.cache.keys()];
+    for (const key of keys) {
+      this.delete(key);
+    }
+  }
+}
+
+const CACHE_LIMIT = 10;
+const lruCache = new WorkLruCache<string, ICmsAdapter>(CACHE_LIMIT);
 
 export const prepare = async (uuid: string, force: boolean = false): Promise<ICmsAdapter> => {
   if (!uuid) {
@@ -102,7 +136,6 @@ export const terminate = async () => {
     const SingleAdapter = singleton(module);
     if (SingleAdapter?.terminate) await SingleAdapter.terminate();
   }
-  for (const [key, _adapter] of lruCache.entries()) {
-    lruCache.delete(key);
-  }
+
+  lruCache.clear();
 };

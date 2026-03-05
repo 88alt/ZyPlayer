@@ -9,8 +9,8 @@
 - 优化: ip接口参数ipv4/ipv6优先缺失; 增加结果isChinaMainland字段
 - 优化: 鸿蒙操作系统标识识别
 - 优化: webview组件 src参数以支持默认加载
-- 优化: github action cicd引用node版本
-- 修复: 影视 alist和catopen适配器ext参数序列化处理
+- 优化: github action cicd引用仓库node版本
+- 修复: 影视 适配器初始化失败无具体报错信息; T3Alist和T3Catopen适配器ext参数序列化处理; T3Drpy和T3Catopen缓存冲突
 - 修复: 实验室-写源工具 首次加载非js适配器时提示语法报错
 - 修复: 复制提示类型错误
 - 修复: 影视分类只有一个时触发folder模式时没有重置按钮
