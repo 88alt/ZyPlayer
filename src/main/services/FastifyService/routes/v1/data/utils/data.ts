@@ -167,7 +167,7 @@ const tvboxToStandard = (config: Tvbox, baseUrl: string, type: string): Partial<
     // ];
 
     const iptv: IDbStore['iptv'] = [];
-    const channel: IDbStore['channel'] = [];
+    const channel: Array<{ name: string; api: string; group: string }> = [];
 
     const isNewLive = (value: TvboxLiveNewItem): value is TvboxLiveNewItem => value.type === 0 && isHttp(value.url);
     const isOldLive = (value: TvboxLiveOldItem): value is TvboxLiveOldItem =>
@@ -239,17 +239,10 @@ const tvboxToStandard = (config: Tvbox, baseUrl: string, type: string): Partial<
             urls
               .filter((url) => isHttp(url))
               .forEach((item) => {
-                const uuidSub = randomUUID();
-
                 channel.push({
-                  id: uuidSub,
                   name,
                   api: item,
-                  logo: '',
                   group: group ?? '',
-                  playback: '',
-                  createdAt: Date.now(),
-                  updatedAt: Date.now(),
                 });
               });
           }
@@ -257,8 +250,32 @@ const tvboxToStandard = (config: Tvbox, baseUrl: string, type: string): Partial<
       }
     }
 
+    if (channel.length) {
+      const m3uArgs = [
+        '#EXTM3U',
+        ...channel.map(
+          (item) => `#EXTINF:-1 tvg-name="${item.name}" group-title="${item.group}",${item.name}\n${item.api}`,
+        ),
+      ];
+      const m3uContent = m3uArgs.join('\n');
+      const uuid = randomUUID();
+
+      iptv.push({
+        id: uuid,
+        key: uuid,
+        name: 'Auto Generated M3U',
+        type: 3,
+        api: m3uContent,
+        epg: '',
+        logo: '',
+        headers: {},
+        isActive: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    }
+
     data.iptv = iptv;
-    data.channel = channel;
   }
 
   if (Object.hasOwn(config, 'parses') && isArray(config.parses) && !isArrayEmpty(config.parses)) {
