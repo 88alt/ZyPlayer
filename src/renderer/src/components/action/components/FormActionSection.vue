@@ -282,10 +282,11 @@ const getInputType = (item: Record<string, any>) => {
   return typeMap[type] ?? 'text';
 };
 
-const handleGetImageCoord = (item: Record<string, any>, event: MouseEvent) => {
-  const rect = (event.target as HTMLElement).getBoundingClientRect();
-  const x = Math.round(event.clientX - rect.left);
-  const y = Math.round(event.clientY - rect.top);
+const handleGetImageCoord = (item: Record<string, any>, event: { e: PointerEvent }) => {
+  const { e } = event;
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  const x = Math.round(e.clientX - rect.left);
+  const y = Math.round(e.clientY - rect.top);
   const coord = `${x},${y}`;
 
   const key = getKey(item);
