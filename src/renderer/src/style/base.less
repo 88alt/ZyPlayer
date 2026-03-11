@@ -82,8 +82,7 @@ pre {
   background-color: var(--td-bg-color-component);
 
   &--focused {
-    box-shadow: none;
-    border-color: var(--td-brand-color);
+    box-shadow: none !important;
   }
 
   &.t-is-readonly {
@@ -146,6 +145,12 @@ pre {
     border-radius: var(--td-radius-medium);
     border-color: var(--td-bg-color-component);
     background-color: var(--td-bg-color-component);
+  }
+
+  &__inner {
+    &:focus {
+      box-shadow: none !important;
+    }
   }
 }
 

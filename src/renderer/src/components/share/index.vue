@@ -169,11 +169,7 @@ const handleCopy = async () => {
   .bottom-copy {
     :deep(.input-only) {
       .t-input {
-        border-width: 0;
-      }
-
-      .t-input--focused {
-        box-shadow: none;
+        border: none;
       }
     }
 
