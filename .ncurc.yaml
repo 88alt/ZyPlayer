@@ -31,4 +31,5 @@ reject:
   - eslint
   - monaco-editor
   - pnpm
+  - proxy-agent
   - undici
