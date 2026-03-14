@@ -21,7 +21,7 @@ import { windowService } from '@main/services/WindowService';
 import { isDev, isLinux, isMacOS, isWindows } from '@main/utils/systeminfo';
 import { APP_NAME, APP_NAME_PROTOCOL } from '@shared/config/appinfo';
 import { LOG_MODULE } from '@shared/config/logger';
-import { runAsyncFunction } from '@shared/modules/function';
+import { runFunction } from '@shared/modules/function';
 import { isBoolean, isHttp } from '@shared/modules/validate';
 import { app, crashReporter } from 'electron';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
@@ -241,9 +241,7 @@ const main = async () => {
     appLocale.init();
     setupReady();
 
-    runAsyncFunction(() => {
-      pluginService.autoLaunch();
-    });
+    runFunction(() => pluginService.autoLaunch());
   }
 };
 
