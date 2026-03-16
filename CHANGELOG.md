@@ -6,7 +6,7 @@
 
 - 优化: mac/window侧边栏配色
 - 修复: 改进更新行为，防止意外自动更新
-- 修复: window部分情况关闭窗口导致整个应用程序崩溃
+- 修复: window部分情况关闭窗口导致整个应用程序崩溃; arm平台打包失败
 - 变动: 依赖库升级
 
 [View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.4)
