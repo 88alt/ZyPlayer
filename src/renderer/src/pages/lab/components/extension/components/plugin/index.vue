@@ -101,7 +101,7 @@ const operations = computed(() => [
   { label: t('common.enable'), value: 'enable' },
   { label: t('common.disable'), value: 'disable' },
   { label: t('common.uninstall'), value: 'delete' },
-  { label: t('common.store'), value: 'store' },
+  // { label: t('common.store'), value: 'store' },
   { label: t('pages.lab.extension.env.title'), value: 'env' },
   { label: t('common.help'), value: 'help' },
 ]);
