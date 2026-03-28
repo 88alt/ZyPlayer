@@ -33,4 +33,5 @@ reject:
   - npminstall
   - pnpm
   - proxy-agent
+  - typescript
   - undici

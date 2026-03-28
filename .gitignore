@@ -66,6 +66,7 @@ packages/*/build
 !.vscode/mcp.json
 !.vscode/settings.json
 .zed/*
+.bitfun/*
 
 # Env
 .env
