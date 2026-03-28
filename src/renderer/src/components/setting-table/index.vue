@@ -127,6 +127,10 @@ const handleSelectChange = (val: any[]) => {
       z-index: 0;
     }
 
+    :deep(.t-table__header--fixed:not(.t-table__header--multiple) > tr > th) {
+      background-color: transparent;
+    }
+
     :deep(.t-table__affixed-header-elm) {
       padding: 0 var(--td-comp-paddingLR-s) 0 0;
     }
