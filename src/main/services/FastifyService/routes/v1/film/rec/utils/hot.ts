@@ -81,7 +81,7 @@ export const baidu = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]> 
 
     return rawList
       .map((item) => ({
-        vod_id: item.urlsign ?? '',
+        vod_id: item.urlsign || randomNanoid(),
         vod_name: item.ename ?? '',
         vod_remarks: item.additional ?? '',
         vod_pic: item.img ?? '',
@@ -136,7 +136,7 @@ export const douban = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]>
     return rawList
       .map((item) => {
         const base = {
-          vod_id: item.id ?? '',
+          vod_id: item.id || randomNanoid(),
           vod_name: item.title ?? '',
           vod_hot: Number(item.allHot) || 0,
           vod_pic: '',
@@ -201,7 +201,7 @@ export const enlightent = async (doc: IRecommHotOptions = {}): Promise<IRecommHo
 
     return rawList
       .map((item) => ({
-        vod_id: item.nameId ?? '',
+        vod_id: item.nameId || randomNanoid(),
         vod_name: item.name ?? '',
         vod_hot: Number(item.allHot) || 0,
         vod_remarks: item.channel ?? '',
@@ -252,7 +252,7 @@ export const kylive = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]>
 
     return rawList
       .map((item) => ({
-        vod_id: item.caid ?? '',
+        vod_id: item.caid || randomNanoid(),
         vod_name: item.epg ?? '',
         vod_remarks: isPositiveFiniteNumber(item.mr) ? `播放市占${(item.mr * 100).toFixed(2)}%` : '播放市占0.00%',
         vod_hot: Number(item.count) || 0,
@@ -320,7 +320,7 @@ export const komect = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]>
 
     return rawList
       .map((item) => ({
-        vod_id: item.psId ?? '',
+        vod_id: item.psId || randomNanoid(),
         vod_name: item.dpContentName ?? '',
         vod_pic: item.dpContentPicUrl ?? '',
         vod_hot: Number(item.dpPlayCount) || 0,
@@ -385,7 +385,7 @@ export const quark = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]> 
 
     return rawList
       .map((item) => ({
-        vod_id: randomNanoid() ?? '',
+        vod_id: randomNanoid(),
         vod_name: item.title ?? '',
         vod_remarks: item.episode_count ?? '',
         vod_pic: item.src ?? '',
