@@ -4,6 +4,7 @@ import { loggerService } from '@logger';
 import { appLocale } from '@main/services/AppLocale';
 import { configManager } from '@main/services/ConfigManager';
 import { APP_DATABASE_PATH, APP_FILE_PATH } from '@main/utils/path';
+import { isSafeExternalUrl } from '@main/utils/security';
 import { isDev, isLinux, isMacOS, isMacOSTahoe, isPackaged, isWindows, isWindows22H2 } from '@main/utils/systeminfo';
 import { titleBarOverlayDark, titleBarOverlayLight } from '@shared/config/appinfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
@@ -408,7 +409,11 @@ export class WindowService {
       }
 
       event.preventDefault();
-      shell.openExternal(url);
+      if (isSafeExternalUrl(url)) {
+        void shell.openExternal(url);
+      } else {
+        logger.warn(`Blocked navigation to untrusted URL scheme: ${url}`);
+      }
     });
 
     mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -429,12 +434,9 @@ export class WindowService {
 
       if (url.includes('http://file/')) {
         const fileName = url.replace('http://file/', '');
-        const filePath = `${APP_FILE_PATH}/${fileName}`;
+        const filePath = join(APP_FILE_PATH, fileName);
         shell.openPath(filePath).catch((error) => logger.error('Failed to open file:', error));
-      } else {
-        // mainWindow.webContents.send(IPC_CHANNEL.URI_BLOCKED, url);
-        // shell.openExternal(details.url);
-
+      } else if (isSafeExternalUrl(details.url)) {
         let window = this.getWindow(WINDOW_NAME.BROWSER);
         if (window && !window.isDestroyed()) {
           this.showWindow(window);
@@ -447,6 +449,8 @@ export class WindowService {
             }, 1000);
           });
         }
+      } else {
+        logger.warn(`Blocked shell.openExternal for untrusted URL scheme: ${url}`);
       }
 
       return { action: 'deny' };
