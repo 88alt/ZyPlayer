@@ -28,7 +28,8 @@ reject:
 
   # Others
   - '@types/node'
-  - eslint
+  # - '@typescript/native-preview'
+  # - eslint
   - monaco-editor
   - npminstall
   - pnpm
