@@ -1,6 +1,6 @@
 export default {
   baidu: {
-    url: 'https://www.baidu.com/s?wd=%E7%94%B5%E8%A7%86%E5%89%A7%E6%8E%92%E8%A1%8C%E6%A6%9C',
+    url: 'https://www.baidu.com/s?wd=电视剧排行榜',
     category: [1, 2],
   },
   douban: {
@@ -9,7 +9,11 @@ export default {
   },
   enlightent: {
     url: 'https://www.enlightent.cn/sixiang/rank-list/',
-    category: [1, 2, 3],
+    category: [1, 2, 3, 4],
+  },
+  hisense: {
+    url: 'https://wxtv-vod.hismarttv.com',
+    category: [1, 2, 3, 4],
   },
   kylive: {
     url: 'https://www.ky.live',

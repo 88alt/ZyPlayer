@@ -307,17 +307,19 @@ const LANG_OPTIONS = computed(() => [
 ]);
 
 const HOT_OPTIONS = computed(() => [
-  { value: REC_HOT_TYPE.BAIDU, label: t('pages.setting.base.hot.map.baidu') },
+  // { value: REC_HOT_TYPE.BAIDU, label: t('pages.setting.base.hot.map.baidu') },
   { value: REC_HOT_TYPE.DOUBAN, label: t('pages.setting.base.hot.map.douban') },
   { value: REC_HOT_TYPE.ENLIGHTENT, label: t('pages.setting.base.hot.map.enlightent') },
+  { value: REC_HOT_TYPE.HISENSE, label: t('pages.setting.base.hot.map.hisense') },
   { value: REC_HOT_TYPE.KOMECT, label: t('pages.setting.base.hot.map.komect') },
   { value: REC_HOT_TYPE.KYLIVE, label: t('pages.setting.base.hot.map.kylive') },
-  { value: REC_HOT_TYPE.QUARK, label: t('pages.setting.base.hot.map.quark') },
+  // { value: REC_HOT_TYPE.QUARK, label: t('pages.setting.base.hot.map.quark') },
 ]);
 
 const ASSOCIATION_OPTIONS = computed(() => [
   { value: REC_ASSOCIATION_TYPE.DOUBAN, label: t('pages.setting.base.association.map.douban') },
-  { value: REC_ASSOCIATION_TYPE.IQIYI, label: t('pages.setting.base.association.map.iqiyi') },
+  { value: REC_ASSOCIATION_TYPE.HISENSE, label: t('pages.setting.base.association.map.hisense') },
+  // { value: REC_ASSOCIATION_TYPE.IQIYI, label: t('pages.setting.base.association.map.iqiyi') },
   { value: REC_ASSOCIATION_TYPE.SNM, label: t('pages.setting.base.association.map.snm') },
 ]);
 

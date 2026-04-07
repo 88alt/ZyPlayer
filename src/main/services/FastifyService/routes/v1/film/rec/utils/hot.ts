@@ -2,7 +2,7 @@ import { loggerService } from '@logger';
 import { request } from '@main/utils/request';
 import { LOG_MODULE } from '@shared/config/logger';
 import { randomNanoid } from '@shared/modules/crypto';
-import { toM, toUnix, toY, toYMD } from '@shared/modules/date';
+import { toM, toSubtract, toUnix, toY, toYMD } from '@shared/modules/date';
 import { isArrayEmpty, isNil, isPositiveFiniteNumber, isStrEmpty, isString } from '@shared/modules/validate';
 
 const logger = loggerService.withContext(LOG_MODULE.FILM_REC_HOT);
@@ -167,21 +167,23 @@ export const douban = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]>
  */
 export const enlightent = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]> => {
   try {
-    let { date, type } = doc;
+    let { date, type = 1 } = doc;
 
     if (isStrEmpty(date) || isNil(date)) date = toYMD();
+    if (date === toYMD()) date = toYMD(toSubtract(1, 'day', date)); // 默认取昨天的数据
     date = date.replace(/-/g, '/');
 
     if (isString(type)) type = Number.parseInt(type);
-    if (isNil(type) || ![1, 2, 3].includes(type)) type = 1; // 1:电影 2:电视剧 3:综艺
+    if (isNil(type) || ![1, 2, 3, 4].includes(type)) type = 1; // 1:电影 2:电视剧 3:综艺 4:动漫(少儿)
 
     const TYPE_MAP = {
       1: 'movie',
       2: 'tv',
       3: 'art',
+      4: 'animation',
     };
 
-    const url = 'https://www.enlightent.cn/sxapi/top/getHeatTop.do';
+    const url = 'https://www.enlightent.cn/research/top/getTopRanking';
     const { data: resp } = await request.request({
       url,
       method: 'POST',
@@ -189,9 +191,10 @@ export const enlightent = async (doc: IRecommHotOptions = {}): Promise<IRecommHo
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       data: {
-        sort: 'allHot',
         channelType: TYPE_MAP[type],
+        sort: 'playTimesPredicted',
         day: 1,
+        channel: 'total',
         date,
       },
     });
@@ -201,14 +204,77 @@ export const enlightent = async (doc: IRecommHotOptions = {}): Promise<IRecommHo
 
     return rawList
       .map((item) => ({
-        vod_id: item.nameId || randomNanoid(),
+        vod_id: item.nameID || randomNanoid(),
         vod_name: item.name ?? '',
-        vod_hot: Number(item.allHot) || 0,
-        vod_remarks: item.channel ?? '',
+        vod_hot: Number(item.barrageCount || item.commentCount) || 0,
+        vod_remarks: item.dayPlatform ?? '',
       }))
       .sort((a, b) => b.vod_hot - a.vod_hot);
   } catch (error) {
     logger.error('Failed to fetch enlightent hot', error as Error);
+    return [];
+  }
+};
+
+/**
+ * 海信
+ *
+ * @see https://wxtv-vod.hismarttv.com/category/api/search/v2/2003?version=3.6&deviceType=2&type=2&languageId=0&deviceid&distributeId=2001&license&start=0&rows=30&show=false&sort=325&platid=2&appVersion=6.3.10-0
+ */
+export const hisense = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]> => {
+  try {
+    let { type = 1, pageSize = 20, page = 1 } = doc;
+
+    if (isString(type)) type = Number.parseInt(type);
+    if (![1, 2, 3, 4].includes(type)) type = 1; // 1:电影 2:电视剧 3:综艺 4:少儿(动漫)
+
+    if (isString(pageSize)) pageSize = Number.parseInt(pageSize);
+    if (isString(page)) page = Number.parseInt(page);
+    if (!isPositiveFiniteNumber(pageSize)) pageSize = 20;
+    if (!isPositiveFiniteNumber(page)) page = 1;
+
+    const TYPE_MAP = {
+      1: '2002',
+      2: '2003',
+      3: '2004',
+      4: '2007',
+    };
+
+    const url = `https://wxtv-vod.hismarttv.com/category/api/search/v2/${TYPE_MAP[type]}`;
+    const { data: resp } = await request.request({
+      url,
+      method: 'GET',
+      params: {
+        version: '3.6',
+        deviceType: 2,
+        type: 2,
+        languageId: 0,
+        deviceid: '',
+        distributeId: 2001,
+        license: '',
+        start: pageSize * (page - 1),
+        rows: pageSize,
+        show: false,
+        sort: 325, // 空:综合 325:最热 100:最新
+        platid: 2,
+        appVersion: '6.3.10-0',
+      },
+    });
+
+    const rawList = resp?.medias;
+    if (isNil(rawList) || isArrayEmpty(rawList)) return [];
+
+    return rawList
+      .map((item) => ({
+        vod_id: item.id || randomNanoid(),
+        vod_name: item.title ?? '',
+        vod_hot: Number(item.douban_rate || item.rate) || 0,
+        vod_pic: item.image_rec_url || item.image_icon_url || '',
+        vod_remarks: item.update_mark ?? '',
+      }))
+      .sort((a, b) => b.vod_hot - a.vod_hot);
+  } catch (error) {
+    logger.error('Failed to fetch hisense search', error as Error);
     return [];
   }
 };
@@ -220,7 +286,8 @@ export const enlightent = async (doc: IRecommHotOptions = {}): Promise<IRecommHo
  */
 export const kylive = async (doc: IRecommHotOptions = {}): Promise<IRecommHot[]> => {
   try {
-    let { date, type } = doc;
+    let { date, type = 2 } = doc;
+
     if (isStrEmpty(date) || isNil(date)) date = toYMD();
     if (isString(type)) type = Number.parseInt(type);
     if (isNil(type) || ![2, 3].includes(type)) type = 2; // 2:电视剧 3:综艺
@@ -403,6 +470,7 @@ export default {
   douban,
   quark,
   baidu,
+  hisense,
   kylive,
   enlightent,
 };

@@ -25,6 +25,7 @@ export default {
         baidu: 'Baidu',
         douban: 'Douban',
         enlightent: 'Enlightent',
+        hisense: 'Hisense',
         kylive: 'Kylive',
         komect: 'Komect',
         quark: 'Quark',
@@ -34,6 +35,8 @@ export default {
       title: 'Association',
       map: {
         douban: 'Douban',
+        hisense: 'Hisense',
+        komect: 'Komect',
         iqiyi: 'Iqiyi',
         snm: 'Snm',
       },

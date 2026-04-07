@@ -2,6 +2,7 @@ import { loggerService } from '@logger';
 import { request } from '@main/utils/request';
 import { LOG_MODULE } from '@shared/config/logger';
 import { randomNanoid } from '@shared/modules/crypto';
+import { toUnix } from '@shared/modules/date';
 import { isArrayEmpty, isNil, isPositiveFiniteNumber, isStrEmpty, isString } from '@shared/modules/validate';
 
 const logger = loggerService.withContext(LOG_MODULE.FILM_REC_HOT);
@@ -26,14 +27,9 @@ export interface IRecommSearchOptions {
  * @see https://www.douban.com/j/search_suggest?debug=true&q=我
  */
 export const douban = async (doc: IRecommSearchOptions = { kw: '' }): Promise<IRecommHot[]> => {
-  let { kw, pageSize = 20, page = 1 } = doc;
+  const { kw } = doc;
 
   if (!isString(kw) || isStrEmpty(kw)) return [];
-
-  if (isString(pageSize)) pageSize = Number.parseInt(pageSize);
-  if (isString(page)) page = Number.parseInt(page);
-  if (!isPositiveFiniteNumber(pageSize)) pageSize = 20;
-  if (!isPositiveFiniteNumber(page)) page = 1;
 
   try {
     const url = 'https://www.douban.com/j/search_suggest';
@@ -65,19 +61,70 @@ export const douban = async (doc: IRecommSearchOptions = { kw: '' }): Promise<IR
 };
 
 /**
+ * 海信
+ *
+ * @see https://public-wxtv.hismarttv.com/weixintv/voice/suggestedWord?index=2&keyWord=我&objtypeSelect=1&page=1&pageSize=60&productCode=vod&searchPlatform=ios&sequence=1775225175193&serviceType=vod&sourceType=2&subscriberId=666666&userType=2
+ */
+export const hisense = async (doc: IRecommSearchOptions = { kw: '' }): Promise<IRecommHot[]> => {
+  try {
+    let { kw, pageSize = 20, page = 1 } = doc;
+
+    if (!isString(kw) || isStrEmpty(kw)) return [];
+
+    if (isString(pageSize)) pageSize = Number.parseInt(pageSize);
+    if (isString(page)) page = Number.parseInt(page);
+    if (!isPositiveFiniteNumber(pageSize)) pageSize = 20;
+    if (!isPositiveFiniteNumber(page)) page = 1;
+
+    const url = 'https://public-wxtv.hismarttv.com/weixintv/voice/suggestedWord';
+    const { data: resp } = await request.request({
+      url,
+      method: 'GET',
+      params: {
+        index: 0,
+        keyWord: kw,
+        objtypeSelect: 1,
+        page,
+        pageSize,
+        productCode: 'vod',
+        searchPlatform: 'h5',
+        sequence: toUnix(),
+        serviceType: 'vod',
+        sourceType: 2,
+        subscriberId: '666666',
+        userType: 2,
+      },
+    });
+
+    if (resp?.resultCode !== 0) return [];
+
+    const rawList = resp?.searchResultList;
+    if (isNil(rawList) || isArrayEmpty(rawList)) return [];
+
+    return rawList
+      .map((item) => ({
+        vod_id: randomNanoid(),
+        vod_name: item.wordName ?? '',
+        vod_hot: 0,
+        vod_pic: '',
+        vod_remarks: item?.productCode ?? '',
+      }))
+      .sort((a, b) => b.vod_hot - a.vod_hot);
+  } catch (error) {
+    logger.error('Failed to fetch hisense search', error as Error);
+    return [];
+  }
+};
+
+/**
  * 爱奇艺
  *
  * @see https://suggest.video.iqiyi.com/?if=mobile&key=我
  */
 export const iqiyi = async (doc: IRecommSearchOptions = { kw: '' }): Promise<IRecommHot[]> => {
-  let { kw, pageSize = 20, page = 1 } = doc;
+  const { kw } = doc;
 
   if (!isString(kw) || isStrEmpty(kw)) return [];
-
-  if (isString(pageSize)) pageSize = Number.parseInt(pageSize);
-  if (isString(page)) page = Number.parseInt(page);
-  if (!isPositiveFiniteNumber(pageSize)) pageSize = 20;
-  if (!isPositiveFiniteNumber(page)) page = 1;
 
   try {
     const url = 'https://suggest.video.iqiyi.com/';
@@ -161,6 +208,7 @@ export const snm = async (doc: IRecommSearchOptions = { kw: '' }): Promise<IReco
 
 export default {
   douban,
+  hisense,
   iqiyi,
   snm,
 };

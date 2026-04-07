@@ -24,6 +24,7 @@ export default {
         baidu: '百度',
         douban: '豆瓣',
         enlightent: '云合',
+        hisense: '海信',
         kylive: '酷云',
         komect: '移动爱家',
         quark: '夸克',
@@ -33,6 +34,8 @@ export default {
       title: '联想',
       map: {
         douban: '豆瓣',
+        hisense: '海信',
+        komect: '移动爱家',
         iqiyi: '爱奇艺',
         snm: '喜粤TV',
       },

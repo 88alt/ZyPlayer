@@ -24,6 +24,7 @@ export default {
         baidu: '百度',
         douban: '豆瓣',
         enlightent: '雲合',
+        hisense: '海信',
         kylive: '酷雲',
         komect: '移動愛家',
         quark: '誇克',
@@ -33,6 +34,8 @@ export default {
       title: '聯想',
       map: {
         douban: '豆瓣',
+        hisense: '海信',
+        komect: '移動愛家',
         iqiyi: '愛奇藝',
         snm: '喜粵TV',
       },

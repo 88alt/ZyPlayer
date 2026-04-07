@@ -4,7 +4,8 @@
 
 ## 3.4.4
 
-- 特性: 支持搜索联想
+- 特性: 支持搜索联想(豆瓣/海信/喜粤TV)
+- 特性: 热搜支持海信, 修复云合, 剔除百度/夸克
 - 特性: 支持login事件(basic-auth)
 - 特性: scheme支持zy://sub?lang={{lang}}&url={{url}}
 - 修复: windows x64平台调用npminstall失败
