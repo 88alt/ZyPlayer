@@ -2,7 +2,7 @@
 
 > All notable changes to this project will be documented in this file.
 
-## 3.4.4
+## 3.4.4 (2026-04-11)
 
 - 特性: 支持搜索联想(豆瓣/海信/喜粤TV)
 - 特性: 热搜支持海信, 修复云合, 剔除百度/夸克
