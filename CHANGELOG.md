@@ -6,6 +6,7 @@
 
 - 修复: 影视分类排除存在逗号为整体时无法排除, 处理方法(整体加括号): [含逗号分类]
 - 修复: T3Py适配器兼容性
+- 修复: 影视/直播搜索栏存在数据时切换数据源未清空搜索关键词
 
 [View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.5)
 

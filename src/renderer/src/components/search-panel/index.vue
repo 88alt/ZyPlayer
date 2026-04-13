@@ -295,7 +295,8 @@ const getSuggestList = async () => {
   associationConfig.value.load = true;
 
   try {
-    const kw = searchValue.value.trim();
+    const kw = searchValue.value?.trim();
+    if (!kw) return;
 
     const resp = await fetchRecAssociation({
       kw,
@@ -413,7 +414,7 @@ const reloadConfig = async ({ data: eventData }) => {
 };
 
 const reloadKwConfig = async ({ data: eventData }) => {
-  const { source, data: kw } = eventData;
+  const { source, data: kw = '' } = eventData;
   if (source === emitterSource.LAYOUT_HEADER_SEARCH) return;
 
   searchValue.value = kw;

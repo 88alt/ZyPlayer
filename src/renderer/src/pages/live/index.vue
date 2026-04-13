@@ -420,6 +420,7 @@ const defaultConfig = () => {
   resetPagination();
 
   searchValue.value = '';
+  emitter.emit(emitterChannel.SEARCH_RECOMMEND, { source: emitterSource.PAGE_SHOW, data: '' });
 
   active.value.lazyload = false;
   active.value.loadStatus = 'complete';
