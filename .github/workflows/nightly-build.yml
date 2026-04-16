@@ -80,7 +80,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, windows-latest, windows-11-arm, ubuntu-latest]
       fail-fast: false
 
     steps:
@@ -145,10 +145,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: --max-old-space-size=8192
 
-      - name: Build Windows
+      - name: Build Windows(x64)
         if: matrix.os == 'windows-latest'
         run: |
-          pnpm build:win
+          pnpm build:win:x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Build Windows(arm64)
+        if: matrix.os == 'windows-11-arm'
+        run: |
+          pnpm build:win:arm64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: --max-old-space-size=8192
@@ -160,7 +168,7 @@ jobs:
           DATE=${{ steps.date.outputs.date }}
 
           # Windows artifacts - based on actual file naming pattern
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          if [ "${{ matrix.os }}" == "windows-latest" ] || [ "${{ matrix.os }}" == "windows-11-arm" ]; then
             # Setup installer
             find dist -name "*-x64-setup.exe" -exec cp {} renamed-artifacts/zyfun-nightly-${DATE}-x64-setup.exe \;
             find dist -name "*-arm64-setup.exe" -exec cp {} renamed-artifacts/zyfun-nightly-${DATE}-arm64-setup.exe \;
