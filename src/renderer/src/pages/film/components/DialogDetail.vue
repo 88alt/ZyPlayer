@@ -373,7 +373,7 @@ const reverseOrderEvent = () => {
 const getAnalyzeConfig = async () => {
   try {
     const resp = await fetchAnalyzeActive();
-    if (resp?.default) {
+    if (resp?.default?.id) {
       analyzeConfig.value.default = resp.default;
       active.value.analyzeId = resp.default.id;
     }

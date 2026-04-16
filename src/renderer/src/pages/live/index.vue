@@ -191,7 +191,7 @@ const resetPagination = () => {
 const getSetting = async () => {
   try {
     const resp = await fetchIptvActive();
-    if (resp?.default) {
+    if (resp?.default?.id) {
       config.value.default = resp.default;
       active.value.nav = resp.default.id;
     }
@@ -199,7 +199,7 @@ const getSetting = async () => {
     if (resp?.extra) config.value.extra = resp.extra;
 
     active.value.loadStatus =
-      resp?.default && resp.list.length ? 'complete' : resp.list.length ? 'noSelect' : 'noConfig';
+      resp?.default?.id && resp.list.length ? 'complete' : resp.list.length ? 'noSelect' : 'noConfig';
   } catch (error) {
     console.error(`Failed to get iptv config:`, error);
     active.value.loadStatus = 'error';

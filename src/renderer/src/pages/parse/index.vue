@@ -140,7 +140,7 @@ const handlePlatformChange = (id: string) => {
 const getSetting = async () => {
   try {
     const resp = await fetchAnalyzeActive();
-    if (resp?.default) {
+    if (resp?.default?.id) {
       config.value.default = resp.default;
       active.value.nav = resp.default.id;
     }

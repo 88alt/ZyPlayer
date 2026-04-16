@@ -165,7 +165,6 @@ const fetchTable = async () => {
       pageSize: pagination.value.pageSize,
       kw: searchValue.value,
     });
-    if (resp?.default) tableState.value.default = resp.default;
     if (resp?.list) tableState.value.list = resp.list;
     if (resp?.total) pagination.value.total = resp.total;
   } catch (error) {
