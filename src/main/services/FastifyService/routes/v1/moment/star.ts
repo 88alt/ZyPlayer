@@ -1,4 +1,12 @@
 import { dbService } from '@main/services/DbService';
+import type {
+  AddStarBody,
+  DeleteStarBody,
+  FindStarDetailQuery,
+  GetStarDetailParams,
+  GetStarPageQuery,
+  PutStarBody,
+} from '@server/schemas/v1/moment/star';
 import {
   addSchema,
   deleteSchema,
@@ -8,97 +16,139 @@ import {
   putSchema,
 } from '@server/schemas/v1/moment/star';
 import type { IModels } from '@shared/types/db';
-import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 
 const API_PREFIX = 'moment/star';
 
 const api: FastifyPluginAsync = async (fastify): Promise<void> => {
-  fastify.post(`/${API_PREFIX}`, { schema: addSchema }, async (req: FastifyRequest<{ Body: IModels['star'] }>) => {
-    const dbRes = await dbService.star.add(req.body);
-    return { code: 0, msg: 'ok', data: dbRes };
-  });
-
-  fastify.delete(
+  fastify.post<{ Body: AddStarBody }>(
     `/${API_PREFIX}`,
-    { schema: deleteSchema },
-    async (req: FastifyRequest<{ Body: { id?: string[]; type?: IModels['star']['type'][] } | null }>) => {
-      const { id = [], type = [] } = req.body || {};
-      if (type && type.length !== 0) {
-        await dbService.star.removeByField({ type });
-      } else if (id && id.length !== 0) {
-        await dbService.star.remove(id);
-      } else {
-        await dbService.star.clear();
+    {
+      schema: addSchema,
+    },
+    async (req, reply) => {
+      try {
+        const dbRes = await dbService.star.add(req.body as IModels['star']);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: dbRes });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
       }
-      return { code: 0, msg: 'ok', data: null };
     },
   );
 
-  fastify.put(
+  fastify.delete<{ Body: DeleteStarBody }>(
     `/${API_PREFIX}`,
-    { schema: putSchema },
-    async (req: FastifyRequest<{ Body: { id: string[]; doc: IModels['star'] } }>) => {
-      const { id, doc } = req.body;
-      const dbRes = await dbService.star.update(id, doc);
-      return { code: 0, msg: 'ok', data: dbRes };
+    {
+      schema: deleteSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id = [], type = [] } = req.body || {};
+        if (type.length !== 0) {
+          await dbService.star.removeByField({ type });
+        } else if (id.length !== 0) {
+          await dbService.star.remove(id);
+        } else {
+          await dbService.star.clear();
+        }
+        return reply.code(200).send({ code: 0, msg: 'ok', data: null });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.get(
+  fastify.put<{ Body: PutStarBody }>(
+    `/${API_PREFIX}`,
+    {
+      schema: putSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id, doc } = req.body;
+        const dbRes = await dbService.star.update(id, doc as IModels['star']);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: dbRes });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.get<{ Querystring: GetStarPageQuery }>(
     `/${API_PREFIX}/page`,
-    { schema: pageSchema },
-    async (
-      req: FastifyRequest<{
-        Querystring: { page: number; pageSize: number; kw?: string; type?: IModels['star']['type'][] };
-      }>,
-    ) => {
-      const { page, pageSize, type, kw } = req.query;
+    {
+      schema: pageSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { pageNum = 1, pageSize = 10, type = [], kw } = req.query;
 
-      const dbResPage = await dbService.star.page(page, pageSize, kw, type);
+        const dbResPage = await dbService.star.page(pageNum, pageSize, kw, type);
 
-      // 1:site 2: iptv 3:analyze
-      const loaderMap: Record<number, string> = {
-        1: 'site',
-        2: 'iptv',
-        3: 'analyze',
-      } as const;
+        const loaderMap: Record<number, string> = {
+          1: 'site',
+          2: 'iptv',
+          3: 'analyze',
+        } as const;
 
-      const list = await Promise.all(
-        dbResPage.list.map(async (item) => {
-          const relateSite = (await dbService?.[loaderMap[item.type]]?.getByField({ key: item.relateId! }))?.[0] ?? {};
-          return { ...item, relateSite };
-        }),
-      );
+        const list = await Promise.all(
+          dbResPage.list.map(async (item) => {
+            const relateSite =
+              (await dbService?.[loaderMap[item.type]]?.getByField({ key: item.relateId! }))?.[0] ?? {};
+            return { ...item, relateSite };
+          }),
+        );
 
-      return {
-        code: 0,
-        msg: 'ok',
-        data: {
-          list,
-          total: dbResPage.total,
-        },
-      };
+        return reply.code(200).send({
+          code: 0,
+          msg: 'ok',
+          data: {
+            list,
+            total: dbResPage.total,
+          },
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.get(
+  fastify.get<{ Querystring: FindStarDetailQuery }>(
     `/${API_PREFIX}/find`,
-    { schema: findDetailSchema },
-    async (req: FastifyRequest<{ Querystring: { relateId: string; videoId: string; type?: number } }>) => {
-      const { relateId, videoId, type } = req.query;
-      const dbRes = await dbService.star.getByField({ relateId, videoId, ...(type ? { type } : {}) });
-      const res = dbRes?.[0];
-      return { code: 0, msg: 'ok', data: res ?? {} };
+    {
+      schema: findDetailSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { relateId, videoId, type } = req.query;
+        const dbRes = await dbService.star.getByField({ relateId, videoId, ...(type ? { type } : {}) });
+        const res = dbRes?.[0] ?? {};
+        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.get(
+  fastify.get<{ Params: GetStarDetailParams }>(
     `/${API_PREFIX}/:id`,
-    { schema: getDetailSchema },
-    async (req: FastifyRequest<{ Params: { id: string } }>) => {
-      const { id } = req.params;
-      const dbRes = await dbService.star.get(id);
-      return { code: 0, msg: 'ok', data: dbRes };
+    {
+      schema: getDetailSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id } = req.params;
+        const dbRes = await dbService.star.get(id);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: dbRes });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 };

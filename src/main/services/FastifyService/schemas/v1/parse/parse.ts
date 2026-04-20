@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'parse';
 
@@ -28,9 +28,9 @@ export const mediaDirectSchema = {
   }),
   response: {
     200: MediaDirectResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    400: ResponseErrorSchema,
+    500: ResponseErrorSchema,
   },
 };
+
+export type MediaDirectQuery = Static<typeof mediaDirectSchema.querystring>;

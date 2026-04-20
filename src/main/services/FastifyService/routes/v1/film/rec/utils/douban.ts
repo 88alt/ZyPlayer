@@ -176,7 +176,7 @@ export const fetchDoubanRecomm = async (doc: {
   id?: string;
   type?: string;
   name?: string;
-  year?: number;
+  year?: number | string;
 }): Promise<IRecMatch[]> => {
   try {
     let { id, type, name, year } = doc || {};
@@ -195,7 +195,7 @@ export const fetchDoubanRecomm = async (doc: {
     }
 
     if (!hasId && hasName) {
-      const searchResult = await fetchDoubanSearch({ name: name!, year: year! });
+      const searchResult = await fetchDoubanSearch({ name: name!, year: year! as number });
       doubanId = searchResult.vod_douban_id ?? '';
       doubanType = searchResult.vod_douban_type ?? '';
     }

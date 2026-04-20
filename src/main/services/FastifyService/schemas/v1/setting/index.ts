@@ -1,9 +1,8 @@
-import { Schema } from '@main/types/server';
 import { settingKeys, setupKeys } from '@shared/config/tblSetting';
-import type { TLiteral } from '@sinclair/typebox';
+import type { Static, TLiteral } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'setting';
 
@@ -65,10 +64,7 @@ export const addSchema = {
   }),
   response: {
     200: SettingArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -87,10 +83,7 @@ export const deleteSchema = {
       },
       { description: 'Response schema for delete response' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -104,10 +97,7 @@ export const putSchema = {
   }),
   response: {
     200: SettingArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -117,10 +107,7 @@ export const getSetupSchema = {
   description: 'Get setup',
   response: {
     200: SetupObjectResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -130,10 +117,7 @@ export const getListSchema = {
   description: 'Get list',
   response: {
     200: SettingObjectResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -146,10 +130,7 @@ export const getDetailSchema = {
   }),
   response: {
     200: SettingResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -162,10 +143,7 @@ export const getDetailValueSchema = {
   }),
   response: {
     200: ResponseSuccessSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -182,9 +160,13 @@ export const putSourceSchema = {
   ),
   response: {
     200: SettingObjectResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddSettingBody = Static<typeof addSchema.body>;
+export type DeleteSettingBody = Static<typeof deleteSchema.body>;
+export type PutSettingBody = Static<typeof putSchema.body>;
+export type GetSettingDetailParams = Static<typeof getDetailSchema.params>;
+export type GetSettingDetailValueParams = Static<typeof getDetailValueSchema.params>;
+export type PutSettingSourceBody = Static<typeof putSourceSchema.body>;

@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { PageQuery, ResponseSuccessSchema } from '../../base';
+import { PageQuery, ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'moment';
 
@@ -65,10 +65,7 @@ export const addSchema = {
   body: Type.Partial(Type.Omit(StarSchema, ['id', 'createdAt', 'updatedAt'])),
   response: {
     200: StarArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -92,10 +89,7 @@ export const deleteSchema = {
       },
       { description: 'Response schema for delete response' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -109,10 +103,7 @@ export const putSchema = {
   }),
   response: {
     200: StarArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -129,10 +120,7 @@ export const pageSchema = {
   ),
   response: {
     200: StarListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -147,10 +135,7 @@ export const findDetailSchema = {
   }),
   response: {
     200: StarResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -163,9 +148,13 @@ export const getDetailSchema = {
   }),
   response: {
     200: StarResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddStarBody = Static<typeof addSchema.body>;
+export type DeleteStarBody = Static<typeof deleteSchema.body>;
+export type PutStarBody = Static<typeof putSchema.body>;
+export type GetStarPageQuery = Static<typeof pageSchema.querystring>;
+export type FindStarDetailQuery = Static<typeof findDetailSchema.querystring>;
+export type GetStarDetailParams = Static<typeof getDetailSchema.params>;

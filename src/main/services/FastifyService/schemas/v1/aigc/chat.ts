@@ -1,4 +1,4 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
 import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
@@ -65,10 +65,7 @@ export const completionSchema = {
       },
     },
     400: ResponseErrorSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -91,9 +88,9 @@ export const normalSchema = {
       { description: 'Response schema for normal chat completion' },
     ),
     400: ResponseErrorSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type CompletionBody = Static<typeof completionSchema.body>;
+export type NormalBody = Static<typeof normalSchema.body>;

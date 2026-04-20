@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'system';
 
@@ -40,10 +40,7 @@ export const getBinaryListSchema = {
   description: 'Get binary list',
   response: {
     200: BinaryListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -56,9 +53,8 @@ export const installBinarySchema = {
   }),
   response: {
     200: BinaryArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type InstallBinaryBody = Static<typeof installBinarySchema.body>;

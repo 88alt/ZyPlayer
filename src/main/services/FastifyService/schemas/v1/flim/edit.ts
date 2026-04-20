@@ -1,8 +1,8 @@
-import { Schema } from '@main/types/server';
 import { siteTypes } from '@shared/config/film';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'film';
 
@@ -23,10 +23,7 @@ export const domPdSchema = {
       },
       { description: 'Response schema for pd' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -46,10 +43,7 @@ export const domPdfaSchema = {
       },
       { description: 'Response schema for pdfa' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -70,10 +64,7 @@ export const domPdfhSchema = {
       },
       { description: 'Response schema for pdfh' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -96,10 +87,7 @@ export const domPdflSchema = {
       },
       { description: 'Response schema for pdfl' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -133,10 +121,7 @@ export const siftCategorySchema = {
       },
       { description: 'Response schema for sift category' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -160,10 +145,7 @@ export const siftFilterSchema = {
       },
       { description: 'Response schema for sift filter' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -178,14 +160,11 @@ export const templateNameSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.String({ description: 'template names' }),
+        data: Type.Array(Type.String(), { description: 'template names' }),
       },
       { description: 'Response schema for template names' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -205,10 +184,7 @@ export const templateDetailSchema = {
       },
       { description: 'Response schema for template detail' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -229,9 +205,17 @@ export const decryptSchema = {
       },
       { description: 'Response schema for decrypt' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type DomPdBody = Static<typeof domPdSchema.body>;
+export type DomPdfaBody = Static<typeof domPdfaSchema.body>;
+export type DomPdfhBody = Static<typeof domPdfhSchema.body>;
+export type DomPdflBody = Static<typeof domPdflSchema.body>;
+export type SiftCategoryBody = Static<typeof siftCategorySchema.body>;
+export type SiftFilterBody = Static<typeof siftFilterSchema.body>;
+export type TemplateNameParams = Static<typeof templateNameSchema.params>;
+export type TemplateDetailParams = Static<typeof templateDetailSchema.params>;
+export type DecryptParams = Static<typeof decryptSchema.params>;
+export type DecryptBody = Static<typeof decryptSchema.body>;

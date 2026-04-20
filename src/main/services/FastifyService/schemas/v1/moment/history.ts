@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { PageQuery, ResponseSuccessSchema } from '../../base';
+import { PageQuery, ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'moment';
 
@@ -70,10 +70,7 @@ export const addSchema = {
   body: Type.Partial(Type.Omit(HistorySchema, ['id', 'createdAt', 'updatedAt'])),
   response: {
     200: HistoryArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -97,10 +94,7 @@ export const deleteSchema = {
       },
       { description: 'Response schema for delete response' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -114,10 +108,7 @@ export const putSchema = {
   }),
   response: {
     200: HistoryArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -134,10 +125,7 @@ export const pageSchema = {
   ),
   response: {
     200: HistoryListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -152,10 +140,7 @@ export const findDetailSchema = {
   }),
   response: {
     200: HistoryResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -168,9 +153,13 @@ export const getDetailSchema = {
   }),
   response: {
     200: HistoryResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddHistoryBody = Static<typeof addSchema.body>;
+export type DeleteHistoryBody = Static<typeof deleteSchema.body>;
+export type PutHistoryBody = Static<typeof putSchema.body>;
+export type GetHistoryPageQuery = Static<typeof pageSchema.querystring>;
+export type FindHistoryDetailQuery = Static<typeof findDetailSchema.querystring>;
+export type GetHistoryDetailParams = Static<typeof getDetailSchema.params>;

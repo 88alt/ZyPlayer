@@ -1,7 +1,6 @@
-import { Schema } from '@main/types/server';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 import { SiteResponse } from '../flim/site';
 import { IptvResponse } from '../live/iptv';
 import { AnalyzeResponse } from '../parse/analyze';
@@ -28,9 +27,6 @@ export const getRelatedSchema = {
   description: 'Get related site',
   response: {
     200: RelatedResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };

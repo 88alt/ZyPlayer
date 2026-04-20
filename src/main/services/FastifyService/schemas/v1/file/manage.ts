@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'file';
 
@@ -22,10 +22,7 @@ export const addSchema = {
       },
       { description: 'Response schema for add file' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -45,10 +42,7 @@ export const deleteSchema = {
       },
       { description: 'Response schema for delete file' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -69,10 +63,7 @@ export const putSchema = {
       },
       { description: 'Response schema for update file content' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -87,9 +78,13 @@ export const getSchema = {
   }),
   response: {
     200: Type.Any({ description: 'file content' }),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddFileParams = Static<typeof addSchema.params>;
+export type AddFileBody = Static<typeof addSchema.body>;
+export type DeleteFileParams = Static<typeof deleteSchema.params>;
+export type PutFileParams = Static<typeof putSchema.params>;
+export type PutFileBody = Static<typeof putSchema.body>;
+export type GetFileParams = Static<typeof getSchema.params>;

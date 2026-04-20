@@ -1,8 +1,8 @@
-import { Schema } from '@main/types/server';
 import { iptvTypes } from '@shared/config/live';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { PageQuery, ResponseSuccessSchema } from '../../base';
+import { PageQuery, ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'live';
 
@@ -83,10 +83,7 @@ export const addSchema = {
   body: Type.Partial(Type.Omit(IptvSchema, ['id', 'createdAt', 'updatedAt'])),
   response: {
     200: IptvArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -105,10 +102,7 @@ export const deleteSchema = {
       },
       { description: 'Response schema for delete data' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -122,10 +116,7 @@ export const putSchema = {
   }),
   response: {
     200: IptvArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -141,10 +132,7 @@ export const pageSchema = {
   ),
   response: {
     200: IptvListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -154,10 +142,7 @@ export const getActiveSchema = {
   description: 'Get active data',
   response: {
     200: IptvActiveListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -170,10 +155,7 @@ export const getDetailSchema = {
   }),
   response: {
     200: IptvResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -186,10 +168,7 @@ export const getDetailByKeySchema = {
   }),
   response: {
     200: IptvResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -204,14 +183,12 @@ export const setDefaultSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Null({ description: 'set default success' }),
+        data: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
       },
-      { description: 'Response schema for set default data' },
+      { description: 'Response schema for set default response' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    400: ResponseErrorSchema,
+    500: ResponseErrorSchema,
   },
 };
 
@@ -226,13 +203,20 @@ export const getCheckSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Null({ description: 'check validity success' }),
+        data: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
       },
-      { description: 'Response schema for check validity' },
+      { description: 'Response schema for check validity response' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    400: ResponseErrorSchema,
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddIptvBody = Static<typeof addSchema.body>;
+export type DeleteIptvBody = Static<typeof deleteSchema.body>;
+export type PutIptvBody = Static<typeof putSchema.body>;
+export type GetIptvPageQuery = Static<typeof pageSchema.querystring>;
+export type GetIptvDetailParams = Static<typeof getDetailSchema.params>;
+export type GetIptvDetailByKeyParams = Static<typeof getDetailByKeySchema.params>;
+export type SetDefaultIptvParams = Static<typeof setDefaultSchema.params>;
+export type GetCheckIptvParams = Static<typeof getCheckSchema.params>;

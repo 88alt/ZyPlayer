@@ -1,23 +1,32 @@
-import type { ISnifferOptions } from '@main/services/CdpElectron';
+import type { CdpSnifferMediaBody } from '@server/schemas/v1/system/cdp';
 import { cdpSnifferMediaSchema } from '@server/schemas/v1/system/cdp';
 import { isHttp } from '@shared/modules/validate';
-import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 
 import { snifferMediaToStandard } from './utils/sniffer';
 
 const API_PREFIX = 'system/cdp';
 
 const api: FastifyPluginAsync = async (fastify): Promise<void> => {
-  fastify.post(
+  fastify.post<{ Body: CdpSnifferMediaBody }>(
     `/${API_PREFIX}/sniffer/media`,
-    { schema: cdpSnifferMediaSchema },
-    async (req: FastifyRequest<{ Body: { url: string; options?: ISnifferOptions } }>) => {
-      const { url, options } = req.body;
-      if (!isHttp(url)) return { code: -1, msg: 'Invalid URL', data: { url: '', headers: {} } };
+    {
+      schema: cdpSnifferMediaSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { url, options } = req.body;
+        if (!isHttp(url)) {
+          return reply.code(400).send({ code: -1, msg: 'Invalid URL', data: null });
+        }
 
-      const resp = await snifferMediaToStandard(url, options);
+        const resp = await snifferMediaToStandard(url, options);
 
-      return { code: 0, msg: 'ok', data: resp };
+        return reply.code(200).send({ code: 0, msg: 'ok', data: resp });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: 'Error processing request', data: null });
+      }
     },
   );
 };

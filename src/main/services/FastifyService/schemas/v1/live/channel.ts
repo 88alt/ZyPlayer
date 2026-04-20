@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { PageQuery, ResponseSuccessSchema } from '../../base';
+import { PageQuery, ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'Channel';
 
@@ -70,10 +70,7 @@ export const addSchema = {
   body: Type.Partial(Type.Omit(ChannelSchema, ['id', 'createdAt', 'updatedAt'])),
   response: {
     200: ChannelArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -92,10 +89,7 @@ export const deleteSchema = {
       },
       { description: 'Response schema for delete data' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -109,10 +103,7 @@ export const putSchema = {
   }),
   response: {
     200: ChannelArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -129,10 +120,7 @@ export const pageSchema = {
   ),
   response: {
     200: ChannelListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -145,10 +133,7 @@ export const getDetailSchema = {
   }),
   response: {
     200: ChannelResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -162,9 +147,14 @@ export const getEpgSchema = {
   }),
   response: {
     200: ChannelEpgResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    400: ResponseErrorSchema,
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddChannelBody = Static<typeof addSchema.body>;
+export type DeleteChannelBody = Static<typeof deleteSchema.body>;
+export type PutChannelBody = Static<typeof putSchema.body>;
+export type GetChannelPageQuery = Static<typeof pageSchema.querystring>;
+export type GetChannelDetailParams = Static<typeof getDetailSchema.params>;
+export type GetChannelEpgQuery = Static<typeof getEpgSchema.querystring>;

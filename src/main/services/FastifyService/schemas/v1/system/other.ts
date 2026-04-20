@@ -1,6 +1,6 @@
-import { Schema } from '@main/types/server';
 import { LEVEL, LOG_MODULE } from '@shared/config/logger';
 import { reqEncodes, reqMethods } from '@shared/config/req';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
 import { ResponseErrorSchema, ResponseRedirectSchema, ResponseSuccessSchema } from '../../base';
@@ -65,10 +65,7 @@ export const healthSchema = {
   description: 'Server health.',
   response: {
     200: HealthResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -85,10 +82,7 @@ export const ipSchema = {
   ),
   response: {
     200: IpResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -107,10 +101,7 @@ export const reqSchema = {
   }),
   response: {
     200: RequestResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -133,10 +124,7 @@ export const m3u8AdRemoveSchema = {
     },
     302: ResponseRedirectSchema,
     400: ResponseErrorSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -172,9 +160,11 @@ export const logSchema = {
       },
       description: 'log stream',
     },
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type SystemIpQuery = Static<typeof ipSchema.querystring>;
+export type SystemReqBody = Static<typeof reqSchema.body>;
+export type SystemM3u8AdRemoveQuery = Static<typeof m3u8AdRemoveSchema.querystring>;
+export type SystemLogQuery = Static<typeof logSchema.querystring>;

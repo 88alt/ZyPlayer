@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'aigc';
 
@@ -41,10 +41,7 @@ export const addMessageSchema = {
   }),
   response: {
     200: MemoryResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -58,10 +55,7 @@ export const deleteMessageSchema = {
   }),
   response: {
     200: MemoryResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -81,10 +75,7 @@ export const putMessageSchema = {
   }),
   response: {
     200: MemoryResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -102,10 +93,7 @@ export const getMessageSchema = {
   }),
   response: {
     200: MemoryResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -122,10 +110,7 @@ export const createSessionSchema = {
   ),
   response: {
     200: MemoryResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -144,10 +129,7 @@ export const clearSessionSchema = {
       },
       { description: 'Response schema for clear session' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -157,9 +139,15 @@ export const getSessionIdsSchema = {
   description: 'Get all session id',
   response: {
     200: SessionIdsResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddMessageBody = Static<typeof addMessageSchema.body>;
+export type DeleteMessageBody = Static<typeof deleteMessageSchema.body>;
+export type PutMessageBody = Static<typeof putMessageSchema.body>;
+export type GetMessageParams = Static<typeof getMessageSchema.params>;
+export type GetMessageQuery = Static<typeof getMessageSchema.querystring>;
+
+export type CreateSessionBody = Static<typeof createSessionSchema.body>;
+export type ClearSessionBody = Static<typeof clearSessionSchema.body>;

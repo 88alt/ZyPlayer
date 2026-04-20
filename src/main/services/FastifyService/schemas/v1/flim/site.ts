@@ -1,8 +1,8 @@
-import { Schema } from '@main/types/server';
 import { siteTypes } from '@shared/config/film';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { PageQuery, ResponseSuccessSchema } from '../../base';
+import { PageQuery, ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'film';
 
@@ -86,10 +86,7 @@ export const addSchema = {
   body: Type.Partial(Type.Omit(SiteSchema, ['id', 'createdAt', 'updatedAt'])),
   response: {
     200: SiteArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -110,10 +107,7 @@ export const deleteSchema = {
         description: 'Response schema for delete data',
       },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -127,10 +121,7 @@ export const putSchema = {
   }),
   response: {
     200: SiteArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -146,10 +137,7 @@ export const pageSchema = {
   ),
   response: {
     200: SiteListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -159,10 +147,7 @@ export const getActiveSchema = {
   description: 'Get active data',
   response: {
     200: SiteActiveListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -175,10 +160,7 @@ export const getDetailSchema = {
   }),
   response: {
     200: SiteResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -191,10 +173,7 @@ export const getDetailByKeySchema = {
   }),
   response: {
     200: SiteResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -213,9 +192,14 @@ export const setDefaultSchema = {
       },
       { description: 'Response schema for set default' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddSiteBody = Static<typeof addSchema.body>;
+export type DeleteSiteBody = Static<typeof deleteSchema.body>;
+export type PutSiteBody = Static<typeof putSchema.body>;
+export type GetSitePageQuery = Static<typeof pageSchema.querystring>;
+export type GetSiteDetailParams = Static<typeof getDetailSchema.params>;
+export type GetSiteDetailByKeyParams = Static<typeof getDetailByKeySchema.params>;
+export type SetDefaultSiteParams = Static<typeof setDefaultSchema.params>;

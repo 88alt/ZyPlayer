@@ -1,9 +1,9 @@
 import { tableNames } from '@main/services/DbService/schemas';
-import { Schema } from '@main/types/server';
 import { dataImportTypes, dataPages, dataPutTypes, dataRemoteTypes } from '@shared/config/data';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'data';
 
@@ -34,10 +34,7 @@ export const clearSchema = {
       },
       { description: 'Response schema for data clear' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -54,10 +51,7 @@ export const exportSchema = {
   }),
   response: {
     200: ExportResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -79,9 +73,10 @@ export const importSchema = {
       },
       { description: 'Response schema for data import' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type ClearDataBody = Static<typeof clearSchema.body>;
+export type ExportDataBody = Static<typeof exportSchema.body>;
+export type ImportDataBody = Static<typeof importSchema.body>;

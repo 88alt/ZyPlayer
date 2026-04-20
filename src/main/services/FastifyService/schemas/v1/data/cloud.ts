@@ -1,7 +1,6 @@
-import { Schema } from '@main/types/server';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'data';
 
@@ -17,10 +16,7 @@ export const backupSchema = {
       },
       { description: 'Response schema for backup' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -36,9 +32,6 @@ export const resumeSchema = {
       },
       { description: 'Response schema for resume' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };

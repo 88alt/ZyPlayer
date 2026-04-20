@@ -1,4 +1,14 @@
 import { dbService } from '@main/services/DbService';
+import type {
+  AddIptvBody,
+  DeleteIptvBody,
+  GetCheckIptvParams,
+  GetIptvDetailByKeyParams,
+  GetIptvDetailParams,
+  GetIptvPageQuery,
+  PutIptvBody,
+  SetDefaultIptvParams,
+} from '@server/schemas/v1/live/iptv';
 import {
   addSchema,
   deleteSchema,
@@ -13,148 +23,219 @@ import {
 import type { IIptvType } from '@shared/config/live';
 import { isArrayEmpty, isNumber, isStrEmpty } from '@shared/modules/validate';
 import type { IModels } from '@shared/types/db';
-import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 
 import { convertToStandard } from './utils/channel';
 
 const API_PREFIX = 'live/iptv';
 
 const api: FastifyPluginAsync = async (fastify): Promise<void> => {
-  fastify.post(`/${API_PREFIX}`, { schema: addSchema }, async (req: FastifyRequest<{ Body: IModels['iptv'] }>) => {
-    const dbRes = await dbService.iptv.add(req.body);
-    return { code: 0, msg: 'ok', data: dbRes };
-  });
-
-  fastify.delete(
+  fastify.post<{ Body: AddIptvBody }>(
     `/${API_PREFIX}`,
-    { schema: deleteSchema },
-    async (req: FastifyRequest<{ Body: { id?: string[] } | null }>) => {
-      const { id } = req.body || {};
-      if (id && id.length !== 0) {
-        await dbService.iptv.remove(id);
-      } else {
-        await dbService.iptv.clear();
+    {
+      schema: addSchema,
+    },
+    async (req, reply) => {
+      try {
+        const doc = req.body as IModels['iptv'];
+        const dbRes = await dbService.iptv.add(doc);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: dbRes });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
       }
-      return { code: 0, msg: 'ok', data: null };
     },
   );
 
-  fastify.put(
+  fastify.delete<{ Body: DeleteIptvBody }>(
     `/${API_PREFIX}`,
-    { schema: putSchema },
-    async (req: FastifyRequest<{ Body: { id: string[]; doc: IModels['iptv'] } }>) => {
-      const { id, doc } = req.body;
-      const dbRes = await dbService.iptv.update(id, doc);
-      return { code: 0, msg: 'ok', data: dbRes };
+    {
+      schema: deleteSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id } = req.body || {};
+        if (id && id.length !== 0) {
+          await dbService.iptv.remove(id);
+        } else {
+          await dbService.iptv.clear();
+        }
+        return reply.code(200).send({ code: 0, msg: 'ok', data: null });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.get(
+  fastify.put<{ Body: PutIptvBody }>(
+    `/${API_PREFIX}`,
+    {
+      schema: putSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id, doc } = req.body as { id: string[]; doc: IModels['iptv'] };
+        const dbRes = await dbService.iptv.update(id, doc);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: dbRes });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.get<{ Querystring: GetIptvPageQuery }>(
     `/${API_PREFIX}/page`,
-    { schema: pageSchema },
-    async (req: FastifyRequest<{ Querystring: { page: number; pageSize: number; kw?: string } }>) => {
-      const { page = 1, pageSize = 10, kw } = req.query;
+    {
+      schema: pageSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { pageNum = 1, pageSize = 10, kw } = req.query;
 
-      const [dbResPage, dbResDefaultId] = await Promise.all([
-        dbService.iptv.page(page, pageSize, kw),
-        dbService.setting.getValue('defaultIptv'),
-      ]);
+        const [dbResPage, dbResDefaultId] = await Promise.all([
+          dbService.iptv.page(pageNum, pageSize, kw),
+          dbService.setting.getValue('defaultIptv'),
+        ]);
 
-      return {
-        code: 0,
-        msg: 'ok',
-        data: {
-          list: dbResPage.list,
-          total: dbResPage.total,
-          default: dbResDefaultId ?? '',
-        },
-      };
+        return reply.code(200).send({
+          code: 0,
+          msg: 'ok',
+          data: {
+            list: dbResPage.list,
+            total: dbResPage.total,
+            default: dbResDefaultId ?? '',
+          },
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.get(`/${API_PREFIX}/active`, { schema: getActiveSchema }, async () => {
-    const [dbResAll, dbResDefaultId, dbResIptv] = await Promise.all([
-      dbService.iptv.active(),
-      dbService.setting.getValue('defaultIptv'),
-      dbService.setting.getValue('live'),
-    ]);
-
-    const dbResDefault = await dbService.iptv.get(dbResDefaultId);
-
-    return {
-      code: 0,
-      msg: 'ok',
-      data: {
-        list: dbResAll,
-        default: dbResDefault ?? {},
-        extra: {
-          epg: dbResIptv?.epg ?? '',
-          logo: dbResIptv?.logo ?? '',
-          ipMark: dbResIptv?.ipMark ?? '',
-          delay: dbResIptv?.delay ?? '',
-          thumbnail: dbResIptv?.thumbnail ?? '',
-        },
-      },
-    };
-  });
-
   fastify.get(
+    `/${API_PREFIX}/active`,
+    {
+      schema: getActiveSchema,
+    },
+    async (_req, reply) => {
+      try {
+        const [dbResAll, dbResDefaultId, dbResIptv] = await Promise.all([
+          dbService.iptv.active(),
+          dbService.setting.getValue('defaultIptv'),
+          dbService.setting.getValue('live'),
+        ]);
+
+        const dbResDefault = await dbService.iptv.get(dbResDefaultId);
+
+        return reply.code(200).send({
+          code: 0,
+          msg: 'ok',
+          data: {
+            list: dbResAll,
+            default: dbResDefault ?? {},
+            extra: {
+              epg: dbResIptv?.epg ?? '',
+              logo: dbResIptv?.logo ?? '',
+              ipMark: dbResIptv?.ipMark ?? '',
+              delay: dbResIptv?.delay ?? '',
+              thumbnail: dbResIptv?.thumbnail ?? '',
+            },
+          },
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.get<{ Params: GetIptvDetailParams }>(
     `/${API_PREFIX}/:id`,
-    { schema: getDetailSchema },
-    async (req: FastifyRequest<{ Params: { id: string } }>) => {
-      const { id } = req.params;
-      const dbRes = await dbService.iptv.get(id);
-      return { code: 0, msg: 'ok', data: dbRes };
+    {
+      schema: getDetailSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id } = req.params;
+        const dbRes = await dbService.iptv.get(id);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: dbRes });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.get(
+  fastify.get<{ Params: GetIptvDetailByKeyParams }>(
     `/${API_PREFIX}/key/:key`,
-    { schema: getDetailByKeySchema },
-    async (req: FastifyRequest<{ Params: { key: string } }>) => {
-      const { key } = req.params;
-      const dbRes = await dbService.iptv.getByField({ key });
-      const res = dbRes?.[0];
-      return { code: 0, msg: 'ok', data: res };
+    {
+      schema: getDetailByKeySchema,
+    },
+    async (req, reply) => {
+      try {
+        const { key } = req.params;
+        const dbRes = await dbService.iptv.getByField({ key });
+        const res = dbRes?.[0] ?? {};
+        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.put(
+  fastify.put<{ Params: SetDefaultIptvParams }>(
     `/${API_PREFIX}/default/:id`,
-    { schema: setDefaultSchema },
-    async (req: FastifyRequest<{ Params: { id: string } }>) => {
-      const { id } = req.params;
-      const dbResDetail = await dbService.iptv.get(id);
-      const { api, type } = dbResDetail || {};
-      if (isStrEmpty(api) || !isNumber(type)) return { code: -1, msg: 'Invalid parameters', data: false };
+    {
+      schema: setDefaultSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id } = req.params;
+        const dbResDetail = await dbService.iptv.get(id);
+        const { api, type } = dbResDetail || {};
+        if (isStrEmpty(api) || !isNumber(type)) {
+          return reply.code(400).send({ code: -1, msg: 'Invalid parameters', data: null });
+        }
 
-      const parseRes = await convertToStandard(api, type as IIptvType);
+        const parseRes = await convertToStandard(api, type as IIptvType);
 
-      if (!isArrayEmpty(parseRes)) {
-        await dbService.channel.set(parseRes as IModels['channel'][]); // clear && insert
-        await dbService.setting.update({ key: 'defaultIptv', value: id });
+        if (!isArrayEmpty(parseRes)) {
+          await dbService.channel.set(parseRes as IModels['channel'][]);
+          await dbService.setting.update({ key: 'defaultIptv', value: id });
+        }
+
+        return reply.code(200).send({ code: 0, msg: 'ok', data: true });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
       }
-
-      return { code: 0, msg: 'ok', data: true };
     },
   );
 
-  fastify.get(
+  fastify.get<{ Params: GetCheckIptvParams }>(
     `/${API_PREFIX}/check/:id`,
-    { schema: getCheckSchema },
-    async (req: FastifyRequest<{ Params: { id: string } }>) => {
-      const { id } = req.params;
-      const dbResDetail = await dbService.iptv.get(id);
-      const { api, type } = dbResDetail || {};
-      if (isStrEmpty(api) || !isNumber(type)) return { code: -1, msg: 'Invalid parameters', data: false };
+    {
+      schema: getCheckSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id } = req.params;
+        const dbResDetail = await dbService.iptv.get(id);
+        const { api, type } = dbResDetail || {};
+        if (isStrEmpty(api) || !isNumber(type)) {
+          return reply.code(400).send({ code: -1, msg: 'Invalid parameters', data: null });
+        }
 
-      const parseRes = await convertToStandard(api, type as IIptvType);
-
-      if (!isArrayEmpty(parseRes)) {
-        return { code: 0, msg: 'ok', data: true };
+        const parseRes = await convertToStandard(api, type as IIptvType);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: !isArrayEmpty(parseRes) });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
       }
-
-      return { code: 0, msg: 'ok', data: false };
     },
   );
 };

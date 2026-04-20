@@ -1,3 +1,12 @@
+import type {
+  AddMessageBody,
+  ClearSessionBody,
+  CreateSessionBody,
+  DeleteMessageBody,
+  GetMessageParams,
+  GetMessageQuery,
+  PutMessageBody,
+} from '@server/schemas/v1/aigc/memory';
 import {
   addMessageSchema,
   clearSessionSchema,
@@ -7,7 +16,7 @@ import {
   getSessionIdsSchema,
   putMessageSchema,
 } from '@server/schemas/v1/aigc/memory';
-import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 
 import type { ChatMessage, RecentMessageOptions } from './utils/memory';
 import { memoryManager } from './utils/memory';
@@ -15,82 +24,133 @@ import { memoryManager } from './utils/memory';
 const API_PREFIX = 'aigc/memory';
 
 const api: FastifyPluginAsync = async (fastify): Promise<void> => {
-  fastify.post(
+  fastify.post<{ Body: AddMessageBody }>(
     `/${API_PREFIX}/message`,
-    { schema: addMessageSchema },
-    async (req: FastifyRequest<{ Body: { id: string; messages: ChatMessage | ChatMessage[] } }>) => {
-      const { id, messages } = req.body;
-      const session = memoryManager.addMessage(id, messages);
-      return { code: 0, msg: 'ok', data: session };
+    {
+      schema: addMessageSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id, messages } = req.body as { id: string; messages: ChatMessage[] };
+        const session = memoryManager.addMessage(id, messages);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: session });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.delete(
+  fastify.delete<{ Body: DeleteMessageBody }>(
     `/${API_PREFIX}/message`,
-    { schema: deleteMessageSchema },
-    async (req: FastifyRequest<{ Body: { id: string; index?: number[] } }>) => {
-      const { id, index } = req.body;
-      const session = memoryManager.deleteMessage(id, index);
-      return { code: 0, msg: 'ok', data: session };
+    {
+      schema: deleteMessageSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id, index } = req.body;
+        const session = memoryManager.deleteMessage(id, index);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: session });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.put(
+  fastify.put<{ Body: PutMessageBody }>(
     `/${API_PREFIX}/message`,
-    { schema: putMessageSchema },
-    async (req: FastifyRequest<{ Body: { id: string; updates: { index: number; message: ChatMessage }[] } }>) => {
-      const { id, updates } = req.body;
-      const session = memoryManager.replaceMessage(id, updates);
-      return { code: 0, msg: 'ok', data: session };
+    {
+      schema: putMessageSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id, updates } = req.body as { id: string; updates: Array<{ index: number; message: ChatMessage }> };
+        const session = memoryManager.replaceMessage(id, updates);
+        reply.code(200).send({ code: 0, msg: 'ok', data: session });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.get<{ Params: GetMessageParams; Querystring: GetMessageQuery }>(
+    `/${API_PREFIX}/message/:id`,
+    {
+      schema: getMessageSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id } = req.params;
+        const { recentCount, maxTokens } = req.query;
+        const options: RecentMessageOptions = {};
+
+        if (recentCount) options.recentCount = Number.parseInt(recentCount);
+        if (maxTokens) options.maxTokens = Number.parseInt(maxTokens);
+
+        const session = memoryManager.getMessage(id, options);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: session });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.post<{ Body: CreateSessionBody }>(
+    `/${API_PREFIX}/session`,
+    {
+      schema: createSessionSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { messages = [] } = req.body as { messages: ChatMessage[] };
+        const session = memoryManager.createSession(messages);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: session });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.delete<{ Body: ClearSessionBody }>(
+    `/${API_PREFIX}/session`,
+    {
+      schema: clearSessionSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { id } = req.body || {};
+        if (id && id.length !== 0) {
+          memoryManager.delSession(id);
+        } else {
+          memoryManager.clearSession();
+        }
+        return reply.code(200).send({ code: 0, msg: 'ok', data: null });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
   fastify.get(
-    `/${API_PREFIX}/message/:id`,
-    { schema: getMessageSchema },
-    async (
-      req: FastifyRequest<{ Params: { id: string }; Querystring: { recentCount?: string; maxTokens?: string } }>,
-    ) => {
-      const { id } = req.params;
-      const { recentCount, maxTokens } = req.query;
-      const options: RecentMessageOptions = {};
-
-      if (recentCount) options.recentCount = Number.parseInt(recentCount);
-      if (maxTokens) options.maxTokens = Number.parseInt(maxTokens);
-
-      const session = memoryManager.getMessage(id, options);
-      return { code: 0, msg: 'ok', data: session };
+    `/${API_PREFIX}/session/id`,
+    {
+      schema: getSessionIdsSchema,
     },
-  );
-
-  fastify.post(
-    `/${API_PREFIX}/session`,
-    { schema: createSessionSchema },
-    async (req: FastifyRequest<{ Body: { messages?: ChatMessage[] } }>) => {
-      const { messages = [] } = req.body;
-      const session = memoryManager.createSession(messages);
-      return { code: 0, msg: 'ok', data: session };
-    },
-  );
-
-  fastify.delete(
-    `/${API_PREFIX}/session`,
-    { schema: clearSessionSchema },
-    async (req: FastifyRequest<{ Body: { id?: string[] } | null }>) => {
-      const { id } = req.body || {};
-      if (id && id.length !== 0) {
-        memoryManager.delSession(id);
-      } else {
-        memoryManager.clearSession();
+    async (_req, reply) => {
+      try {
+        const id = memoryManager.getSessionIds();
+        return reply.code(200).send({ code: 0, msg: 'ok', data: id });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
       }
-      return { code: 0, msg: 'ok', data: null };
     },
   );
-
-  fastify.get(`/${API_PREFIX}/session/id`, { schema: getSessionIdsSchema }, async () => {
-    const id = memoryManager.getSessionIds();
-    return { code: 0, msg: 'ok', data: id };
-  });
 };
 
 export default api;

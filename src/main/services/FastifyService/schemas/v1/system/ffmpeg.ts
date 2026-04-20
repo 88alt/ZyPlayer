@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'system';
 
@@ -61,10 +61,7 @@ export const ffmpegInfoSchema = {
   }),
   response: {
     200: InfoResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -86,9 +83,9 @@ export const ffmpegScreenshotSchema = {
   }),
   response: {
     200: ScreenshotResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type FfmpegInfoBody = Static<typeof ffmpegInfoSchema.body>;
+export type FfmpegScreenshotBody = Static<typeof ffmpegScreenshotSchema.body>;

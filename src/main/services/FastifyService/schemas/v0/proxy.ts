@@ -1,4 +1,4 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
 import { ResponseErrorSchema, ResponseSuccessSchema } from '../base';
@@ -21,10 +21,7 @@ export const getSchema = {
       },
     },
     400: ResponseErrorSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -51,9 +48,9 @@ export const setSchema = {
       },
       { description: 'Response schema for proxy cache set operation' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type GetProxyCacheRequest = Static<typeof getSchema.querystring>;
+export type SetProxyCacheRequest = Static<typeof setSchema.body>;

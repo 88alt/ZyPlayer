@@ -1,4 +1,16 @@
 import { pd, pdfa, pdfh, pdfl } from '@main/utils/hiker/htmlParser';
+import type {
+  DecryptBody,
+  DecryptParams,
+  DomPdBody,
+  DomPdfaBody,
+  DomPdfhBody,
+  DomPdflBody,
+  SiftCategoryBody,
+  SiftFilterBody,
+  TemplateDetailParams,
+  TemplateNameParams,
+} from '@server/schemas/v1/flim/edit';
 import {
   decryptSchema,
   domPdfaSchema,
@@ -10,10 +22,9 @@ import {
   templateDetailSchema,
   templateNameSchema,
 } from '@server/schemas/v1/flim/edit';
-import type { ISiteType } from '@shared/config/film';
 import { SITE_TYPE } from '@shared/config/film';
 import { isObjectEmpty } from '@shared/modules/validate';
-import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 
 import { convertOriginalCode as t3DrpyDecrypt } from '../cms/adapter/t3Drpy/decrypt';
 import { renderTemplate as t3DrpyTemplates } from '../cms/adapter/t3Drpy/templates';
@@ -31,131 +42,175 @@ const DECRYPT_MAP = {
 const API_PREFIX = 'film/edit';
 
 const api: FastifyPluginAsync = async (fastify): Promise<void> => {
-  fastify.post(
+  fastify.post<{ Body: DomPdBody }>(
     `/${API_PREFIX}/dom/pd`,
-    { schema: domPdSchema },
-    async (req: FastifyRequest<{ Body: { html: string; rule: string; baseUrl?: string } }>) => {
-      const { html, rule, baseUrl } = req.body;
-      const res = pd(html, rule, baseUrl);
-      return { code: 0, msg: 'ok', data: res };
+    {
+      schema: domPdSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { html, rule, baseUrl } = req.body;
+        const res = pd(html, rule, baseUrl);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.post(
+  fastify.post<{ Body: DomPdfaBody }>(
     `/${API_PREFIX}/dom/pdfa`,
-    { schema: domPdfaSchema },
-    async (req: FastifyRequest<{ Body: { html: string; rule: string } }>) => {
-      const { html, rule } = req.body;
-      const res = pdfa(html, rule);
-      return { code: 0, msg: 'ok', data: res };
+    {
+      schema: domPdfaSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { html, rule } = req.body;
+        const res = pdfa(html, rule);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.post(
+  fastify.post<{ Body: DomPdfhBody }>(
     `/${API_PREFIX}/dom/pdfh`,
-    { schema: domPdfhSchema },
-    async (req: FastifyRequest<{ Body: { html: string; rule: string; baseUrl?: string } }>) => {
-      const { html, rule, baseUrl } = req.body;
-      const res = pdfh(html, rule, baseUrl);
-      return { code: 0, msg: 'ok', data: res };
+    {
+      schema: domPdfhSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { html, rule, baseUrl } = req.body;
+        const res = pdfh(html, rule, baseUrl);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.post(
+  fastify.post<{ Body: DomPdflBody }>(
     `/${API_PREFIX}/dom/pdfl`,
-    { schema: domPdflSchema },
-    async (
-      req: FastifyRequest<{
-        Body: { html: string; rule: string; listText: string; listUrl: string; urlKey?: string };
-      }>,
-    ) => {
-      const { html, rule, listText, listUrl, urlKey = '' } = req.body;
-      const res = pdfl(html, rule, listText, listUrl, urlKey);
-      return { code: 0, msg: 'ok', data: res };
+    {
+      schema: domPdflSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { html, rule, listText, listUrl, baseUrl = '' } = req.body;
+        const res = pdfl(html, rule, listText, listUrl, baseUrl);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.post(
+  fastify.post<{ Body: SiftCategoryBody }>(
     `/${API_PREFIX}/sift/category`,
-    { schema: siftCategorySchema },
-    async (
-      req: FastifyRequest<{
-        Body: {
-          html: string;
-          baseUrl: string;
-          categoryUrl: string;
-          categoryRule: string;
-          categoryExclude?: string;
-        };
-      }>,
-    ) => {
-      const { html, baseUrl, categoryUrl, categoryRule, categoryExclude = '' } = req.body;
-      const res = siftCategory(html, baseUrl, categoryUrl, categoryRule, categoryExclude);
-      return { code: 0, msg: 'ok', data: res };
+    {
+      schema: siftCategorySchema,
+    },
+    async (req, reply) => {
+      try {
+        const { html, baseUrl, categoryUrl, categoryRule, categoryExclude = '' } = req.body;
+        const res = siftCategory(html, baseUrl, categoryUrl, categoryRule, categoryExclude);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.post(
+  fastify.post<{ Body: SiftFilterBody }>(
     `/${API_PREFIX}/sift/filter`,
-    { schema: siftFilterSchema },
-    async (
-      req: FastifyRequest<{
-        Body: {
-          html: string;
-          baseRule: string;
-          detailRule: string;
-          matchs: Record<string, string>;
-          ci?: string;
-          excludeKeys?: string;
-        };
-      }>,
-    ) => {
-      const { html, baseRule, detailRule, matchs, ci = '', excludeKeys = '' } = req.body;
-      const res = siftFilter(html, baseRule, detailRule, matchs, ci, excludeKeys);
-      return { code: 0, msg: 'ok', data: res };
+    {
+      schema: siftFilterSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { html, baseRule, detailRule, matchs, ci = '', excludeKeys = '' } = req.body;
+        const res = siftFilter(html, baseRule, detailRule, matchs, ci, excludeKeys);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.get(
+  fastify.get<{ Params: TemplateNameParams }>(
     `/${API_PREFIX}/template/:type`,
-    { schema: templateNameSchema },
-    async (req: FastifyRequest<{ Params: { type: ISiteType } }>) => {
-      const { type: rawType } = req.params;
-      const type = Number.parseInt(rawType as unknown as string);
+    {
+      schema: templateNameSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { type: rawType } = req.params;
+        const type = Number.parseInt(rawType as unknown as string);
 
-      if (isObjectEmpty(TEMPLATES_MAP[type]?.templates || {})) return { code: 0, msg: 'ok', data: [] };
-      const templates = Object.keys(TEMPLATES_MAP[type].templates);
+        if (isObjectEmpty(TEMPLATES_MAP[type]?.templates || {})) {
+          return reply.code(200).send({ code: 0, msg: 'ok', data: [] });
+        }
+        const templates = Object.keys(TEMPLATES_MAP[type].templates);
 
-      return { code: 0, msg: 'ok', data: templates };
+        return reply.code(200).send({ code: 0, msg: 'ok', data: templates });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.get(
+  fastify.get<{ Params: TemplateDetailParams }>(
     `/${API_PREFIX}/template/:type/:name`,
-    { schema: templateDetailSchema },
-    async (req: FastifyRequest<{ Params: { type: ISiteType; name: string } }>) => {
-      const { type: rawType, name } = req.params;
-      const type = Number.parseInt(rawType as unknown as string);
+    {
+      schema: templateDetailSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { type: rawType, name } = req.params;
+        const type = Number.parseInt(rawType as unknown as string);
 
-      if (!Object.hasOwn(TEMPLATES_MAP[type]?.templates || {}, name)) return { code: 0, msg: 'ok', data: '' };
-      const template = TEMPLATES_MAP[type].detail(name) || '';
+        if (!Object.hasOwn(TEMPLATES_MAP[type]?.templates || {}, name)) {
+          return reply.code(200).send({ code: 0, msg: 'ok', data: '' });
+        }
+        const template = TEMPLATES_MAP[type].detail(name) || '';
 
-      return { code: 0, msg: 'ok', data: template };
+        return reply.code(200).send({ code: 0, msg: 'ok', data: template });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 
-  fastify.post(
+  fastify.post<{ Params: DecryptParams; Body: DecryptBody }>(
     `/${API_PREFIX}/decrypt/:type`,
-    { schema: decryptSchema },
-    async (req: FastifyRequest<{ Params: { type: ISiteType }; Body: string }>) => {
-      const rawCode = req.body;
-      const { type: rawType } = req.params;
-      const type = Number.parseInt(rawType as unknown as string);
+    {
+      schema: decryptSchema,
+    },
+    async (req, reply) => {
+      try {
+        const rawCode = req.body;
+        const { type: rawType } = req.params;
+        const type = Number.parseInt(rawType as unknown as string);
 
-      if (!Object.hasOwn(DECRYPT_MAP, type)) return { code: 0, msg: 'ok', data: '' };
-      const code = DECRYPT_MAP[type]?.(rawCode) || '';
+        if (!Object.hasOwn(DECRYPT_MAP, type)) {
+          return reply.code(200).send({ code: 0, msg: 'ok', data: '' });
+        }
+        const code = DECRYPT_MAP[type]?.(rawCode) || '';
 
-      return { code: 0, msg: 'ok', data: code };
+        return reply.code(200).send({ code: 0, msg: 'ok', data: code });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
     },
   );
 };

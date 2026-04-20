@@ -1,4 +1,4 @@
-import film from './film';
 import manage from './manage';
+import tvbox from './tvbox';
 
-export { film, manage };
+export { manage, tvbox };

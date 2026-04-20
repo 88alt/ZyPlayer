@@ -1,5 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
+
+import { ResponseErrorSchema } from '../../base';
 
 const API_PREFIX = 'file';
 
@@ -76,10 +78,7 @@ export const autoSchema = {
   }),
   response: {
     200: TvbosResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -94,9 +93,9 @@ export const makeSchema = {
   }),
   response: {
     200: TvbosResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type TvboxAutoParams = Static<typeof autoSchema.params>;
+export type TvboxMakeParams = Static<typeof makeSchema.params>;

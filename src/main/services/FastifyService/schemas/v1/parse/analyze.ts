@@ -1,8 +1,8 @@
-import { Schema } from '@main/types/server';
 import { analyzeTypes } from '@shared/config/parse';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { PageQuery, ResponseSuccessSchema } from '../../base';
+import { PageQuery, ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'parse';
 
@@ -75,10 +75,7 @@ export const addSchema = {
   body: Type.Partial(Type.Omit(AnalyzeSchema, ['id', 'createdAt', 'updatedAt'])),
   response: {
     200: AnalyzeArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -97,10 +94,7 @@ export const deleteSchema = {
       },
       { description: 'Response schema for delete response' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -114,10 +108,7 @@ export const putSchema = {
   }),
   response: {
     200: AnalyzeArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -133,10 +124,7 @@ export const pageSchema = {
   ),
   response: {
     200: AnalyzeListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -146,10 +134,7 @@ export const getActiveSchema = {
   description: 'Get active data',
   response: {
     200: AnalyzeActiveListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -162,10 +147,7 @@ export const getDetailSchema = {
   }),
   response: {
     200: AnalyzeResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -178,10 +160,7 @@ export const getDetailByKeySchema = {
   }),
   response: {
     200: AnalyzeResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -200,10 +179,7 @@ export const setDefaultSchema = {
       },
       { description: 'Response schema for set default response' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -222,9 +198,15 @@ export const getCheckSchema = {
       },
       { description: 'Response schema for check validity response' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type AddAnalyzeBody = Static<typeof addSchema.body>;
+export type PutAnalyzeBody = Static<typeof putSchema.body>;
+export type GetAnalyzeDetailParams = Static<typeof getDetailSchema.params>;
+export type GetAnalyzeDetailByKeyParams = Static<typeof getDetailByKeySchema.params>;
+export type DeleteAnalyzeBody = Static<typeof deleteSchema.body>;
+export type GetAnalyzePageQuery = Static<typeof pageSchema.querystring>;
+export type SetDefaultParams = Static<typeof setDefaultSchema.params>;
+export type GetCheckParams = Static<typeof getCheckSchema.params>;

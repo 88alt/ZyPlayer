@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { ResponseSuccessSchema } from '../../base';
+import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'film';
 
@@ -24,6 +24,7 @@ const InfoSchema = Type.Object({
   vod_play_url: Type.String(),
   vod_episode: Type.Record(Type.String(), Type.Array(Type.Object({ text: Type.String(), link: Type.String() }))),
   type_name: Type.String(),
+  vod_tag: Type.Optional(Type.String()),
 });
 
 const HomeSchema = Type.Object({
@@ -133,10 +134,7 @@ export const getInitchema = {
       },
       { description: 'Response schema for cms init' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -149,10 +147,7 @@ export const getHomeSchema = {
   }),
   response: {
     200: HomeResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -165,10 +160,7 @@ export const getHomeVodSchema = {
   }),
   response: {
     200: BaseResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -178,16 +170,13 @@ export const getCategorySchema = {
   description: 'Cms category',
   querystring: Type.Object({
     uuid: Type.String({ description: 'cms uuid' }),
-    tid: Type.Union([Type.String(), Type.Integer({ format: 'int32' })], { description: 'category id' }),
+    tid: Type.String({ description: 'category id' }),
     page: Type.Optional(Type.Integer({ format: 'int32', description: 'page' })),
     extend: Type.Optional(Type.String({ description: 'extend' })),
   }),
   response: {
     200: BaseResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -201,10 +190,7 @@ export const getDetailSchema = {
   }),
   response: {
     200: DetailResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -219,10 +205,7 @@ export const getSearchSchema = {
   }),
   response: {
     200: BaseResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -233,14 +216,11 @@ export const getPlaySchema = {
   querystring: Type.Object({
     uuid: Type.String({ description: 'cms uuid' }),
     play: Type.String({ description: 'play episode' }),
-    flag: Type.Optional(Type.String({ description: 'play line' })),
+    flag: Type.String({ description: 'play line' }),
   }),
   response: {
     200: PlayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -251,17 +231,12 @@ export const getActionSchema = {
   querystring: Type.Object({
     uuid: Type.String({ format: 'uuid', description: 'cms uuid' }),
     action: Type.String({ description: 'action key' }),
-    value: Type.Optional(
-      Type.Union([Type.String(), Type.Record(Type.String(), Type.Any())], { description: 'action value' }),
-    ),
+    value: Type.Union([Type.String(), Type.Record(Type.String(), Type.Any())], { description: 'action value' }),
     timeout: Type.Optional(Type.Integer({ format: 'int32', description: 'action timeout, unit is second' })),
   }),
   response: {
     200: ActionResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -279,10 +254,7 @@ export const getProxySchema = {
   ),
   response: {
     200: ProxyResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -302,9 +274,17 @@ export const getCheckSchema = {
       },
       { description: 'Response schema for cms check' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type CmsInitQuery = Static<typeof getInitchema.querystring>;
+export type CmsHomeQuery = Static<typeof getHomeSchema.querystring>;
+export type CmsHomeVodQuery = Static<typeof getHomeVodSchema.querystring>;
+export type CmsCategoryQuery = Static<typeof getCategorySchema.querystring>;
+export type CmsDetailQuery = Static<typeof getDetailSchema.querystring>;
+export type CmsSearchQuery = Static<typeof getSearchSchema.querystring>;
+export type CmsPlayQuery = Static<typeof getPlaySchema.querystring>;
+export type CmsActionQuery = Static<typeof getActionSchema.querystring>;
+export type CmsProxyQuery = Static<typeof getProxySchema.querystring>;
+export type CmsCheckQuery = Static<typeof getCheckSchema.querystring>;

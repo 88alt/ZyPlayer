@@ -1,7 +1,7 @@
-import { Schema } from '@main/types/server';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { PageQuery, ResponseSuccessSchema } from '../../base';
+import { PageQuery, ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'plugin';
 
@@ -68,10 +68,7 @@ export const pageSchema = {
   ),
   response: {
     200: PluginListResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -84,10 +81,7 @@ export const getDetailSchema = {
   }),
   response: {
     200: PluginResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -100,10 +94,7 @@ export const installSchema = {
   }),
   response: {
     200: PluginArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -116,10 +107,7 @@ export const uninstallSchema = {
   }),
   response: {
     200: PluginArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -132,10 +120,7 @@ export const startSchema = {
   }),
   response: {
     200: PluginArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -148,9 +133,13 @@ export const stopSchema = {
   }),
   response: {
     200: PluginArrayResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type GetPluginPageQuery = Static<typeof pageSchema.querystring>;
+export type GetPluginDetailParams = Static<typeof getDetailSchema.params>;
+export type InstallPluginBody = Static<typeof installSchema.body>;
+export type UninstallPluginBody = Static<typeof uninstallSchema.body>;
+export type StartPluginBody = Static<typeof startSchema.body>;
+export type StopPluginBody = Static<typeof stopSchema.body>;

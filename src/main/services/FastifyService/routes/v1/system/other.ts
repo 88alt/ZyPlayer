@@ -6,6 +6,12 @@ import TailFile from '@logdna/tail-file';
 import { getNetwork } from '@main/utils/ip';
 import { APP_LOG_PATH } from '@main/utils/path';
 import { request } from '@main/utils/request';
+import type {
+  SystemIpQuery,
+  SystemLogQuery,
+  SystemM3u8AdRemoveQuery,
+  SystemReqBody,
+} from '@server/schemas/v1/system/other';
 import { healthSchema, ipSchema, logSchema, m3u8AdRemoveSchema, reqSchema } from '@server/schemas/v1/system/other';
 import { APP_VERSION } from '@shared/config/appinfo';
 import type { ILogModuleType, LogLevel } from '@shared/config/logger';
@@ -15,7 +21,7 @@ import { reqEncodes } from '@shared/config/req';
 import { toUnix, toYMD } from '@shared/modules/date';
 import { isHttp, isJsonStr, isNil } from '@shared/modules/validate';
 import type { AxiosRequestConfig } from 'axios';
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 import iconv from 'iconv-lite';
 
 import { fixAdM3u8Ai } from './utils/m3u8';
@@ -23,80 +29,122 @@ import { fixAdM3u8Ai } from './utils/m3u8';
 const API_PREFIX = 'system';
 
 const api: FastifyPluginAsync = async (fastify): Promise<void> => {
-  fastify.get(`/${API_PREFIX}/health`, { schema: healthSchema }, async () => {
-    return { code: 0, msg: 'ok', data: { timestamp: toUnix(), version: APP_VERSION } };
-  });
-
   fastify.get(
-    `/${API_PREFIX}/ip`,
-    { schema: ipSchema },
-    async (req: FastifyRequest<{ Querystring: { preferIPv6?: boolean } }>) => {
-      const { preferIPv6 = true } = req.query;
-      const resp = await getNetwork(preferIPv6);
-      return { code: 0, msg: 'ok', data: resp };
+    `/${API_PREFIX}/health`,
+    {
+      schema: healthSchema,
     },
-  );
-
-  fastify.post(
-    `/${API_PREFIX}/req`,
-    { schema: reqSchema },
-    async (req: FastifyRequest<{ Body: AxiosRequestConfig & { encode?: IReqEncode } }>) => {
-      const { encode, ...config } = req.body;
-
-      if (!isNil(encode) && reqEncodes.includes(encode)) {
-        const resp = await request.request({ ...config, responseType: 'arraybuffer' });
-        resp.data = iconv.decode(Buffer.from(resp.data), encode);
-        const res = { code: resp.status, data: resp.data, headers: resp.headers };
-        return { code: 0, msg: 'ok', data: res };
-      } else {
-        const resp = await request.request(config);
-        const res = { code: resp.status, data: resp.data, headers: resp.headers };
-        return { code: 0, msg: 'ok', data: res };
-      }
-    },
-  );
-
-  fastify.get(
-    `/${API_PREFIX}/m3u8/adremove`,
-    { schema: m3u8AdRemoveSchema },
-    async (req: FastifyRequest<{ Querystring: { url: string; headers?: string } }>, reply: FastifyReply) => {
-      const M3U8_CONTENT_TYPES = ['application/vnd.apple.mpegurl', 'application/x-mpegURL', 'application/octet-stream'];
-
-      const { url, headers: rawHeaders = '{}' } = req.query;
-      const headers = isJsonStr(rawHeaders) ? JSON.parse(rawHeaders) : {};
-
-      if (!isHttp(url)) {
-        return reply.code(400).send({ code: -1, msg: 'Invalid m3u8 URL' });
-      }
-
+    async (_req, reply) => {
       try {
-        const ext = new URL(url).pathname.split('.').pop();
-        if (ext !== 'm3u8') {
-          const { data: resp } = await request.request({ url, method: 'HEAD', headers });
-
-          const contentType = resp?.headers?.['content-type'];
-          if (!contentType || !M3U8_CONTENT_TYPES.includes(contentType)) {
-            return reply.code(400).send({ code: -1, msg: 'Invalid m3u8 URL' });
-          }
-        }
-
-        const content = await fixAdM3u8Ai(url, headers);
-        if (content && content.includes('.ts')) {
-          return reply.code(200).header('Content-Type', 'application/vnd.apple.mpegurl').send(content);
-        }
-
-        return reply.code(302).redirect(url);
-      } catch {
-        return reply.code(302).redirect(url);
+        const data = {
+          timestamp: toUnix(),
+          version: APP_VERSION,
+        };
+        return reply.code(200).send({ code: 0, msg: 'ok', data });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
       }
     },
   );
 
-  fastify.get(
+  fastify.get<{ Querystring: SystemIpQuery }>(
+    `/${API_PREFIX}/ip`,
+    {
+      schema: ipSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { preferIPv6 = true } = req.query;
+        const resp = await getNetwork(preferIPv6);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: resp });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.post<{ Body: SystemReqBody }>(
+    `/${API_PREFIX}/req`,
+    {
+      schema: reqSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { encode, ...config } = req.body as unknown as { encode?: IReqEncode } & AxiosRequestConfig;
+
+        if (!isNil(encode) && reqEncodes.includes(encode)) {
+          const resp = await request.request({ ...config, responseType: 'arraybuffer' });
+          resp.data = iconv.decode(Buffer.from(resp.data), encode);
+          const res = { code: resp.status, data: resp.data, headers: resp.headers };
+          return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+        } else {
+          const resp = await request.request(config);
+          const res = { code: resp.status, data: resp.data, headers: resp.headers };
+          return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+        }
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.get<{ Querystring: SystemM3u8AdRemoveQuery }>(
+    `/${API_PREFIX}/m3u8/adremove`,
+    {
+      schema: m3u8AdRemoveSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { url, headers: rawHeaders = '{}' } = req.query;
+        const headers = isJsonStr(rawHeaders) ? JSON.parse(rawHeaders) : {};
+
+        if (!isHttp(url)) {
+          return reply.code(400).send({ code: -1, msg: 'Invalid m3u8 URL', data: null });
+        }
+
+        const M3U8_CONTENT_TYPES = [
+          'application/vnd.apple.mpegurl',
+          'application/x-mpegURL',
+          'application/octet-stream',
+        ];
+
+        try {
+          const ext = new URL(url).pathname.split('.').pop();
+          if (ext !== 'm3u8') {
+            const { data: resp } = await request.request({ url, method: 'HEAD', headers });
+
+            const contentType = resp?.headers?.['content-type'];
+            if (!contentType || !M3U8_CONTENT_TYPES.includes(contentType)) {
+              return reply.code(400).send({ code: -1, msg: 'Invalid m3u8 URL', data: null });
+            }
+          }
+
+          const content = await fixAdM3u8Ai(url, headers);
+          if (content && content.includes('.ts')) {
+            return reply.code(200).header('Content-Type', 'application/vnd.apple.mpegurl').send(content);
+          }
+
+          return reply.code(302).redirect(url);
+        } catch {
+          return reply.code(302).redirect(url);
+        }
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.get<{ Querystring: SystemLogQuery }>(
     `/${API_PREFIX}/log`,
-    { schema: logSchema },
-    async (req: FastifyRequest<{ Querystring: { type?: string; level?: LogLevel } }>, reply: FastifyReply<any>) => {
-      const { type: rawType = '', level = 'none' } = req.query;
+    {
+      schema: logSchema,
+    },
+    async (req, reply) => {
+      const { type: rawType = '', level = 'none' } = req.query as { type?: string; level?: LogLevel };
 
       const modules = Object.values(LOG_MODULE) as ILogModuleType[];
 
@@ -110,6 +158,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
       const minLevel = LEVEL_MAP[level];
 
       reply.raw.writeHead(200, {
+        'Access-Control-Allow-Origin': '*',
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',

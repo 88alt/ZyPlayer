@@ -1,8 +1,8 @@
-import { Schema } from '@main/types/server';
 import { REC_ASSOCIATION_TYPE, REC_HOT_TYPE } from '@shared/config/setting';
+import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
-import { PageQuery, ResponseSuccessSchema } from '../../base';
+import { PageQuery, ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'film';
 
@@ -75,10 +75,7 @@ export const getBarrageSchema = {
   }),
   response: {
     200: BarrageResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -102,10 +99,7 @@ export const sendBarrageSchema = {
       },
       { description: 'Response schema for send barrage' },
     ),
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -123,10 +117,7 @@ export const getHotSchema = {
   ),
   response: {
     200: HotResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -141,10 +132,7 @@ export const getAssociationSchema = {
   }),
   response: {
     200: AssociationResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
 
@@ -162,9 +150,12 @@ export const getMatchSchema = {
   ),
   response: {
     200: DoubanMatchResponseSchema,
-    default: {
-      description: 'Unexpected Error',
-      $ref: Schema.ApiReponseError,
-    },
+    500: ResponseErrorSchema,
   },
 };
+
+export type GetBarrageQuery = Static<typeof getBarrageSchema.querystring>;
+export type SendBarrageBody = Static<typeof sendBarrageSchema.body>;
+export type GetHotQuery = Static<typeof getHotSchema.querystring>;
+export type GetAssociationQuery = Static<typeof getAssociationSchema.querystring>;
+export type GetMatchQuery = Static<typeof getMatchSchema.querystring>;
