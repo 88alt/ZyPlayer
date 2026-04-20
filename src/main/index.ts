@@ -28,6 +28,7 @@ import { isBoolean, isHttp } from '@shared/modules/validate';
 import type { IAuthCacheProgress, IAuthCert, IAuthRelayPayload } from '@shared/types/auth';
 import { app, BrowserWindow, crashReporter, ipcMain } from 'electron';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import fixPath from 'fix-path';
 
 const logger = loggerService.withContext(LOG_MODULE.MAIN);
 
@@ -61,6 +62,8 @@ const setupEnv = () => {
       logger.error(`Unhandled Rejection at: ${promise} reason: ${reason}`);
     });
   }
+
+  fixPath(); // fix environment
 };
 
 /**
