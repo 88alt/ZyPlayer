@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
+import * as fflate from 'fflate';
 import * as he from 'he';
-import pako from 'pako';
 
 import { atob, btoa } from '../modules/atob-btoa';
 import type {
@@ -232,7 +232,7 @@ export const gzip = {
     const { src, inputEncode = 'utf8', outputEncode = 'base64' } = options;
     if (src === '') return '';
     const buffer = wordParse[inputEncode](src);
-    const compressed = pako.gzip(wordArrayToArray(buffer));
+    const compressed = fflate.gzipSync(wordArrayToArray(buffer));
     return wordStringify[outputEncode](arrayToWordArray(compressed));
   },
 
@@ -250,7 +250,7 @@ export const gzip = {
     const { src, inputEncode = 'base64', outputEncode = 'utf8' } = options;
     if (src === '') return '';
     const buffer = wordParse[inputEncode](src);
-    const decompressed = pako.ungzip(wordArrayToArray(buffer));
+    const decompressed = fflate.gunzipSync(wordArrayToArray(buffer));
     if (!decompressed) {
       throw new Error('Not a valid Gzip string');
     }
