@@ -41,7 +41,24 @@ export const isWindows: boolean = platform === 'win32';
 export const isLinux: boolean = platform === 'linux';
 export const isOhOS: boolean = platform === 'ohos';
 
-export const isMacOSTahoe = isMacOS && Number.parseInt(macosRelease().version) >= 26;
+export const isMacOSTahoe =
+  isMacOS &&
+  (() => {
+    const parts = os.release().split('.');
+    // macOS 26 (Tahoe) corresponds to Darwin kernel 25.x
+    const darwinMajor = Number.parseInt(parts[0], 10);
+    return darwinMajor >= 25;
+  })();
+export const isWindows11 =
+  isWindows &&
+  (() => {
+    const parts = os.release().split('.');
+    const majorVersion = Number.parseInt(parts[0], 10);
+    const minorVersion = Number.parseInt(parts[1], 10);
+    const buildNumber = Number.parseInt(parts[2], 10);
+    // Windows 11 build numbers start from 22000
+    return majorVersion === 10 && minorVersion === 0 && buildNumber >= 22_000;
+  })();
 export const isWindows22H2 =
   isWindows &&
   (() => {
