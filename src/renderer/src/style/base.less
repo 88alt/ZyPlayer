@@ -178,7 +178,9 @@ pre {
 
 // button
 .t-button {
-  border-radius: var(--td-radius-medium);
+  &:not(.t-button--shape-round) {
+    border-radius: var(--td-radius-medium);
+  }
 
   &:not(.t-is-disabled, .t-button--ghost) {
     --ripple-color: transparent !important;
@@ -300,6 +302,10 @@ pre {
 }
 
 // divider
+.t-divider--horizontal {
+  margin: var(--td-comp-margin-s) 0;
+}
+
 .t-divider--vertical {
   margin: 0 var(--td-comp-margin-s);
 }
