@@ -9,6 +9,7 @@ export enum REC_HOT_TYPE {
   DOUBAN = 'douban',
   ENLIGHTENT = 'enlightent',
   HISENSE = 'hisense',
+  HUANTV = 'huantv',
   KOMECT = 'komect',
   KYLIVE = 'kylive',
   QUARK = 'quark',
@@ -41,7 +42,8 @@ export enum AIGC_PROVIDER_TYPE {
   AMZON = 'amazon',
   ANTHROPIC = 'anthropic',
   AZURE = 'azure',
-  GEMINI = 'gemini',
+  GOOGLE = 'google',
+  OLLAMA = 'ollama',
   OPENAI = 'openai',
 }
 export type IAigcProviderType = `${AIGC_PROVIDER_TYPE}`;

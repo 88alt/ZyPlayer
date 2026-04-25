@@ -26,6 +26,7 @@ export default {
         douban: 'Douban',
         enlightent: 'Enlightent',
         hisense: 'Hisense',
+        huantv: 'HuanTV',
         kylive: 'Kylive',
         komect: 'Komect',
         quark: 'Quark',

@@ -25,6 +25,7 @@ export default {
         douban: '豆瓣',
         enlightent: '云合',
         hisense: '海信',
+        huantv: '欢网',
         kylive: '酷云',
         komect: '移动爱家',
         quark: '夸克',

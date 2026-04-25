@@ -15,6 +15,10 @@ export default {
     url: 'https://wxtv-vod.hismarttv.com',
     category: [1, 2, 3, 4],
   },
+  huantv: {
+    url: 'https://www.huan.tv',
+    category: [1, 2, 3],
+  },
   kylive: {
     url: 'https://www.ky.live',
     category: [2, 3],
