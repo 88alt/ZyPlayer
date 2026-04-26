@@ -287,6 +287,7 @@
     "patchedDependencies": {
       "@oplayer/core@1.2.38-beta.2": "patches/@oplayer-core-npm-1.2.38-beta.2-66bf7d6252.patch",
       "@oplayer/torrent@1.2.25-beta.2": "patches/@oplayer-torrent-npm-1.2.25-beta.2-6efddccea2.patch",
+      "@tdesign-vue-next/chat@0.5.2": "patches/@tdesign-vue-next__chat@0.5.2.patch",
       "artplayer@5.4.0": "patches/artplayer@5.4.0.patch",
       "atomically@1.7.0": "patches/atomically-npm-1.7.0-e742e5293b.patch",
       "dplayer@1.32.7": "patches/dplayer@1.32.7.patch",

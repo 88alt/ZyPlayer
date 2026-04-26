@@ -1,0 +1,28 @@
+diff --git a/es/chat-actionbar/chat-actionbar.mjs b/es/chat-actionbar/chat-actionbar.mjs
+index a704b14d52a60eff9f201e8b3b9da33cc51127aa..0633a8164c529ddca0d772b651f1abdc7a1c8f30 100644
+--- a/es/chat-actionbar/chat-actionbar.mjs
++++ b/es/chat-actionbar/chat-actionbar.mjs
+@@ -63,9 +63,6 @@ var _ChatActionbar = defineComponent({
+         });
+       };
+       var handleClick = function handleClick(e, type, content2) {
+-        if (type === "copy") {
+-          copyAnswer(e, content2);
+-        }
+         emit("actions", type, {
+           e: e
+         });
+diff --git a/esm/chat-actionbar/chat-actionbar.js b/esm/chat-actionbar/chat-actionbar.js
+index ce5ca8e15edab577ded87b5ceb61800752b57cd9..14e88b068f6e789ba7c861644521ac03d08d7f04 100644
+--- a/esm/chat-actionbar/chat-actionbar.js
++++ b/esm/chat-actionbar/chat-actionbar.js
+@@ -172,9 +172,6 @@ var _ChatActionbar = defineComponent({
+         });
+       };
+       var handleClick = function handleClick(e, type, content2) {
+-        if (type === "copy") {
+-          copyAnswer(e, content2);
+-        }
+         emit("actions", type, {
+           e: e
+         });
