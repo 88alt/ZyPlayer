@@ -191,7 +191,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
       try {
         const { id } = req.params;
         await dbService.setting.update({ key: 'defaultSite', value: id });
-        return reply.code(200).send({ code: 0, msg: 'ok', data: true });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: true } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });

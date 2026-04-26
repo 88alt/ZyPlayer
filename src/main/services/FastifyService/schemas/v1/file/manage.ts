@@ -18,7 +18,9 @@ export const addSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the add operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for add file' },
     ),
@@ -38,7 +40,9 @@ export const deleteSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the delete operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for delete file' },
     ),
@@ -59,7 +63,9 @@ export const putSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the update operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for update file content' },
     ),

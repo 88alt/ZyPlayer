@@ -61,8 +61,8 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         }
 
         const dbResBarrage = await dbService.setting.getValue('barrage');
-        const res = await sendBarrage(dbResBarrage?.url, options);
-        return reply.code(200).send({ code: 0, msg: 'ok', data: res });
+        const status = await sendBarrage(dbResBarrage?.url, options);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: status } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });

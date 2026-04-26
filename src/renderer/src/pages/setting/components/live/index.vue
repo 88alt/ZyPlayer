@@ -192,8 +192,12 @@ const updateItem = async (ids: string[], doc: Partial<IModels['iptv']>) => {
 
 const setDefaultItem = async (id: string) => {
   try {
-    await putIptvDefault(id);
-    MessagePlugin.success(`${t('common.success')}`);
+    const resp = await putIptvDefault(id);
+    if (resp.success) {
+      MessagePlugin.success(`${t('common.success')}`);
+    } else {
+      MessagePlugin.warning(`${t('common.fail')}`);
+    }
   } catch (error) {
     console.error('Fail to set default item', error);
     MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
@@ -216,7 +220,8 @@ const checkItem = async (ids: string[]) => {
 
         let isActive = false;
         try {
-          isActive = await fetchIptvCheck(id);
+          const resp = await fetchIptvCheck(id);
+          isActive = resp.success;
         } catch {
           // ignore error
         }

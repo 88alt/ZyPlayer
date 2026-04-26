@@ -12,7 +12,9 @@ export const backupSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the backup operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for backup' },
     ),
@@ -28,7 +30,9 @@ export const resumeSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the resume operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for resume' },
     ),

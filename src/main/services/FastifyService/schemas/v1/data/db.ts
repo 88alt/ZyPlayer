@@ -30,7 +30,9 @@ export const clearSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the clear operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for data clear' },
     ),
@@ -69,7 +71,9 @@ export const importSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the import operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for data import' },
     ),

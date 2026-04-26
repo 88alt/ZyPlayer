@@ -34,7 +34,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         }
 
         const status = await saveFile(filePath, content);
-        return reply.code(200).send({ code: 0, msg: 'ok', data: status });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: status } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
@@ -52,7 +52,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         const { type = 'file', '*': path } = req.params;
         const filePath = type === 'file' ? join(APP_FILE_PATH, path) : path;
         const status = await fileDelete(filePath);
-        return reply.code(200).send({ code: 0, msg: 'ok', data: status });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: status } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
@@ -78,7 +78,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         }
 
         const status = await saveFile(filePath, content);
-        return reply.code(200).send({ code: 0, msg: 'ok', data: status });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: status } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });

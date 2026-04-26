@@ -98,7 +98,7 @@ export const putSchema = {
   summary: 'Set data',
   description: 'Set data',
   body: Type.Object({
-    id: Type.Array(Type.String(), { description: 'updated id' }),
+    id: Type.Array(Type.String(), { description: 'id' }),
     doc: Type.Partial(Type.Omit(ChannelSchema, ['id', 'createdAt', 'updatedAt'])),
   }),
   response: {

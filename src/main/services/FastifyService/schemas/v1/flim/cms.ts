@@ -130,7 +130,9 @@ export const getInitchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the init operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for cms init' },
     ),
@@ -270,9 +272,11 @@ export const getCheckSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the check operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
-      { description: 'Response schema for cms check' },
+      { description: 'Response schema for cms check response' },
     ),
     500: ResponseErrorSchema,
   },

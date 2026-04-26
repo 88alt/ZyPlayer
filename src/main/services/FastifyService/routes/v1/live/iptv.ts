@@ -202,13 +202,14 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         }
 
         const parseRes = await convertToStandard(api, type as IIptvType);
-
-        if (!isArrayEmpty(parseRes)) {
-          await dbService.channel.set(parseRes as IModels['channel'][]);
-          await dbService.setting.update({ key: 'defaultIptv', value: id });
+        if (isArrayEmpty(parseRes)) {
+          return reply.code(200).send({ code: 0, msg: 'ok', data: { success: false } });
         }
 
-        return reply.code(200).send({ code: 0, msg: 'ok', data: true });
+        await dbService.channel.set(parseRes as IModels['channel'][]);
+        await dbService.setting.update({ key: 'defaultIptv', value: id });
+
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: true } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
@@ -231,7 +232,8 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         }
 
         const parseRes = await convertToStandard(api, type as IIptvType);
-        return reply.code(200).send({ code: 0, msg: 'ok', data: !isArrayEmpty(parseRes) });
+        const status = !isArrayEmpty(parseRes);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: status } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });

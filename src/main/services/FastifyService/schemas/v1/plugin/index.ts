@@ -85,7 +85,7 @@ export const getDetailSchema = {
   },
 };
 
-export const installSchema = {
+export const addSchema = {
   tags: [API_PREFIX],
   summary: 'Install plugin',
   description: 'Install plugin by project path',
@@ -98,7 +98,7 @@ export const installSchema = {
   },
 };
 
-export const uninstallSchema = {
+export const deleteSchema = {
   tags: [API_PREFIX],
   summary: 'Uninstall plugin',
   description: 'Uninstall plugin by id',
@@ -111,12 +111,13 @@ export const uninstallSchema = {
   },
 };
 
-export const startSchema = {
+export const putSchema = {
   tags: [API_PREFIX],
-  summary: 'Start plugin',
-  description: 'Start plugin by id',
+  summary: 'Update plugin status',
+  description: 'Update plugin status by id',
   body: Type.Object({
     id: Type.Array(Type.String(), { description: 'id' }),
+    doc: Type.Pick(PluginSchema, ['isActive']),
   }),
   response: {
     200: PluginArrayResponseSchema,
@@ -124,22 +125,8 @@ export const startSchema = {
   },
 };
 
-export const stopSchema = {
-  tags: [API_PREFIX],
-  summary: 'Stop plugin',
-  description: 'Stop plugin by id',
-  body: Type.Object({
-    id: Type.Array(Type.String(), { description: 'id' }),
-  }),
-  response: {
-    200: PluginArrayResponseSchema,
-    500: ResponseErrorSchema,
-  },
-};
-
+export type AddPluginBody = Static<typeof addSchema.body>;
+export type PutPluginBody = Static<typeof putSchema.body>;
 export type GetPluginPageQuery = Static<typeof pageSchema.querystring>;
 export type GetPluginDetailParams = Static<typeof getDetailSchema.params>;
-export type InstallPluginBody = Static<typeof installSchema.body>;
-export type UninstallPluginBody = Static<typeof uninstallSchema.body>;
-export type StartPluginBody = Static<typeof startSchema.body>;
-export type StopPluginBody = Static<typeof stopSchema.body>;
+export type DeletePluginBody = Static<typeof deleteSchema.body>;

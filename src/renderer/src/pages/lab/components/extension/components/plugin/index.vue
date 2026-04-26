@@ -76,9 +76,9 @@ import type { IModels } from '@shared/types/db';
 import { cloneDeep } from 'es-toolkit';
 import PQueue from 'p-queue';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { computed, onActivated, onMounted, ref, toRaw } from 'vue';
+import { computed, onActivated, onMounted, ref } from 'vue';
 
-import { fetchPluginPage, installPlugin, startPlugin, stopPlugin, uninstallPlugin } from '@/api/plugin';
+import { addPlugin, delPlugin, fetchPluginPage, putPlugin } from '@/api/plugin';
 import DialogDocument from '@/components/dialog-document/index.vue';
 import SettingTable from '@/components/setting-table/index.vue';
 import { emitterChannel, emitterSource } from '@/config/emitterChannel';
@@ -180,7 +180,7 @@ const createItem = async (ids: string[]) => {
 
   installQueue.add(async () => {
     try {
-      await installPlugin({ id: ids });
+      await addPlugin({ id: ids });
     } finally {
       activeInstallIds.delete(id);
     }
@@ -192,32 +192,22 @@ const createItem = async (ids: string[]) => {
   });
 };
 
-const disableItem = async (ids: string[]) => {
+const deleteItem = async (ids: string[]) => {
   try {
-    await stopPlugin({ id: ids });
-    MessagePlugin.success(`${t('common.success')}`);
-  } catch (error) {
-    console.error('Fail to create item', error);
-    MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
-  }
-};
-
-const enableItem = async (ids: string[]) => {
-  try {
-    await startPlugin({ id: ids });
-    MessagePlugin.success(`${t('common.success')}`);
-  } catch (error) {
-    console.error('Fail to create item', error);
-    MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
-  }
-};
-
-const uninstallItem = async (ids: string[]) => {
-  try {
-    await uninstallPlugin({ id: ids });
+    await delPlugin({ id: ids });
     MessagePlugin.success(t('common.success'));
   } catch (error) {
     console.error('Fail to uninstall item', error);
+    MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
+  }
+};
+
+const updateItem = async (ids: string[], doc: Pick<IModels['plugin'], 'isActive'>) => {
+  try {
+    await putPlugin({ id: ids, doc });
+    MessagePlugin.success(`${t('common.success')}`);
+  } catch (error) {
+    console.error('Fail to update item', error);
     MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
   }
 };
@@ -249,9 +239,9 @@ const handleOperation = async (type: string, payload: any) => {
       formData.value = { id: '' };
       dialogState.value.visibleForm = true;
     },
-    enable: () => enableItem(toRaw(payload)),
-    disable: () => disableItem(toRaw(payload)),
-    delete: () => uninstallItem(toRaw(payload)),
+    enable: () => updateItem(payload, { isActive: true }),
+    disable: () => updateItem(payload, { isActive: false }),
+    delete: () => deleteItem(payload),
     preview: () => window.electron.ipcRenderer.invoke(IPC_CHANNEL.WINDOW_BROWSER, payload.web),
     info: () => {
       const cloneDoc = cloneDeep(payload);

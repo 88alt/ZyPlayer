@@ -95,7 +95,9 @@ export const sendBarrageSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the send operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for send barrage' },
     ),

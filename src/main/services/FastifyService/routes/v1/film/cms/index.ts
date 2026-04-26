@@ -64,9 +64,9 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         const { uuid, force = false } = req.query || {};
         try {
           await prepare(uuid, force);
-          return reply.code(200).send({ code: 0, msg: 'ok', data: true });
+          return reply.code(200).send({ code: 0, msg: 'ok', data: { success: true } });
         } catch {
-          return reply.code(200).send({ code: 0, msg: 'ok', data: false });
+          return reply.code(200).send({ code: 0, msg: 'ok', data: { success: false } });
         }
       } catch (error) {
         fastify.log.error(error);
@@ -439,15 +439,15 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         try {
           for (const fn of checks) {
             if (!(await fn())) {
-              return reply.code(200).send({ code: 0, msg: 'ok', data: false });
+              return reply.code(200).send({ code: 0, msg: 'ok', data: { success: false } });
             }
           }
         } catch (error) {
           fastify.log.error(error);
-          return reply.code(200).send({ code: 0, msg: 'ok', data: false });
+          return reply.code(200).send({ code: 0, msg: 'ok', data: { success: false } });
         }
 
-        return reply.code(200).send({ code: 0, msg: 'ok', data: true });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: true } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: 0, msg: (error as Error).message, data: null });

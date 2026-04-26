@@ -413,8 +413,7 @@ const importData = async (importType: IDataImportType, putType: IDataPutType) =>
     }
 
     const resp = await dataDbImport({ importType, putType, api, remoteType: type });
-
-    if (resp) {
+    if (resp.success) {
       refreshEmitter();
       MessagePlugin.success(t('common.success'));
     } else {
@@ -478,8 +477,7 @@ const clearData = async () => {
     if (isArrayEmpty(keyList)) return;
 
     const resp = await dataDbClear({ type: keyList });
-
-    if (resp) {
+    if (resp.success) {
       refreshEmitter(keyList);
       MessagePlugin.success(t('common.success'));
     } else {
@@ -487,7 +485,7 @@ const clearData = async () => {
     }
   } catch (error) {
     console.error('Clear data error:', error);
-    MessagePlugin.error(`${t('common.error')}:${error}`);
+    MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
   }
 };
 
@@ -517,8 +515,8 @@ const cloudBackup = async () => {
       return;
     }
 
-    const syncStatus = await dataCloudBackup();
-    if (syncStatus) {
+    const resp = await dataCloudBackup();
+    if (resp.success) {
       MessagePlugin.success(t('common.success'));
     } else {
       MessagePlugin.warning(t('common.fail'));
@@ -540,8 +538,8 @@ const cloudResume = async () => {
       return;
     }
 
-    const syncStatus = await dataCloudResume();
-    if (syncStatus) {
+    const resp = await dataCloudResume();
+    if (resp.success) {
       refreshEmitter();
       MessagePlugin.success(t('common.success'));
     } else {

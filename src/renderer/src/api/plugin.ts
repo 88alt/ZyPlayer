@@ -8,36 +8,27 @@ export function fetchPluginPage(doc) {
   });
 }
 
-export function startPlugin(doc) {
+export function putPlugin(doc) {
   return request.request({
-    url: `/v1/plugin/start`,
+    url: `/v1/plugin`,
     method: 'put',
     data: doc,
     timeout: 0,
   });
 }
 
-export function stopPlugin(doc) {
+export function addPlugin(doc) {
   return request.request({
-    url: `/v1/plugin/stop`,
-    method: 'put',
-    data: doc,
-    timeout: 0,
-  });
-}
-
-export function installPlugin(doc) {
-  return request.request({
-    url: `/v1/plugin/install`,
+    url: `/v1/plugin`,
     method: 'post',
     data: doc,
     timeout: 0,
   });
 }
 
-export function uninstallPlugin(doc) {
+export function delPlugin(doc) {
   return request.request({
-    url: `/v1/plugin/uninstall`,
+    url: `/v1/plugin`,
     method: 'delete',
     data: doc,
     timeout: 0,

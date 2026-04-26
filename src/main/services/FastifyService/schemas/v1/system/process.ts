@@ -8,7 +8,9 @@ const API_PREFIX = 'system';
 const KillResponseSchema = Type.Object(
   {
     ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-    data: Type.Boolean({ description: 'kill result' }),
+    data: Type.Object({
+      success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+    }),
   },
   { description: 'Response schema for kill process result' },
 );

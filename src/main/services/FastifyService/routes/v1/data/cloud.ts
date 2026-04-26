@@ -16,7 +16,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         const { sync: _sync, type, ...options } = cloudConf || {};
 
         const status = await dbService.cloudBackup(type, options);
-        return reply.code(200).send({ code: 0, msg: 'ok', data: status });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: status } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
@@ -35,7 +35,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         const { sync: _sync, type, ...options } = cloudConf || {};
 
         const status = await dbService.cloudResume(type, options);
-        return reply.code(200).send({ code: 0, msg: 'ok', data: status });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: status } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });

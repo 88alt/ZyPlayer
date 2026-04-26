@@ -111,7 +111,7 @@ export const putSchema = {
   summary: 'Set data',
   description: 'Set data',
   body: Type.Object({
-    id: Type.Array(Type.String(), { description: 'updated id' }),
+    id: Type.Array(Type.String(), { description: 'id' }),
     doc: Type.Partial(Type.Omit(IptvSchema, ['id', 'createdAt', 'updatedAt'])),
   }),
   response: {
@@ -183,7 +183,9 @@ export const setDefaultSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for set default response' },
     ),
@@ -203,7 +205,9 @@ export const getCheckSchema = {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+        }),
       },
       { description: 'Response schema for check validity response' },
     ),

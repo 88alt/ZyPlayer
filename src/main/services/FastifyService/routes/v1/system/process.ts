@@ -14,8 +14,8 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
     async (req, reply) => {
       try {
         const { pid = [] } = req.query;
-        const resp = await killPid(pid);
-        return reply.code(200).send({ code: 0, msg: 'ok', data: resp });
+        const status = await killPid(pid);
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: status } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });

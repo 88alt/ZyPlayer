@@ -39,7 +39,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         if (!isArrayEmpty(tables)) await dbService.db.clear(tables as ITableName[]);
         await Promise.all(others.filter((t) => t in otherActions).map((t) => otherActions[t]()));
 
-        return reply.code(200).send({ code: 0, msg: 'ok', data: true });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: true } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
@@ -94,7 +94,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         const res = await Promise.allSettled(ops);
 
         const ststus = res.filter((r) => r.status === 'rejected').length === 0;
-        return reply.code(200).send({ code: 0, msg: 'ok', data: ststus });
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: ststus } });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
