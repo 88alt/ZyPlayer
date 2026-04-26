@@ -83,5 +83,6 @@ export function binaryInstall(doc) {
     url: '/v1/system/binary/install',
     method: 'post',
     data: doc,
+    timeout: 0,
   });
 }

@@ -45,7 +45,7 @@ import { LoadingIcon } from 'tdesign-icons-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, ref } from 'vue';
 
-import { getBinaryList } from '@/api/system';
+import { binaryInstall, getBinaryList } from '@/api/system';
 import DialogDocument from '@/components/dialog-document/index.vue';
 import GroupBtn from '@/components/group-btn/index.vue';
 import { attachContent } from '@/config/global';
@@ -108,8 +108,7 @@ const handleInstall = async (id: string) => {
     try {
       tableList.value[idx].loading = true;
 
-      // const resp = await binaryInstall({ id: [id] });
-      const resp = await window.electron.ipcRenderer.invoke(IPC_CHANNEL.BINARY_INSTALL, [id]);
+      const resp = await binaryInstall({ id: [id] });
       tableList.value[idx].exist = resp?.[0]?.exist;
     } finally {
       activeInstallIds.delete(id);

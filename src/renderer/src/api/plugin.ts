@@ -13,6 +13,7 @@ export function startPlugin(doc) {
     url: `/v1/plugin/start`,
     method: 'put',
     data: doc,
+    timeout: 0,
   });
 }
 
@@ -21,6 +22,7 @@ export function stopPlugin(doc) {
     url: `/v1/plugin/stop`,
     method: 'put',
     data: doc,
+    timeout: 0,
   });
 }
 
@@ -29,6 +31,7 @@ export function installPlugin(doc) {
     url: `/v1/plugin/install`,
     method: 'post',
     data: doc,
+    timeout: 0,
   });
 }
 
@@ -37,6 +40,7 @@ export function uninstallPlugin(doc) {
     url: `/v1/plugin/uninstall`,
     method: 'delete',
     data: doc,
+    timeout: 0,
   });
 }
 
