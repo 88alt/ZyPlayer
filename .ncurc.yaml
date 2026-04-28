@@ -30,6 +30,7 @@ reject:
   - '@types/node'
   # - '@typescript/native-preview'
   # - eslint
+  - jsdom
   - monaco-editor
   - npminstall
   - pnpm
