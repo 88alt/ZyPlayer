@@ -5,62 +5,60 @@ import { ResponseErrorSchema, ResponseSuccessSchema } from '../../base';
 
 const API_PREFIX = 'aigc';
 
-const CompletionSchema = Type.Object({
-  id: Type.String(),
-  object: Type.String(Type.Literal('chat.completion')),
-  created: Type.Integer({ format: 'int64' }),
-  model: Type.String(),
-  choices: Type.Array(
-    Type.Object({
-      index: Type.Integer({ format: 'int32' }),
-      message: Type.Object({
-        role: Type.String({ enum: ['system', 'user', 'assistant'] }),
-        content: Type.String(),
-      }),
-      finish_reason: Type.String(),
-    }),
-  ),
-  usage: Type.Optional(
-    Type.Object({
-      prompt_tokens: Type.Integer({ format: 'int32' }),
-      completion_tokens: Type.Integer({ format: 'int32' }),
-      total_tokens: Type.Integer({ format: 'int32' }),
-    }),
-  ),
-});
+const ChatStreamResponseSchema = Type.Object(
+  {
+    type: Type.String(),
+  },
+  {
+    additionalProperties: true,
+    description: 'Response schema for chat completion stream',
+  },
+);
 
-const TextEventStreamResponseSchema = Type.Union([CompletionSchema, Type.String()]);
-
-const ApplicationJsonResponseSchema = Type.Object(
+const ChatTextResponseSchema = Type.Object(
   {
     ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
     data: Type.Object({
-      sessionId: Type.String(),
-      completion: CompletionSchema,
+      sessionId: Type.String({ description: 'Completion session id' }),
+      completion: Type.Object({
+        type: Type.String({ enum: ['text-delta', 'error'], description: 'Completion type' }),
+        parentId: Type.String({ description: 'Unique identifier of the parent message' }),
+        messageId: Type.String({ description: 'Unique identifier of the message' }),
+        text: Type.Optional(Type.String({ description: 'Completion text' })),
+        error: Type.Optional(Type.Any({ description: 'Error message' })),
+      }),
     }),
   },
-  { description: 'Response schema for chat completion' },
+  { description: 'Response schema for chat completion text' },
 );
 
 export const completionSchema = {
   tags: [API_PREFIX],
-  summary: 'Ai Chat Completion',
-  description: 'Ai Chat Completion',
+  summary: 'Ai Chat Stream',
+  description: 'Ai Chat Completion Stream',
   body: Type.Object({
-    prompt: Type.String({ description: 'The prompt to generate a completion for.' }),
-    model: Type.Optional(Type.String({ description: 'The model to use.' })),
-    stream: Type.Optional(Type.Boolean({ description: 'Whether to stream the response.' })),
-    sessionId: Type.Optional(Type.String({ description: 'The session ID for the conversation.' })),
-    parentId: Type.Optional(Type.String({ description: 'The parent message ID for threading.' })),
+    prompt: Type.String({ description: 'Completion prompt ' }),
+    model: Type.String({ description: 'Completion model' }),
+    sessionId: Type.String({ description: 'Completion session id' }),
+    parentId: Type.Optional(Type.Number({ description: 'Completion parent id' })),
+    temperature: Type.Optional(Type.Number({ description: 'Sampling temperature' })),
+    topP: Type.Optional(Type.Number({ description: 'Top-p sampling parameter' })),
+    thinkingEnabled: Type.Optional(
+      Type.Union([Type.Boolean(), Type.String({ enum: ['off', 'low', 'medium', 'high', 'xhigh'] })], {
+        description: 'Completion reasoning level',
+      }),
+    ),
+    searchEnabled: Type.Optional(Type.Boolean({ description: 'Enable web search tool' })),
+    stream: Type.Optional(Type.Boolean({ description: 'Whether to stream the response, default is true' })),
   }),
   response: {
     200: {
       content: {
         'text/event-stream': {
-          schema: TextEventStreamResponseSchema,
+          schema: ChatStreamResponseSchema,
         },
         'application/json': {
-          schema: ApplicationJsonResponseSchema,
+          schema: ChatTextResponseSchema,
         },
       },
     },
@@ -71,21 +69,29 @@ export const completionSchema = {
 
 export const normalSchema = {
   tags: [API_PREFIX],
-  summary: 'Ai Chat Normal',
-  description: 'Ai Chat Normal, only return message',
+  summary: 'Ai Chat Text',
+  description: 'Ai Chat Completion Text ',
   body: Type.Object({
-    prompt: Type.String({ description: 'The prompt to generate a completion for.' }),
-    model: Type.Optional(Type.String({ description: 'The model to use.' })),
-    sessionId: Type.Optional(Type.String({ description: 'The session ID for the conversation.' })),
-    parentId: Type.Optional(Type.String({ description: 'The parent message ID for threading.' })),
+    prompt: Type.String({ description: 'Completion prompt ' }),
+    model: Type.String({ description: 'Completion model' }),
+    sessionId: Type.String({ description: 'Completion session id' }),
+    parentId: Type.Optional(Type.Number({ description: 'Completion parent id' })),
+    temperature: Type.Optional(Type.Number({ description: 'Sampling temperature' })),
+    topP: Type.Optional(Type.Number({ description: 'Top-p sampling parameter' })),
+    thinkingEnabled: Type.Optional(
+      Type.Union([Type.Boolean(), Type.String({ enum: ['off', 'low', 'medium', 'high', 'xhigh'] })], {
+        description: 'Completion reasoning level',
+      }),
+    ),
+    searchEnabled: Type.Optional(Type.Boolean({ description: 'Enable web search tool' })),
   }),
   response: {
     200: Type.Object(
       {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
-        data: Type.String({ description: 'The generated message content.' }),
+        data: Type.String({ description: 'Completion text' }),
       },
-      { description: 'Response schema for normal chat completion' },
+      { description: 'Response schema for chat completion text' },
     ),
     400: ResponseErrorSchema,
     500: ResponseErrorSchema,

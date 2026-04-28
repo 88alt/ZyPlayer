@@ -12,7 +12,6 @@
             :avatar="messageProps[message.role]?.avatar"
             :handle-actions="message.role === 'user' ? {} : handleMsgActions"
             :chat-content-props="contentProps"
-            :copy-text="handleCopyAction"
             allow-content-segment-custom
           >
             <template #actionbar>
@@ -20,7 +19,8 @@
                 v-if="isAIMessage(message) && message.status === 'complete'"
                 :comment="actionComment"
                 :action-bar="getActionBar(idx === messages.length - 1)"
-                @actions="handleAction"
+                :copy-text="getMessageContentForCopy(message)"
+                @actions="(type: string) => handleAction(type, { item: message })"
               />
             </template>
           </t-chat-message>
@@ -34,7 +34,30 @@
           :loading="senderLoading"
           @send="handleSend"
           @stop="handleStop"
-        />
+        >
+          <template #footer-prefix>
+            <t-space align="center" size="small">
+              <t-button
+                variant="outline"
+                shape="round"
+                :theme="active.think ? 'primary' : 'default'"
+                @click="active.think = !active.think"
+              >
+                <template #icon><system-sum-icon /></template>
+                {{ $t('aigc.chat.sender.think') }}
+              </t-button>
+              <t-button
+                variant="outline"
+                :theme="active.search ? 'primary' : 'default'"
+                shape="round"
+                @click="active.search = !active.search"
+              >
+                <template #icon><internet-icon /></template>
+                {{ $t('aigc.chat.sender.search') }}
+              </t-button>
+            </t-space>
+          </template>
+        </t-chat-sender>
       </div>
       <p class="aigc-declare">{{ $t('aigc.declare') }}</p>
     </div>
@@ -52,7 +75,8 @@
 import { APP_NAME } from '@shared/config/appinfo';
 import { AIGC_CHAT_COMPLETION_API } from '@shared/config/env';
 import { THEME } from '@shared/config/theme';
-import { isHttp, isNil, isObject, isObjectEmpty } from '@shared/modules/validate';
+import { toM, toY } from '@shared/modules/date';
+import { isHttp, isObject, isObjectEmpty } from '@shared/modules/validate';
 import type {
   AIMessageContent,
   ChatMessagesData,
@@ -64,13 +88,13 @@ import type {
   TdChatContentMDOptions,
   TdChatMessageConfig,
 } from '@tdesign-vue-next/chat';
-import { isAIMessage, useChat } from '@tdesign-vue-next/chat';
+import { getMessageContentForCopy, isAIMessage, useChat } from '@tdesign-vue-next/chat';
 import { cloneDeep } from 'es-toolkit';
-import { ErrorCircleIcon } from 'tdesign-icons-vue-next';
+import { ErrorCircleIcon, InternetIcon, SystemSumIcon } from 'tdesign-icons-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, ref } from 'vue';
 
-import { createMemorySession, delMemoryMessage, delMemorySession } from '@/api/aigc';
+import { createMemorySession, delMemorySession } from '@/api/aigc';
 import { getSettingDetail } from '@/api/setting';
 import openaiIcon from '@/assets/ai/openai-kimi.png';
 import { emitterChannel, emitterSource } from '@/config/emitterChannel';
@@ -82,32 +106,10 @@ import emitter from '@/utils/emitter';
  * @see https://tdesign.tencent.com/vue-next/components/chatbot
  */
 
-type OpenAIStreamChunk =
-  | {
-      id?: string;
-      object?: string;
-      created?: number;
-      model?: string;
-      choices?: Array<{
-        index: number;
-        delta?: {
-          role?: 'user' | 'assistant' | 'system';
-          content?: string;
-          function_call?: any;
-          reasoning_content?: string;
-        };
-        finish_reason?: string;
-      }>;
-    }
-  | string;
-
 const storeSetting = useSettingStore();
 
 const inputValue = ref<string>('');
 const actionComment = ref<'good' | 'bad' | ''>('');
-
-const reasoningCache = ref<string | null>(null);
-const isReasoning = ref<boolean>(false);
 
 const config = ref<{ server: string; key: string; model: string }>({
   server: '',
@@ -115,6 +117,12 @@ const config = ref<{ server: string; key: string; model: string }>({
   model: '',
 });
 const sessionId = ref<string | null>(null);
+const parentId = ref<number>(0);
+
+const active = ref({
+  think: false,
+  search: false,
+});
 
 const messageProps = ref<TdChatMessageConfig>({
   user: { variant: 'base', placement: 'right' },
@@ -132,7 +140,7 @@ const contentProps = ref({
     engine: 'cherry-markdown',
     options: {
       themeSettings: {
-        codeBlockTheme: storeSetting.displayTheme === THEME.LIGHT ? THEME.LIGHT : THEME.DARK,
+        codeBlockTheme: storeSetting.displayTheme === THEME.LIGHT ? 'vs-light' : 'vs-dark',
       } as TdChatContentMDOptions,
     },
   },
@@ -156,6 +164,10 @@ const defaultMessages = ref<ChatMessagesData[]>([
             title: t('aigc.chat.suggestion.desc.title', [APP_NAME]),
             prompt: t('aigc.chat.suggestion.desc.prompt', [APP_NAME]),
           },
+          {
+            title: t('aigc.chat.suggestion.hot.title'),
+            prompt: t('aigc.chat.suggestion.hot.prompt', [toY(), toM()]),
+          },
         ],
       },
     ],
@@ -169,69 +181,120 @@ const chatServiceConfig = ref<ChatServiceConfig>({
   onRequest: (
     params: ChatRequestParams,
   ): (ChatRequestParams & RequestInit) | Promise<ChatRequestParams & RequestInit> => {
+    console.log(messages.value);
+
     return {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        // msgId: params.messageID,
         prompt: params.prompt,
-        messageID: params.messageId,
         stream: true,
         model: config.value.model,
         sessionId: sessionId.value,
+        parentId: parentId.value,
+        thinkingEnabled: active.value.think,
+        searchEnabled: active.value.search,
       }),
     };
   },
-  onMessage: (chunk: SSEChunkData): AIMessageContent | AIMessageContent[] | null => {
-    const data = chunk.data as OpenAIStreamChunk;
+  onMessage: (stream: SSEChunkData): AIMessageContent | AIMessageContent[] | null => {
+    const chunk = stream.data as { type: string; [key: string]: any };
 
-    // stream end / invalid
-    if (data === '[DONE]') return null;
-    if (!isObject(data) || isObjectEmpty(data)) return null;
+    if (!isObject(chunk) || isObjectEmpty(chunk)) return null;
 
-    const delta = data?.choices?.[0]?.delta;
-    if (!isObject(data) || isObjectEmpty(delta)) return null;
+    switch (chunk.type) {
+      case 'reasoning-delta':
+        return {
+          type: 'thinking',
+          status: 'streaming',
+          data: { title: t('aigc.chat.chunk.think.thinking'), text: chunk.text },
+        };
+      case 'reasoning-end':
+        return {
+          type: 'thinking',
+          status: 'complete',
+          data: { title: t('aigc.chat.chunk.think.thinked'), text: '' },
+        };
 
-    const reasoningContent = delta?.reasoning_content;
-    const mainContent = delta?.content ?? '';
+      case 'text-delta':
+        return {
+          type: 'markdown',
+          data: chunk.text || '',
+          strategy: 'merge',
+        };
 
-    const content = isNil(reasoningCache.value) ? mainContent : reasoningCache.value + mainContent;
-    reasoningCache.value = null;
+      case 'tool-call': {
+        const isSearchTool = chunk.toolName === 'websearch';
 
-    /** ---------- reasoning streaming ---------- */
-    if (!isNil(reasoningContent)) {
-      isReasoning.value = true;
+        return {
+          type: isSearchTool ? 'search' : 'toolcall',
+          data: isSearchTool
+            ? {
+                title: t('aigc.chat.chunk.search.searching', [chunk.toolName]),
+                references: [],
+              }
+            : {
+                toolCallId: chunk.toolCallId,
+                toolCallName: chunk.toolName,
+              },
+        } as AIMessageContent;
+      }
+      case 'tool-result': {
+        const isSearchTool = chunk.toolName === 'websearch';
+        const outputResult = chunk.output?.results || [];
 
-      return {
-        type: 'thinking',
-        data: { title: t('aigc.status.reasoning'), text: reasoningContent },
-        status: 'streaming',
-      };
+        return {
+          type: isSearchTool ? 'search' : 'toolcall',
+          data: isSearchTool
+            ? {
+                title: t('aigc.chat.chunk.search.searched', [outputResult.length]),
+                references: outputResult,
+              }
+            : {
+                toolCallId: chunk.toolCallId,
+                toolCallName: chunk.toolName,
+                result: outputResult,
+              },
+        } as AIMessageContent;
+      }
+
+      case 'ready': {
+        parentId.value = chunk.messageId;
+        return null;
+      }
+      // case 'finish': {
+      //   return null;
+      // }
+      case 'error': {
+        const datetime = new Date();
+        chatEngine.value?.setMessages(
+          [
+            ...messages.value.slice(0, -1),
+            {
+              id: `msg_${datetime.getTime()}_${Math.floor(Math.random() * 100000)}`,
+              role: 'assistant',
+              status: 'error',
+              datetime: datetime.toISOString(),
+              content: [
+                {
+                  type: 'text',
+                  data: `${chunk.error.name}: ${chunk.error.reason}`,
+                  status: 'error',
+                  strategy: 'append',
+                },
+              ],
+            },
+          ],
+          'replace',
+        );
+        return null;
+      }
+      default:
+        return null;
     }
-
-    /** ---------- reasoning → content ---------- */
-    if (isReasoning.value && isNil(reasoningContent)) {
-      isReasoning.value = false;
-      reasoningCache.value = content;
-
-      return {
-        type: 'thinking',
-        data: { title: t('aigc.status.reasoned'), text: '' },
-        status: 'complete',
-      };
-    }
-
-    /** ---------- normal content ---------- */
-    if (content) {
-      return {
-        type: 'markdown',
-        data: content,
-        strategy: 'merge',
-      };
-    }
-
-    return null;
   },
 });
 
@@ -260,10 +323,10 @@ const handleMsgActions = {
   },
 };
 
-const handleCopyAction = (content: string) => {
-  console.debug('Copy content:', content);
+const handleCopyAction = (message: ChatMessagesData) => {
   try {
-    navigator.clipboard.writeText(content);
+    const data = getMessageContentForCopy(message);
+    navigator.clipboard.writeText(data);
     MessagePlugin.success(t('common.copySuccess'));
   } catch (error) {
     console.error('Copy failed:', error);
@@ -271,29 +334,35 @@ const handleCopyAction = (content: string) => {
   }
 };
 
-const handleAction = (name: string, data?: any) => {
-  console.log(name, data);
+const handleAction = (type: string, { item }: { item: ChatMessagesData }) => {
   const handles = {
     bad: () => {
       actionComment.value = actionComment.value === 'bad' ? '' : 'bad';
     },
-    copy: () => {},
+    copy: () => {
+      handleCopyAction(item);
+    },
     good: () => {
       actionComment.value = actionComment.value === 'good' ? '' : 'good';
     },
     replay: async () => {
-      await delMessageMemory([-1, -2]);
+      // default(length-2): welcome system
+      parentId.value = messages.value.length - 2 <= 0 ? 0 : messages.value.length - 4;
       chatEngine.value?.regenerateAIMessage();
     },
   };
 
-  handles?.[name]?.(data);
+  try {
+    handles?.[type]?.(item);
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 const handleSend = async (params: string) => {
   if (!sessionId.value) {
-    const sessionStatus = await initSessionMemory();
-    if (!sessionStatus) {
+    await initSessionMemory();
+    if (!sessionId.value) {
       MessagePlugin.error(t('aigc.message.createSessionFailed'));
       return;
     }
@@ -355,10 +424,9 @@ const initSessionMemory = async () => {
   try {
     const resp = await createMemorySession();
     sessionId.value = resp.id;
-    return !!sessionId.value;
+    parentId.value = 0;
   } catch (error) {
     console.error('Failed to create session:', error);
-    return false;
   }
 };
 
@@ -367,20 +435,11 @@ const clearSessionMemory = async () => {
     if (sessionId.value) {
       await delMemorySession({ id: [sessionId.value] });
     }
-    sessionId.value = null;
   } catch (error) {
     console.error('Failed to clear chat:', error);
+  } finally {
     sessionId.value = null;
-  }
-};
-
-const delMessageMemory = async (idx: number[]) => {
-  try {
-    if (sessionId.value) {
-      await delMemoryMessage({ id: sessionId.value, index: idx });
-    }
-  } catch (error) {
-    console.error('Failed to delete message memory:', error);
+    parentId.value = 0;
   }
 };
 
@@ -406,7 +465,7 @@ const clearHistory = async () => {
     gap: var(--td-size-4);
 
     .aigc-content {
-      height: 100%;
+      height: calc(100% - 22px);
       width: 100%;
       flex: 1 1 auto;
       overflow: hidden;
@@ -414,6 +473,7 @@ const clearHistory = async () => {
       flex-direction: column;
       align-items: center;
       gap: var(--td-size-4);
+      position: relative;
 
       :deep(t-chat-loading),
       :deep(t-chat-item) {
@@ -432,14 +492,46 @@ const clearHistory = async () => {
         }
       }
 
-      :deep(.t-divider) {
-        margin: var(--td-comp-margin-s) 0;
-      }
-
       :deep(.t-chat-sender) {
         .t-chat-sender__textarea {
-          background-color: var(--td-bg-color-component);
+          // background-color: var(--td-bg-color-component);
           box-shadow: none;
+
+          &:hover {
+            border-color: var(--td-border-level-2-color);
+          }
+
+          .t-chat-sender__footer {
+            .t-chat-sender__mode {
+              .t-button {
+                &.t-button--theme-primary {
+                  background-color: var(--td-brand-color-light);
+                  color: var(--td-brand-color-active);
+                  border-color: var(--td-brand-color-active);
+                }
+
+                &:hover {
+                  &.t-button--theme-primary {
+                    background-color: var(--td-brand-color-focus);
+                  }
+
+                  &:not(.t-button--theme-primary) {
+                    color: var(--td-text-color-primary);
+                    border-color: var(--td-border-level-2-color);
+                    background-color: var(--td-bg-color-component);
+                  }
+                }
+              }
+            }
+
+            .t-chat-sender__button {
+              .t-chat-sender__button__sendbtn {
+                .t-chat-sender__button__default {
+                  border-radius: var(--td-radius-circle);
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -454,7 +546,7 @@ const clearHistory = async () => {
     }
 
     :deep(.t-chat__to-bottom) {
-      bottom: 0;
+      bottom: var(--td-comp-size-m);
       width: var(--td-comp-size-xl);
       height: var(--td-comp-size-xl);
       border-radius: var(--td-radius-circle);

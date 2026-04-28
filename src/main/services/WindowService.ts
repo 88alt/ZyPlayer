@@ -5,7 +5,16 @@ import { appLocale } from '@main/services/AppLocale';
 import { configManager } from '@main/services/ConfigManager';
 import { handleProtocolUrl } from '@main/services/ProtocolClient';
 import { APP_DATABASE_PATH } from '@main/utils/path';
-import { isDev, isLinux, isMacOS, isMacOSTahoe, isPackaged, isWindows, isWindows22H2 } from '@main/utils/systeminfo';
+import {
+  generateUserAgent,
+  isDev,
+  isLinux,
+  isMacOS,
+  isMacOSTahoe,
+  isPackaged,
+  isWindows,
+  isWindows22H2,
+} from '@main/utils/systeminfo';
 import { APP_NAME_PROTOCOL, titleBarOverlayDark, titleBarOverlayLight } from '@shared/config/appinfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { LOG_MODULE } from '@shared/config/logger';
@@ -35,6 +44,7 @@ const linuxIcon = isLinux ? nativeImage.createFromPath(iconPath) : undefined;
 export class WindowService {
   private static instance: WindowService | null = null;
   private winPool = new Map<string, { window: BrowserWindow | null; lastCrashTime: number }>();
+  private supportShowWindow = new Set<string>([WINDOW_NAME.MAIN, WINDOW_NAME.PLAYER, WINDOW_NAME.BROWSER]);
 
   public static getInstance(): WindowService {
     if (!WindowService.instance) {
@@ -208,8 +218,14 @@ export class WindowService {
     }
   }
 
-  public showAllWindows() {
-    const windows = this.getAllWindows();
+  public showAllWindows(all = false) {
+    const windows = all
+      ? this.getAllWindows()
+      : this.supportShowWindow
+          .values()
+          .map((name) => this.getWindow(name))
+          .filter((win): win is BrowserWindow => win instanceof BrowserWindow);
+
     windows.forEach((win) => this.showWindow(win));
   }
 
@@ -384,7 +400,7 @@ export class WindowService {
 
       // [mac]hacky-fix: miniWindow set visibleOnFullScreen:true will cause dock icon disappeared
       // app.dock?.show();
-      mainWindow.show();
+      // mainWindow.show();
     });
 
     // set the zoom factor again when the window is going to resize
@@ -715,6 +731,10 @@ export class WindowService {
     this.setupWindowEvents(mainWindow);
     this.setupWebContentsHandlers(mainWindow);
 
+    mainWindow.once('ready-to-show', () => {
+      mainWindow.show();
+    });
+
     if (!isPackaged && process.env.ELECTRON_RENDERER_URL) {
       mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
     } else {
@@ -773,6 +793,10 @@ export class WindowService {
 
     this.setupWindowEvents(mainWindow);
     this.setupWebContentsHandlers(mainWindow);
+
+    mainWindow.once('ready-to-show', () => {
+      mainWindow.show();
+    });
 
     mainWindow.on('close', (event: Electron.Event) => {
       event.preventDefault();
@@ -849,6 +873,10 @@ export class WindowService {
     this.setupWindowEvents(mainWindow);
     this.setupWebContentsHandlers(mainWindow);
 
+    mainWindow.once('ready-to-show', () => {
+      mainWindow.show();
+    });
+
     mainWindow.on('close', (event: Electron.Event) => {
       event.preventDefault();
       this.safeClose(mainWindow);
@@ -866,17 +894,34 @@ export class WindowService {
   public createSnifferWindow(uuid: string): BrowserWindow {
     const mainWindow = this.createWindow(`${WINDOW_NAME.SNIFFER}-${uuid}`, {});
 
-    const debug = configManager.debug;
-
-    if (debug) {
-      mainWindow.once('ready-to-show', () => {
-        mainWindow.webContents.setZoomFactor(configManager.zoom);
-
-        // [mac]hacky-fix: miniWindow set visibleOnFullScreen:true will cause dock icon disappeared
-        // app.dock?.show();
+    mainWindow.once('ready-to-show', () => {
+      if (configManager.debug) {
+        this.supportShowWindow.add(`${WINDOW_NAME.SNIFFER}-${uuid}`);
         mainWindow.show();
-      });
-    }
+      }
+    });
+
+    mainWindow.once('close', () => {
+      this.supportShowWindow.delete(`${WINDOW_NAME.SNIFFER}-${uuid}`);
+    });
+
+    return mainWindow;
+  }
+
+  public createSearchWindow(uuid: string): BrowserWindow {
+    const mainWindow = this.createWindow(`${WINDOW_NAME.SEARCH}-${uuid}`, {});
+    mainWindow.webContents.userAgent = generateUserAgent();
+
+    mainWindow.once('ready-to-show', () => {
+      if (configManager.debug) {
+        this.supportShowWindow.add(`${WINDOW_NAME.SEARCH}-${uuid}`);
+        mainWindow.show();
+      }
+    });
+
+    mainWindow.once('close', () => {
+      this.supportShowWindow.delete(`${WINDOW_NAME.SEARCH}-${uuid}`);
+    });
 
     return mainWindow;
   }

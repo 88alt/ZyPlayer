@@ -3,6 +3,7 @@ export enum WINDOW_NAME {
   PLAYER = 'player',
   SNIFFER = 'sniffer',
   BROWSER = 'browser',
+  SEARCH = 'search',
   OTHER = 'other',
 }
 
@@ -30,6 +31,10 @@ export const WINDOW_SIZE: Record<WINDOW_NAME, IWindowSize> = {
     min: { width: 1000, height: 640 },
   },
   [WINDOW_NAME.BROWSER]: {
+    default: { width: 1000, height: 640 },
+    min: { width: 1000, height: 640 },
+  },
+  [WINDOW_NAME.SEARCH]: {
     default: { width: 1000, height: 640 },
     min: { width: 1000, height: 640 },
   },

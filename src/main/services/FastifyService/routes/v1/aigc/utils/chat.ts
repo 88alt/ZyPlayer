@@ -1,136 +1,379 @@
 import { PassThrough, Readable } from 'node:stream';
-import { ReadableStream } from 'node:stream/web';
+import type { ReadableStream } from 'node:stream/web';
 
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { loggerService } from '@logger';
 import { t } from '@main/services/AppLocale';
-import { configManager } from '@main/services/ConfigManager';
-import { APP_NAME } from '@shared/config/appinfo';
 import { LOG_MODULE } from '@shared/config/logger';
+import { AIGC_PROVIDER_TYPE } from '@shared/config/setting';
+import type { ISetting } from '@shared/config/tblSetting';
 import { isHttp, isObject, isObjectEmpty } from '@shared/modules/validate';
+import type { LanguageModel, ModelMessage, ToolSet } from 'ai';
+import { generateText, stepCountIs, streamText } from 'ai';
 import { isEqual } from 'es-toolkit';
-import type { ClientOptions } from 'openai';
-import OpenAI from 'openai';
+import { createOllama } from 'ollama-ai-provider-v2';
 
+import { formatApiHost } from './api';
 import { memoryManager } from './memory';
+import { SYSTEM_PROMPT } from './prompts';
+import { websearchTool } from './tools/websearch';
 
-const SYSTEM_PROMPT = `
-你是一名名为${APP_NAME}智能助手的人工智能助手。你的角色设定为简洁高效地为用户提供准确信息。当被问及姓名时，必须明确回答 "${APP_NAME}智能助手"。
+type JSONValue = null | string | number | boolean | JSONObject | JSONArray;
+interface JSONObject {
+  [key: string]: JSONValue | undefined;
+}
+type JSONArray = JSONValue[];
 
-你需要严格遵循用户要求，杜绝违反版权的内容。回答应简洁明了，不带有任何个人情感色彩。在回复之前，要逐步思考，详细规划回复思路。尽量减少其他散文式表述，避免用三重回车键包裹整个回复，每个对话回合仅给出一个回复。
+type LLMSupportProvider =
+  | AIGC_PROVIDER_TYPE.OPENAI
+  | AIGC_PROVIDER_TYPE.ANTHROPIC
+  | AIGC_PROVIDER_TYPE.OLLAMA
+  | AIGC_PROVIDER_TYPE.GOOGLE;
 
-当遇到询问${APP_NAME}产品相关的问题时，需参考以下信息：${APP_NAME}是一款免费易用的媒体播放器桌面客户端, 支持Windows、Mac和Linux操作系统, 其开源地址为<https://github.com/Hiram-Wong/zyfun>。在回复此类问题时，要准确运用这些参考信息，清晰、直接地给出答案。
-`;
+type LLMOptions = Omit<ISetting['aigc'], 'type'> & { type: LLMSupportProvider };
+interface LLMProviderConfig {
+  apiKey?: string;
+  baseURL: string;
+}
+type LLMOptionsValidator = (options: LLMOptions) => string | null;
+type LLMProvider = (modelId: string) => LanguageModel;
 
-interface OpenAICommonAPIOtherOption {
+type ProviderOptions = Record<string, JSONObject>;
+type LLMThinkProviderLevel = 'off' | 'low' | 'medium' | 'high' | 'xhigh';
+type LLMToolName = 'websearch';
+
+interface LLMToolProviderOptions {
+  tools?: ToolSet;
+  toolChoice?: 'auto';
+  stopWhen?: ReturnType<typeof stepCountIs>;
+}
+
+export interface ChatRequestOptions {
   prompt: string;
   model: string;
-  stream?: boolean;
-  sessionId?: string;
-  parentId?: string;
+  sessionId: string;
+  parentId?: number;
+  temperature?: number;
+  topP?: number;
+  thinkingEnabled?: boolean | LLMThinkProviderLevel;
+  searchEnabled?: boolean;
 }
 
 const logger = loggerService.withContext(LOG_MODULE.AIGC_HELPER);
 
+const PROVIDER_VALIDATORS: Partial<Record<AIGC_PROVIDER_TYPE, LLMOptionsValidator>> = {
+  [AIGC_PROVIDER_TYPE.OPENAI]: (options) => {
+    // if (!options.key) return 'key is required';
+    if (options.server && !isHttp(options.server)) return 'server is not a valid HTTP URL';
+    return null;
+  },
+
+  [AIGC_PROVIDER_TYPE.ANTHROPIC]: (options) => {
+    // if (!options.key) return 'key is required';
+    if (options.server && !isHttp(options.server)) return 'server is not a valid HTTP URL';
+    return null;
+  },
+
+  [AIGC_PROVIDER_TYPE.OLLAMA]: (options) => {
+    // if (!options.key) return 'key is required';
+    if (options.server && !isHttp(options.server)) return 'server is not a valid HTTP URL';
+    return null;
+  },
+
+  [AIGC_PROVIDER_TYPE.GOOGLE]: (options) => {
+    // if (!options.key) return 'key is required';
+    if (options.server && !isHttp(options.server)) return 'server is not a valid HTTP URL';
+    return null;
+  },
+};
+
 class ChatCompletion {
-  private client: OpenAI | null = null;
-  private options: ClientOptions = {};
+  private provider: LLMProvider | null = null;
+  private options: LLMOptions | null = null;
   private memory: typeof memoryManager;
 
   constructor() {
     this.memory = memoryManager;
   }
 
-  private async init(options: ClientOptions = {}): Promise<boolean> {
-    if (isObjectEmpty(options) || !isHttp(options.baseURL)) {
-      logger.warn('Invalid OpenAI client options');
-      return false;
+  private validLLMOptions(options: LLMOptions): void {
+    if (!isObject(options) || isObjectEmpty(options)) {
+      throw new Error('Invalid LLM client options');
     }
 
-    if (isEqual(this.options, options) && this.client) {
-      return true;
-    }
+    const { type, model } = options;
+    if (!model) throw new Error('Invalid LLM options - model is required');
 
+    const validator = PROVIDER_VALIDATORS[type];
+    if (!validator) throw new Error(`Invalid LLM options - unsupported provider: ${type}`);
+
+    const error = validator(options);
+    if (error) throw new Error(`Invalid LLM options - ${error}`);
+  }
+
+  private createLLMProvider(provider: LLMSupportProvider, options: LLMProviderConfig): LLMProvider {
+    const { apiKey, baseURL } = options;
+
+    switch (provider) {
+      case AIGC_PROVIDER_TYPE.ANTHROPIC:
+        return createAnthropic({ apiKey, baseURL });
+      case AIGC_PROVIDER_TYPE.OLLAMA:
+        return createOllama({
+          baseURL,
+          ...(apiKey ? { headers: { Authorization: `Bearer ${apiKey}` } } : {}),
+        });
+      case AIGC_PROVIDER_TYPE.GOOGLE:
+        return createGoogleGenerativeAI({ apiKey, baseURL });
+      case AIGC_PROVIDER_TYPE.OPENAI:
+      default:
+        return createOpenAICompatible({ apiKey, baseURL, name: 'openai' });
+    }
+  }
+
+  private getLLMProvider(options: LLMOptions): LLMProvider {
     try {
-      const client = new OpenAI(options);
-      this.client = client;
+      options = { ...options, server: formatApiHost(options.server) };
+      this.validLLMOptions(options);
+
+      if (this.provider && this.options && isEqual(this.options, options)) {
+        return this.provider;
+      }
+
+      this.provider = this.createLLMProvider(options.type, { apiKey: options.key, baseURL: options.server });
       this.options = options;
-      return true;
+      return this.provider;
     } catch (error) {
-      logger.error(`Failed to initialize OpenAI client: ${(error as Error).message}`);
-      this.client = null;
-      if ((error as any).status === 401 || (error as any).status === 403) return false;
+      this.provider = null;
+      this.options = null;
       throw error;
     }
   }
 
-  public async chatStandard(
-    config: OpenAICommonAPIOtherOption,
-    options?: ClientOptions,
-  ): Promise<{ completion: any; sessionId: string }> {
-    if (options && isObject(options) && !isObjectEmpty(options)) {
-      await this.init(options);
+  private getLLMThinkProviderOptions(provider: LLMSupportProvider, level: LLMThinkProviderLevel): ProviderOptions {
+    if (level === 'off') return {};
+
+    const budgetMap = {
+      low: 1024,
+      medium: 4096,
+      high: 8192,
+      xhigh: 16384,
+    } as const;
+
+    switch (provider) {
+      case AIGC_PROVIDER_TYPE.ANTHROPIC:
+        return {
+          [AIGC_PROVIDER_TYPE.ANTHROPIC]: {
+            thinking: {
+              type: 'enabled',
+              budgetTokens: budgetMap[level],
+            },
+          },
+        };
+      case AIGC_PROVIDER_TYPE.GOOGLE:
+        return {
+          [AIGC_PROVIDER_TYPE.GOOGLE]: {
+            thinkingConfig: {
+              thinkingBudget: budgetMap[level],
+              includeThoughts: false,
+            },
+          },
+        };
+      case AIGC_PROVIDER_TYPE.OLLAMA:
+        return {};
+      case AIGC_PROVIDER_TYPE.OPENAI:
+        return {
+          [AIGC_PROVIDER_TYPE.OPENAI]: {
+            reasoningEffort: level,
+          },
+        };
+      default:
+        return {};
     }
-    if (!this.client) throw new Error('OpenAI client is not initialized.');
+  }
 
-    const { sessionId: rawSessionId, prompt, model, stream = false } = config;
-    const sessionId = rawSessionId || this.memory.createSession().id;
+  private getLLMToolProviderOptions(config: { [key in LLMToolName]?: boolean }): LLMToolProviderOptions {
+    if (!isObject(config) || isObjectEmpty(config)) return {};
 
+    const tools = {
+      ...(config.websearch ? { websearch: websearchTool } : {}),
+    };
+
+    return {
+      tools,
+      toolChoice: 'auto',
+      stopWhen: stepCountIs(100),
+    };
+  }
+
+  private buildMessages(sessionId: string, prompt: string): Array<ModelMessage> {
+    const history = this.memory.getMessage(sessionId, { recentCount: 10 });
+
+    return [
+      { role: 'system', content: `必须使用${t('lang')}回答\n\n${SYSTEM_PROMPT}` },
+      ...history.messages.map((msg: { role: 'system' | 'user' | 'assistant'; content: string }) => ({
+        role: msg.role,
+        content: msg.content,
+      })),
+      { role: 'user', content: prompt },
+    ];
+  }
+
+  private computedMessagesLength(sessionId: string): number {
+    const history = this.memory.getMessage(sessionId);
+    const historyLength = history.messages.length;
+    return historyLength;
+  }
+
+  private dealParentMessages(sessionId: string, parentId: number): void {
+    if (parentId % 2 !== 0) return;
+    const messageLength = this.computedMessagesLength(sessionId);
+    if (parentId < 1 || parentId >= messageLength) return;
+
+    const delIdxes = Array.from({ length: messageLength - parentId }, (_, i) => parentId + i);
+    this.memory.deleteMessage(sessionId, delIdxes);
+  }
+
+  public async chatStream(
+    config: ChatRequestOptions,
+    options: LLMOptions,
+  ): Promise<{ completion: ReadableStream; sessionId: string }> {
+    const client = this.getLLMProvider(options);
+    if (!client) throw new Error('LLM client is not initialized.');
+
+    const {
+      sessionId,
+      prompt,
+      parentId = 0,
+      temperature = 1,
+      topP = 0.95,
+      thinkingEnabled = false,
+      searchEnabled = false,
+    } = config;
+    const model = config.model || options.model;
+
+    this.dealParentMessages(sessionId, parentId);
+    const messageLength = this.computedMessagesLength(sessionId);
+    const messages = this.buildMessages(sessionId, prompt);
+
+    const passThrough = new PassThrough({ objectMode: true });
+
+    (async () => {
+      let fullMessage = '';
+
+      try {
+        this.memory.addMessage(sessionId, { role: 'user', content: prompt });
+
+        const { fullStream } = streamText({
+          model: client(model),
+          messages,
+          temperature,
+          topP,
+          ...this.getLLMToolProviderOptions({ websearch: searchEnabled }),
+          providerOptions: {
+            ...this.getLLMThinkProviderOptions(
+              options.type,
+              typeof thinkingEnabled === 'boolean' ? (thinkingEnabled ? 'medium' : 'off') : thinkingEnabled,
+            ),
+          },
+        });
+
+        for await (const chunk of fullStream) {
+          switch (chunk.type) {
+            case 'start':
+              passThrough.write({
+                type: 'ready',
+                sessionId,
+                parentId: messageLength + 1,
+                messageId: messageLength + 2,
+              });
+              break;
+            case 'text-delta': {
+              fullMessage += chunk.text;
+              break;
+            }
+            case 'error': {
+              logger.error(
+                `Failed to complete chat, the status code is ${(chunk.error as any).statusCode}, reason detail with ${(chunk.error as any).responseBody}`,
+              );
+              break;
+            }
+          }
+
+          passThrough.write(chunk);
+        }
+
+        this.memory.addMessage(sessionId, { role: 'assistant', content: fullMessage });
+      } finally {
+        passThrough.end();
+      }
+    })();
+
+    const webStream = Readable.toWeb(passThrough as Readable) as ReadableStream;
+    return { completion: webStream, sessionId };
+  }
+
+  public async chatText(
+    config: ChatRequestOptions,
+    options: LLMOptions,
+  ): Promise<{
+    completion: {
+      type: 'text-delta' | 'error';
+      text?: any;
+      error?: any;
+      parentId: number;
+      messageId: number;
+    };
+    sessionId: string;
+  }> {
+    const client = this.getLLMProvider(options);
+    if (!client) throw new Error('LLM client is not initialized.');
+
+    const {
+      sessionId,
+      prompt,
+      parentId = 0,
+      temperature = 1,
+      topP = 0.95,
+      thinkingEnabled = false,
+      searchEnabled = false,
+    } = config;
+    const model = config.model || options.model;
+
+    this.dealParentMessages(sessionId, parentId);
+    const messageLength = this.computedMessagesLength(sessionId);
+    const messages = this.buildMessages(sessionId, prompt);
+
+    let completion;
     try {
-      // Record user messages
       this.memory.addMessage(sessionId, { role: 'user', content: prompt });
 
-      // Get recent 10 context messages
-      const history = this.memory.getMessage(sessionId, { recentCount: 10 });
-      const timeout = configManager.timeout;
-
-      const completion = await this.client.chat.completions.create(
-        {
-          model,
-          messages: [{ role: 'system', content: `必须使用${t('lang')}回答\n\n${SYSTEM_PROMPT}` }, ...history.messages],
-          temperature: 0.3,
-          stream: stream ?? false,
-          stream_options: { include_usage: false },
+      const { text } = await generateText({
+        model: client(model),
+        messages,
+        temperature,
+        topP,
+        ...this.getLLMToolProviderOptions({ websearch: searchEnabled }),
+        providerOptions: {
+          ...this.getLLMThinkProviderOptions(
+            options.type,
+            typeof thinkingEnabled === 'boolean' ? (thinkingEnabled ? 'medium' : 'off') : thinkingEnabled,
+          ),
         },
-        { maxRetries: 1, timeout },
-      );
+      });
 
-      if (stream) {
-        const nodeStream = Readable.from(completion as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>);
-        const toCaller = new PassThrough({ objectMode: true });
-        const toInternal = new PassThrough({ objectMode: true });
-        const readyMessage = { id: 'ready', sessionId };
-        toCaller.write(readyMessage);
-        nodeStream.pipe(toCaller);
-        nodeStream.pipe(toInternal);
-
-        (async () => {
-          let fullMessage = '';
-          for await (const chunk of toInternal) {
-            const reply = chunk?.choices?.[0]?.delta?.content || '';
-            fullMessage += reply;
-          }
-          this.memory.addMessage(sessionId, { role: 'assistant', content: fullMessage });
-        })();
-
-        const webStream = ReadableStream.from(toCaller);
-        return { completion: webStream, sessionId };
-      } else {
-        const reply = (completion as OpenAI.Chat.Completions.ChatCompletion).choices?.[0]?.message?.content || '';
-        this.memory.addMessage(sessionId, { role: 'assistant', content: reply });
-        return { completion, sessionId };
-      }
+      completion = { type: 'text-delta', text, parentId: messageLength + 1, messageId: messageLength + 2 };
+      this.memory.addMessage(sessionId, { role: 'assistant', content: text });
     } catch (error) {
-      this.memory.deleteMessage(sessionId, [-1]);
-      logger.error(`Failed to chat: ${(error as Error).message}`);
-      throw error;
+      logger.error(
+        `Failed to complete chat, the status code is ${(error as any).statusCode}, reason detail with ${(error as any).responseBody}`,
+      );
+      completion = { type: 'error', error, parentId: messageLength + 1, messageId: messageLength + 2 };
+      this.memory.addMessage(sessionId, { role: 'assistant', content: '' });
     }
-  }
 
-  public async chatNormal(config: OpenAICommonAPIOtherOption, options?: ClientOptions): Promise<string> {
-    config.stream = false; // Ensure it's non-streaming
-    const resp = await this.chatStandard(config, options);
-    const text = (resp.completion as OpenAI.Chat.Completions.ChatCompletion)?.choices?.[0]?.message?.content || '';
-    return text;
+    return { sessionId, completion };
   }
 }
 

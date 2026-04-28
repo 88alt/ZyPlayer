@@ -150,7 +150,6 @@
             v-model="formData.aigc.type"
             :options="AIGC_PROVIDER_OPTIONS"
             :label="$t('common.provider')"
-            disabled
             :style="{ width: '296px' }"
           />
           <t-input v-model="formData.aigc.server" clearable :label="$t('common.api')" :style="{ width: '296px' }" />
@@ -336,8 +335,9 @@ const PLAYER_OPTIONS = computed(() => [
 const AIGC_PROVIDER_OPTIONS = computed(() => [
   // { value: AIGC_PROVIDER_TYPE.AMZON, label: t('aigc.field.providerMap.amazon') },
   { value: AIGC_PROVIDER_TYPE.ANTHROPIC, label: t('aigc.field.providerMap.anthropic') },
-  { value: AIGC_PROVIDER_TYPE.AZURE, label: t('aigc.field.providerMap.azure') },
-  { value: AIGC_PROVIDER_TYPE.GEMINI, label: t('aigc.field.providerMap.gemini') },
+  // { value: AIGC_PROVIDER_TYPE.AZURE, label: t('aigc.field.providerMap.azure') },
+  { value: AIGC_PROVIDER_TYPE.GOOGLE, label: t('aigc.field.providerMap.google') },
+  { value: AIGC_PROVIDER_TYPE.OLLAMA, label: t('aigc.field.providerMap.ollama') },
   { value: AIGC_PROVIDER_TYPE.OPENAI, label: t('aigc.field.providerMap.openai') },
 ]);
 

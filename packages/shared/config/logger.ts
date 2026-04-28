@@ -47,6 +47,7 @@ export enum LOG_MODULE {
   APP_LOCALE = 'AppLocale',
 
   CDP = 'Cdp',
+  SEARCH = 'Search',
   DATABASE = 'Database',
   FASTIFY = 'Fastify',
   FFMPEG = 'FFmpeg',
