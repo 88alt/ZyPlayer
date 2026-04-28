@@ -2,7 +2,7 @@
   <div
     class="xterm-container"
     :style="{
-      backgroundColor: themes[validTheme].background,
+      backgroundColor: themes[props.options.theme || 'XtermDark'].background,
     }"
   >
     <div ref="terminalDivRef" class="xterm-content"></div>
@@ -56,7 +56,7 @@ import { Terminal as XTerm } from '@xterm/xterm';
 import { merge } from 'es-toolkit';
 import JSON5 from 'json5';
 import type { PropType } from 'vue';
-import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { SearchBarAddon } from 'xterm-addon-search-bar';
 
 import { isMacOS } from '@/utils/systeminfo';
@@ -70,9 +70,11 @@ import { t } from '@/locales';
 
 export type IXTerm = XTerm;
 export type IXTermLog = LogLevel;
-export type IXTermTheme = keyof typeof themes;
+export type IXTermTheme = 'XtermDark' | 'XtermLight';
+export type IXTermSearchTheme = 'XtermSearchDark' | 'XtermSearchLight';
 export type IXTermOptions = Omit<ITerminalOptions, 'theme'> & {
   theme?: IXTermTheme;
+  searchTheme?: IXTermSearchTheme;
 };
 type ITerminalConsoleLog = Exclude<LogLevel, 'verbose' | 'silly' | 'none'> | 'log';
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
@@ -99,9 +101,10 @@ watch(
     if (xtermInstance.value) {
       Object.assign(xtermInstance.value.options, {
         ...val,
-        theme: { ...themes[validTheme.value] },
+        theme: { ...themes[val.theme || 'XtermDark'] },
       });
       xtermInstance.value.focus();
+      searchbarAddonRef.value?.applyTheme(themes[val.searchTheme || 'XtermSearchDark']);
     } else {
       await nextTick();
       connectTerminal();
@@ -118,11 +121,6 @@ watch(
   },
   { deep: true },
 );
-
-const validTheme = computed(() => {
-  if (props.options.theme && props.options.theme in themes) return props.options.theme;
-  return 'MonkeyCode';
-});
 
 onMounted(() => setup());
 onUnmounted(() => dispose());
@@ -224,7 +222,7 @@ const connectTerminal = () => {
         fontFamily: '"JetBrains Mono Variable", monospace',
         fontSize: 12,
       },
-      { ...props.options, ...{ theme: themes[validTheme.value] } },
+      { ...props.options, ...{ theme: themes[props.options.theme || 'XtermDark'] } },
     ),
   );
 
@@ -236,7 +234,10 @@ const connectTerminal = () => {
   const unicode11Addon = new Unicode11Addon();
   const webLinksAddon = new WebLinksAddon();
   const search = new SearchAddon();
-  const searchBar = new SearchBarAddon({ searchAddon: search as any });
+  const searchBar = new SearchBarAddon({
+    searchAddon: search,
+    theme: themes[props.options.searchTheme || 'XtermSearchDark'],
+  });
   searchbarAddonRef.value = searchBar;
   xtermInstance.value.loadAddon(fitAddon);
   if (isWebglSupported()) {
@@ -245,7 +246,7 @@ const connectTerminal = () => {
   }
 
   xtermInstance.value.loadAddon(search);
-  xtermInstance.value.loadAddon(searchBar as any);
+  xtermInstance.value.loadAddon(searchBar);
   xtermInstance.value.loadAddon(unicode11Addon);
   xtermInstance.value.loadAddon(webLinksAddon);
 
@@ -423,38 +424,6 @@ defineExpose({
   .xterm-content {
     width: 100%;
     height: 100%;
-
-    :deep(.xterm-search-bar__addon) {
-      box-shadow: var(--td-shadow-1);
-      background-color: var(--td-bg-color-component-hover);
-      transition: transform 200ms linear;
-      padding: var(--td-comp-paddingTB-xs) var(--td-comp-paddingLR-xs);
-
-      .search-bar__input {
-        background-color: var(--td-bg-color-component);
-        color: var(--td-text-color-primary);
-        border-radius: var(--td-radius-default);
-        border-width: 1px;
-        border-style: solid;
-        border-color: transparent;
-
-        &:focus {
-          outline: none;
-          border-color: var(--td-brand-color);
-          box-shadow: 0 0 0 1px var(--td-brand-color-focus);
-        }
-      }
-
-      .search-bar__btn {
-        background-color: transparent;
-        border-radius: var(--td-radius-default);
-        margin-left: var(--td-comp-margin-xs);
-
-        &.prev {
-          margin-left: var(--td-comp-margin-xs);
-        }
-      }
-    }
   }
 }
 </style>

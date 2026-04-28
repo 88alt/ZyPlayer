@@ -427,7 +427,8 @@ const termConf = ref<IXTermOptions>({
   scrollback: 10000,
   scrollSensitivity: 1,
   smoothScrollDuration: 0,
-  theme: storeSetting.displayTheme === THEME.LIGHT ? 'Tomorrow' : 'MonkeyCode',
+  theme: storeSetting.displayTheme === THEME.LIGHT ? 'XtermLight' : 'XtermDark',
+  searchTheme: storeSetting.displayTheme === THEME.LIGHT ? 'XtermSearchLight' : 'XtermSearchDark',
 });
 
 const reqFormData = ref<IReqConfig>({
@@ -511,7 +512,8 @@ watch(
     codeEditConf.value.theme = val === THEME.LIGHT ? 'code-light' : 'code-dark';
     htmlEditConf.value.theme = val === THEME.LIGHT ? 'code-light' : 'code-dark';
 
-    termConf.value.theme = val === THEME.LIGHT ? 'Tomorrow' : 'MonkeyCode';
+    termConf.value.theme = val === THEME.LIGHT ? 'XtermLight' : 'XtermDark';
+    termConf.value.searchTheme = val === THEME.LIGHT ? 'XtermSearchLight' : 'XtermSearchDark';
   },
 );
 
