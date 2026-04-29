@@ -1,9 +1,73 @@
-import binaryHelpMD from './assets/binary-help.md?raw';
-import customPlayerMD from './assets/custom-player.md?raw';
-import disclaimerMD from './assets/disclaimer.md?raw';
-import labEditHelpMD from './assets/lab-edit-help.md?raw';
-import liveEpgMD from './assets/live-epg.md?raw';
-import liveLogoMD from './assets/live-logo.md?raw';
+const binaryHelpMD = `- Click to install and it will be added to the task queue, no need to click multiple times to trigger, wait patiently.
+- If the installation takes too long, try refreshing the page and re-installing.
+- Some installations may require scientific internet access (limited by network provider).
+- Some binaries are only compatible with some operating systems (limited by service providers).
+- Check logs for specific reasons for failed installations.`;
+
+const customPlayerMD = `> Dependent software path or env
+
+- How to set:
+  - Windows: \`software -> right-click -> properties -> target\`
+  - Mac: \`/Applications/SoftwareName.app\`
+  - Linux: \`whereis SoftwareName\`
+- Common player \`[modify path to suit]\`
+  - PotPlayer(Window): \`C:\\Program Files (x86)\\PotPlayer\\PotPlayerMini64.exe\`
+  - VLC(Window): \`C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe\`
+  - IINA(Mac): \`/Applications/IINA.app\`
+  - VLC(Mac): \`/Applications/VLC.app\`
+  - VLC(Linux): \`/usr/bin/vlc\``;
+
+const disclaimerMD = `> Release date: April 30, 2026
+
+> Effective Date: April 30, 2026
+
+**Thank you for choosing to use \`zyfun\` (hereinafter referred to as the Software), the user (hereinafter referred to as you) before using the Software, please read and understand the following:**
+
+1. If you do not agree with any of the following, please stop using the Software immediately. Once you start using the Software, you agree.
+2. This software is for personal study, research and technical exchange only, and only provides display functions, all data resources are provided by your own production, including but not limited to video sites, media sharing sites. The Software has no control over the legality, accuracy, completeness or availability of these data resources, and therefore is not responsible for the authenticity, legality or applicability of the content of the resources.
+3. We would like to remind you that third-party advertisements, product promotion information and other related content may appear in the videos or pop-ups, which are implanted by the data resources provided by you, so please be vigilant in the process of experiencing the authenticity and legitimacy of such information, and the Software will not be responsible for any loss incurred as a result.
+4. This software uses web crawler (including sniffing) technology to obtain part of the data to provide you with more comprehensive information services, it is worth noting that these data have not been authorized. The copyright holder has the right to charge you the relevant fees, this software is not responsible for this part of the license fee. Including but not limited to \`douban.com\` \`ky.live\` \`enlightent.cn\` \`komect.com\` \`hismarttv.com\` \`huan.tv\` \`atianqi.com\`and \`112114.xyz\`.
+5. The Software only uses \`iframe\` technology to embed the content of multiple video platforms, including but not limited to \`360 Video(360kan.com)\` \`IQIYI(iq.com)\` \`WeTv(wetv.vip)\` \`YouKu(youku.tv)\` \`MangoTV(w.mgtv.com)\` \`Letv(le.com)\` \`Sohu Video(tv.sohu.com)\` \`PPTV(pptv.com)\`and\`Bilibili(bilibili.tv)\`. You should comply with the privacy policy or service agreement of the corresponding platform.
+6. This software contains the option of "Remove Ads" to enhance the user experience, and you should be aware that there may be compatibility problems when this option is turned on. You should be aware that there may be compatibility problems when this option is enabled. At the same time, this option may violate the terms of business of third-party vendors, and you should comply with the terms and conditions of the corresponding vendor.
+7. In order to comply with the content auditing requirements of the Cybersecurity Law, this software does not have the ability to audit the content and therefore does not provide the service of sending pop-ups. The content of the pop-up screen display may contain undesirable remarks, due to the data from the data resources you provide, we can not clean this process, you should ignore this part of the pop-up screen content. We call on users to use civilized language, and work together to maintain a healthy network environment.
+8. We realize that privacy is priceless. Therefore, this software never collects any user data, except for the necessary backup (this process is managed by the third-party vendors you provide), all information is strictly stored locally to ensure that your data is only under your control. The Software does not share any of your information with any third party.
+9. According to the relevant regulations of Artificial Generative Intelligence (AIGC), users shall strictly observe the principles of lawful use, content specification and prohibition of misuse when using AIGC services.The content generated by AIGC is for reference only, and its accuracy, completeness or suitability is not guaranteed and does not represent our position. The relevant data will be shared to the third party AIGC service provider.
+10. This software is completely \`free\` and \`open source\`, if you pay to download this software through any channel, it means you have been cheated. If you like the software, you can sponsor us to show your support for open source software, but you should clearly understand that sponsorship does not guarantee any service and does not constitute any form of contractual relationship.
+11. You are solely responsible for all operations and results of your use of the Software. The Software is not responsible for any content you obtain through the use of the Software, including but not limited to the accuracy, copyright compliance, completeness, security and availability of media resources. No liability is accepted for any loss, damage or legal dispute arising from the use of the Software.
+12. You must comply with the relevant laws and regulations of your country or region when using the Software, and are prohibited from using the Software to conduct any unlawful activities, including, but not limited to, producing, uploading, disseminating, storing any illegal, infringing, obscene, defamatory, malware and other content. If you violate the relevant laws and regulations, you need to bear the corresponding legal responsibility.
+13. This Agreement applies to all users of the Software. The Software reserves the right to modify and update this statement at any time and notify users in the form of \`software updates\` or \`Github Readme\` documents. Please review and comply with the latest agreement periodically.`;
+
+const labEditHelpMD = `- Init
+  - The ext parameter will be lost every time it is initialized, to use the ext parameter you need to go to [Setting -> Film Config] to configure the debug source manually.
+  - If the debug source doesn't exist, you can refresh the page or go to [Setting -> Film Config] to manually create a debug source (the id field must be debug, others are optional).
+- Editor: If you get a lot of syntax errors, switch to another adapter and reselect it.
+- Logger: Some adapters do not support log output.
+- Adapter
+  - T4: Go to [Lab->Extension Manager->Plugin] install the corresponding module
+  - T3[py]
+    - For those who have adapted the plugin, go to[Lab->Extension Manager->Environment] install uv module
+    - Click initialize will automatically install python environment, first time you need to wait patiently, if it fails, you need to do it manually.`;
+
+const liveEpgMD = `**The absence of electronic program listings for some channels is a normal phenomenon and is controlled by a third-party data platform.**
+
+> The interface supports \`diyp\` and \`xml\` modes.
+
+- diyp
+  - Requires the parameters {'{'}name{'}'} (identifying the channel name to be queried) and {'{'}date{'}'} (identifying the channel date to be queried).
+  - e.g. \`https://epg.xxx.com/?ch={'{'}name{'}'}&date={'{'}date{'}'}\`
+- xml
+  - This mode requires no configuration parameters
+  - This mode does not support date lookups
+  - e.g. \`http://epg.xxx.com/e.xml\`
+
+> Priority: [Setting->Live Config->Single Source-Epg field] > [Setting->BasicConfig->Live-Epg field]`;
+
+const liveLogoMD = `**It is normal that some channels are not labeled, which is controlled by third-party data platforms.**
+
+- Configuration parameter {'{'}name{'}'}(identify the name of the station) is required.
+- e.g. \`https://epg.xxx.com/logo/{name}.png\`
+
+> Priority: [Channel's own logo field] > [Setting-Live Config-Single Source-Logo field] > [Setting-BasicConfig-Live- Logo field]`;
 
 export default {
   customPlayer: {
