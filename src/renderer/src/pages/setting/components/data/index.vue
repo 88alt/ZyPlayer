@@ -256,7 +256,7 @@ const TABLE_OPTIONS = computed(() => [
   { label: t('pages.moment.history.title'), value: 'history' },
   { label: t('pages.moment.star.title'), value: 'star' },
   { label: t('pages.setting.title'), value: 'setting' },
-  { label: t('pages.plugin.title'), value: 'plugin' },
+  { label: t('pages.lab.extension.plugin.title'), value: 'plugin' },
 ]);
 
 const HISTORY_TYPE_MAP: Record<IDataImportType, 6 | 7> = { simple: 6, complete: 7 };
