@@ -24,14 +24,14 @@
         >
           <div class="data-item">
             <p class="title title-label">{{ $t('common.stepNum', [1]) }}</p>
-            <p class="tip">{{ $t('pages.plugin.install.tip.file') }}</p>
+            <p class="tip">{{ $t('pages.lab.extension.plugin.install.tip.file') }}</p>
             <t-button block class="mg-b-s" @click="handleGoDir">
-              {{ $t('pages.plugin.install.goDir') }}
+              {{ $t('pages.lab.extension.plugin.install.goDir') }}
             </t-button>
           </div>
           <div class="data-item">
             <p class="title title-label">{{ $t('common.stepNum', [2]) }}</p>
-            <p class="tip">{{ $t('pages.plugin.install.tip.input') }}</p>
+            <p class="tip">{{ $t('pages.lab.extension.plugin.install.tip.input') }}</p>
             <t-form-item name="pluginName" label-width="0px">
               <t-select v-model="formData.id" :options="pluginList" clearable @focus="onInputFocus"></t-select>
             </t-form-item>

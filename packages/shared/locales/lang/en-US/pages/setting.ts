@@ -102,11 +102,10 @@ export default {
   barrage: {
     title: 'Barrage',
     param: {
-      base: 'Basic Parameter',
-      map: 'Map Parameter',
+      base: 'Basic Parameters',
+      map: 'Mapping Parameters',
     },
     tip: {
-      base: '',
       map: 'The position corresponding to the barrage return, starting from index 0.',
     },
     field: {

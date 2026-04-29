@@ -40,9 +40,9 @@
                 <t-tag v-if="formData.isActive" theme="success" shape="round" size="small">
                   {{ $t('pages.lab.extension.plugin.info.start') }}
                 </t-tag>
-                <t-tag v-else theme="danger" shape="round" size="small">{{
-                  $t('pages.lab.extension.plugin.info.stop')
-                }}</t-tag>
+                <t-tag v-else theme="danger" shape="round" size="small">
+                  {{ $t('pages.lab.extension.plugin.info.stop') }}
+                </t-tag>
               </div>
               <div class="author info-item">
                 <verified-icon class="icon" />

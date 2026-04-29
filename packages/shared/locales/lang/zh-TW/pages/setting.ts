@@ -104,7 +104,6 @@ export default {
       map: '映射參數',
     },
     tip: {
-      base: '',
       map: '對應彈幕返回的位置, 下標從0開始',
     },
     field: {

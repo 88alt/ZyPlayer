@@ -246,24 +246,8 @@ export default {
         title: '應用信息',
         author: '作者',
         desc: '描述',
-        status: '狀態',
         stop: '停止',
         start: '啟動',
-        error: '出錯',
-      },
-      control: {
-        title: '控製中心',
-        start: '啟動服務',
-        stop: '停止服務',
-        devtool: '開發者工具',
-        upgrade: '升級',
-        update: '更新',
-        install: '安裝',
-        uninstall: '卸載',
-        uninstallTip: '卸載後將無法使用, 請謹慎操作',
-        cancelTip: '當前插件存在未執行完命令, 請稍後',
-        devtoolDomAttchErrTip: '打開開發者工具失敗, DOM未掛載到頁面上',
-        loadUiEntryError: '加載入口失敗',
       },
       content: {
         title: 'README',
@@ -271,14 +255,12 @@ export default {
       webview: {
         title: '內容視圖',
       },
-      installDialog: {
+      install: {
         tip: {
-          tip1: '將項目放入指定目錄中, 文件名不可有特殊字符(如已放入則忽略)',
-          tip2: '輸入項目名進行安裝(項目文件名)',
+          file: '將項目放入目錄中, 文件名不可含特殊字符(如已放入則忽略)',
+          input: '選擇需安裝項目目錄',
         },
-        step: '步驟',
-        goDir: '前往指定目錄',
-        confirm: '安裝',
+        goDir: '前往插件目錄',
       },
     },
     env: {

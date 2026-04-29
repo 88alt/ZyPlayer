@@ -236,28 +236,19 @@ export default {
       server: 'Server',
       file: 'File',
       empty: 'Empty',
+      field: {
+        typeMap: {
+          ui: 'UI',
+          system: 'System',
+          mix: 'Mixed',
+        },
+      },
       info: {
         title: 'Info',
         author: 'Author',
-        desc: 'Desc',
-        status: 'Status',
+        desc: 'Description',
         stop: 'Stop',
         start: 'Start',
-        error: 'Error',
-      },
-      control: {
-        title: 'Control',
-        start: 'Start',
-        stop: 'Stop',
-        devtool: 'Devtool',
-        upgrade: 'Upgrade',
-        update: 'Update',
-        install: 'Install',
-        uninstall: 'UnInstall',
-        uninstallTip: 'It will not work after uninstall, Please careful',
-        cancelTip: 'The current plug-in has an incomplete command, please wait moment',
-        devtoolDomAttchErrTip: 'The DOM is not mounted on the page, and the developer Tool failed to open',
-        loadUiEntryError: 'Failed to load entry',
       },
       content: {
         title: 'README',
@@ -265,14 +256,12 @@ export default {
       webview: {
         title: 'ContentView',
       },
-      installDialog: {
+      install: {
         tip: {
-          tip1: 'Put the project into the specified directory, the file name must not have any special characters (if it is already in the directory, it will be ignored).',
-          tip2: 'Enter the project name to install (project file name)',
+          file: 'Place the project in the directory, the file name cannot contain special characters (ignore if already placed)',
+          input: 'Select the directory of the project to be installed',
         },
-        step: 'Step',
-        goDir: 'Go to Specified Directory',
-        confirm: 'Install',
+        goDir: 'Go to the plugin directory',
       },
     },
     env: {

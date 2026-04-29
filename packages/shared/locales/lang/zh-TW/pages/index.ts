@@ -6,7 +6,6 @@ import md from './md';
 import moment from './moment';
 import parse from './parse';
 import player from './player';
-import plugin from './plugin';
 import setting from './setting';
 
 export default {
@@ -18,6 +17,5 @@ export default {
   moment,
   parse,
   player,
-  plugin,
   setting,
 };

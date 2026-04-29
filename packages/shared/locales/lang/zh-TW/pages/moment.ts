@@ -1,5 +1,5 @@
 export default {
-  name: '時刻',
+  title: '時刻',
   history: {
     title: '歷史',
   },

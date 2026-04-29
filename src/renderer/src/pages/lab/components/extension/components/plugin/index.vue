@@ -18,13 +18,13 @@
       </template>
       <template #type="{ row }">
         <t-tag v-if="row.type === 1" theme="success" shape="round" variant="light-outline">
-          {{ $t('pages.plugin.field.typeMap.ui') }}
+          {{ $t('pages.lab.extension.plugin.field.typeMap.ui') }}
         </t-tag>
         <t-tag v-else-if="row.type === 2" theme="warning" shape="round" variant="light-outline">
-          {{ $t('pages.plugin.field.typeMap.system') }}
+          {{ $t('pages.lab.extension.plugin.field.typeMap.system') }}
         </t-tag>
         <t-tag v-else-if="row.type === 3" theme="danger" shape="round" variant="light-outline">
-          {{ $t('pages.plugin.field.typeMap.mix') }}
+          {{ $t('pages.lab.extension.plugin.field.typeMap.mix') }}
         </t-tag>
       </template>
       <template #isActive="{ row }">

@@ -51,8 +51,5 @@ export default {
     ext: 'Extension',
     group: 'Group',
     category: 'Category',
-    searchClose: 'Close',
-    searchOnly: 'Only',
-    searchGather: 'Gather',
   },
 };
