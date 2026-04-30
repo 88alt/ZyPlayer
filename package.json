@@ -1,6 +1,6 @@
 {
   "name": "zyfun",
-  "version": "3.4.5",
+  "version": "3.4.6-rc1",
   "private": true,
   "description": "Discover the world by watching movies.",
   "main": "./out/main/index.js",
