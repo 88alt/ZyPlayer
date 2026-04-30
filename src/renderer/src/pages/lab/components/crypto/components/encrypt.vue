@@ -7,7 +7,7 @@
           ref="formRef"
           :data="formData"
           :rules="RULES"
-          :label-width="80"
+          :label-width="90"
           required-mark-position="right"
           label-align="left"
           reset-type="initial"

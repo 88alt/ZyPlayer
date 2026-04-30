@@ -19,7 +19,6 @@ export const websearchTool = tool({
 
   execute: async ({ query }) => {
     const result = await toolSearchProvider.search(query);
-    console.log('Search results:', result);
     return result;
   },
 });

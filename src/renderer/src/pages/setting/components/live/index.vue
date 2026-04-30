@@ -31,7 +31,7 @@
         <t-switch v-model="row.isActive" :disabled="row.key === 'debug'" @change="handleOpActiveSwitch(row.id)" />
       </template>
       <template #op="slotProps">
-        <t-space>
+        <t-space size="small">
           <t-link theme="primary" @click="handleOperation('check', [slotProps.row.id])">
             {{ $t('common.check') }}
             <template v-if="slotProps.row.check" #prefix-icon>

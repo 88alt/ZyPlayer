@@ -102,8 +102,8 @@ export default {
   barrage: {
     title: 'Barrage',
     param: {
-      base: 'Basic Parameters',
-      map: 'Mapping Parameters',
+      base: 'Basic Params',
+      map: 'Mapping Params',
     },
     tip: {
       map: 'The position corresponding to the barrage return, starting from index 0.',
@@ -117,7 +117,7 @@ export default {
       color: 'Color',
     },
     popup: {
-      url: `Configuration parameter {'{'}id{'}'} is required (the id needs to be queried for the name of the barrage id).`,
+      url: `Configuration params {'{'}id{'}'} is required (the id needs to be queried for the name of the barrage id).`,
       nested: 'Nested values are accessed using dot notation (.)',
     },
   },
@@ -129,9 +129,9 @@ export default {
   proxy: {
     title: 'Proxy',
     typeMap: {
-      system: 'System Proxy',
-      custom: 'Custom Proxy',
-      direct: 'Direct Proxy',
+      system: 'System',
+      custom: 'Custom',
+      direct: 'Direct',
     },
     field: {
       url: 'Proxy',

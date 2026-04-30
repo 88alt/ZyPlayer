@@ -37,7 +37,7 @@
         <span v-else-if="row.type === SITE_TYPE.T3_APPFOX">{{ $t('pages.film.field.typeMap.t3-csp_appfox') }}</span>
       </template>
       <template #op="slotProps">
-        <t-space>
+        <t-space size="small">
           <t-link theme="primary" @click="handleOperation('check', [slotProps.row.id])">
             {{ $t('common.check') }}
             <template v-if="slotProps.row.check" #prefix-icon>

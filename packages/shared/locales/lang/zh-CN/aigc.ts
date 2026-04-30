@@ -47,7 +47,7 @@ export default {
     modelChange: '由 {0} 模型提供服务',
     stopGenerating: '用户已停止内容生成',
   },
-  declare: '内容由AI生成, 仅供参考',
+  declare: '内容由AI生成, 请仔细甄别',
   noParam: '参数不正确, 请前往 [设置->基础配置] 配置AIGC相关数据',
   message: {
     createSessionFailed: '创建会话失败',

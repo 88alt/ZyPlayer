@@ -4,7 +4,7 @@ export default {
     title: 'History',
   },
   star: {
-    title: 'Favorite',
+    title: 'Follow',
     checkUpdate: 'Update',
     isUpdate: 'Updated',
   },

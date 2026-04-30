@@ -35,9 +35,8 @@
 
           <div class="paction-item more">
             <t-dropdown trigger="click">
-              <t-button theme="default" shape="square" variant="text">
-                <more-icon />
-              </t-button>
+              <more-icon />
+
               <t-dropdown-menu>
                 <t-dropdown-item>
                   <div class="setting-item" @click="handleSettingDialog">

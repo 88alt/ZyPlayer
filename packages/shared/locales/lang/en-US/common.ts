@@ -91,7 +91,7 @@ export default {
   update: 'Update',
   info: 'Info',
   explain: 'Explain',
-  param: 'Parameters',
+  param: 'Params',
   url: 'Url',
   link: 'Link',
   api: 'Api',
@@ -114,7 +114,7 @@ export default {
   password: 'Password',
   request: {
     title: 'Request',
-    param: 'Parameters',
+    param: 'Params',
     headers: 'Headers',
     data: 'Data',
     method: 'Method',
@@ -146,8 +146,8 @@ export default {
     noMore: 'No more',
     noUrl: 'No URL',
     noEnable: 'Data is not enabled yet',
-    noRequiredParam: 'Missing required parameters {0}',
-    errRequiredParam: 'Required parameter {0} format error',
+    noRequiredParam: 'Missing required params {0}',
+    errRequiredParam: 'Required params {0} format error',
     installing: 'Installing, please refresh later to check...',
   },
   popup: {

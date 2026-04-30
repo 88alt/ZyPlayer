@@ -38,7 +38,7 @@ const disclaimerMD = `> Release date: April 30, 2026
 13. This Agreement applies to all users of the Software. The Software reserves the right to modify and update this statement at any time and notify users in the form of \`software updates\` or \`Github Readme\` documents. Please review and comply with the latest agreement periodically.`;
 
 const labEditHelpMD = `- Init
-  - The ext parameter will be lost every time it is initialized, to use the ext parameter you need to go to [Setting -> Film Config] to configure the debug source manually.
+  - The ext params will be lost every time it is initialized, to use the ext params you need to go to [Setting -> Film Config] to configure the debug source manually.
   - If the debug source doesn't exist, you can refresh the page or go to [Setting -> Film Config] to manually create a debug source (the id field must be debug, others are optional).
 - Editor: If you get a lot of syntax errors, switch to another adapter and reselect it.
 - Logger: Some adapters do not support log output.
@@ -53,10 +53,10 @@ const liveEpgMD = `**The absence of electronic program listings for some channel
 > The interface supports \`diyp\` and \`xml\` modes.
 
 - diyp
-  - Requires the parameters {'{'}name{'}'} (identifying the channel name to be queried) and {'{'}date{'}'} (identifying the channel date to be queried).
+  - Requires the params {'{'}name{'}'} (identifying the channel name to be queried) and {'{'}date{'}'} (identifying the channel date to be queried).
   - e.g. \`https://epg.xxx.com/?ch={'{'}name{'}'}&date={'{'}date{'}'}\`
 - xml
-  - This mode requires no configuration parameters
+  - This mode requires no configuration params
   - This mode does not support date lookups
   - e.g. \`http://epg.xxx.com/e.xml\`
 
@@ -64,7 +64,7 @@ const liveEpgMD = `**The absence of electronic program listings for some channel
 
 const liveLogoMD = `**It is normal that some channels are not labeled, which is controlled by third-party data platforms.**
 
-- Configuration parameter {'{'}name{'}'}(identify the name of the station) is required.
+- Configuration params {'{'}name{'}'}(identify the name of the station) is required.
 - e.g. \`https://epg.xxx.com/logo/{name}.png\`
 
 > Priority: [Channel's own logo field] > [Setting-Live Config-Single Source-Logo field] > [Setting-BasicConfig-Live- Logo field]`;

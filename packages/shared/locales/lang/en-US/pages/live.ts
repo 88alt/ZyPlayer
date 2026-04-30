@@ -16,7 +16,7 @@ export default {
     logo: 'Logo',
   },
   popup: {
-    epg: `diyp need to configure parameters {'{'}name{'}'}(identify the channel name to be queried) and {'{'}date{'}'}(identify the date of the channel to be queried); xml don't need to configure parameters.`,
-    logo: `Configuration parameter {'{'}name{'}'} is required (the logo needs to be queried for the name of the platform).`,
+    epg: `diyp need to configure params {'{'}name{'}'}(identify the channel name to be queried) and {'{'}date{'}'}(identify the date of the channel to be queried); xml don't need to configure params.`,
+    logo: `Configuration params {'{'}name{'}'} is required (the logo needs to be queried for the name of the platform).`,
   },
 };

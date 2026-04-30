@@ -31,7 +31,7 @@
         <t-switch v-model="row.isActive" :disabled="row.type === 1" @change="handleOpActiveSwitch(row.id)" />
       </template>
       <template #op="slotProps">
-        <t-space>
+        <t-space size="small">
           <t-link
             :disabled="![1, 3].includes(slotProps.row.type)"
             theme="primary"
@@ -47,7 +47,7 @@
             theme="danger"
             @confirm="handleOperation('delete', [slotProps.row.id])"
           >
-            <t-link theme="danger">{{ $t('common.uninstall') }}</t-link>
+            <t-link theme="danger">{{ $t('common.delete') }}</t-link>
           </t-popconfirm>
         </t-space>
       </template>
@@ -96,10 +96,10 @@ const installQueue = new PQueue({ concurrency: 1 });
 const activeInstallIds = new Set<string>();
 
 const operations = computed(() => [
-  { label: t('common.install'), value: 'add' },
+  { label: t('common.add'), value: 'add' },
   { label: t('common.enable'), value: 'enable' },
   { label: t('common.disable'), value: 'disable' },
-  { label: t('common.uninstall'), value: 'delete' },
+  { label: t('common.delete'), value: 'delete' },
   // { label: t('common.store'), value: 'store' },
   { label: t('pages.lab.extension.env.title'), value: 'env' },
   { label: t('common.help'), value: 'help' },

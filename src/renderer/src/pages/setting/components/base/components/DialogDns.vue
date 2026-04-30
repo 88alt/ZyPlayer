@@ -3,6 +3,7 @@
     v-model:visible="formVisible"
     show-in-attached-element
     :attach="`.${attachContent}`"
+    width="auto"
     placement="center"
     destroy-on-close
     lazy

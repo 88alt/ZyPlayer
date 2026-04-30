@@ -220,8 +220,8 @@ export default {
   sniffer: {
     title: 'Media Sniffer',
     field: {
-      initScript: 'Init Script',
-      runScript: 'Run Script',
+      initScript: 'Init',
+      runScript: 'Run',
       customRegex: 'Match',
       snifferExclude: 'Exclude',
     },

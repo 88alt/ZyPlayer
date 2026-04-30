@@ -47,7 +47,7 @@ export default {
       },
     },
   },
-  declare: '內容由AI生成, 僅供參考',
+  declare: '內容由AI生成, 請仔細甄別',
   noParam: '參數不正確, 請前往 [設置->基礎配置] 配置AIGC相關數據',
   message: {
     createSessionFailed: '創建會話失敗',
