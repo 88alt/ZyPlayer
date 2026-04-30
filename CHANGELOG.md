@@ -2,7 +2,7 @@
 
 > All notable changes to this project will be documented in this file.
 
-## 3.4.5
+## 3.4.5 (2026-04-30)
 
 - 特性: 热搜支持欢网
 - 优化: 重构后端schema和传参类型
