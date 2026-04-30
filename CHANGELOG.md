@@ -2,6 +2,13 @@
 
 > All notable changes to this project will be documented in this file.
 
+## 3.4.6
+
+- 修复: 影视类只有一个同时存在筛选导致整体被隐藏
+- 变动: 依赖库升级
+
+[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.6)
+
 ## 3.4.5 (2026-04-30)
 
 - 特性: 热搜支持欢网

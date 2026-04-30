@@ -3,7 +3,7 @@
     <common-nav :list="navList" :active="active.nav" search class="sidebar" @change="onNavChange" />
 
     <div class="content">
-      <div v-if="classList.length > 1" class="header">
+      <div v-if="classList.length > 1 || (classList.length === 1 && active.class !== REC_CLASS_TAG)" class="header">
         <div class="left-op-container">
           <title-menu :list="classList" :active="active.class" class="nav" @change="onClassChange" />
         </div>
@@ -227,6 +227,8 @@ import emitter from '@/utils/emitter';
 
 import DialogDetailView from './components/DialogDetail.vue';
 
+const REC_CLASS_TAG = '__rec__';
+
 const storePlayer = usePlayerStore();
 
 const renderDefaultLazy = () => <LazyBg class="render-icon" />;
@@ -265,7 +267,7 @@ const actionData = ref<ICmsActionBase>({} as unknown as ICmsActionBase);
 
 const active = ref({
   nav: '',
-  class: '' as ICmsInfo['vod_id'],
+  class: REC_CLASS_TAG as ICmsInfo['vod_id'],
   filter: {},
   folder: '',
   searchCurrent: '',
@@ -368,7 +370,7 @@ const getCmsHome = async (source: IModels['site']): Promise<number> => {
 
   if (isArray(resp.class) && !isArrayEmpty(resp.class)) {
     classList.value = [
-      { type_id: '', type_name: computed(() => t('common.recommend')) },
+      { type_id: REC_CLASS_TAG, type_name: computed(() => t('common.recommend')) },
       ...resp.class.map((item) => ({
         type_id: item.type_id,
         type_name: item.type_name,
@@ -388,7 +390,7 @@ const getCmsHome = async (source: IModels['site']): Promise<number> => {
 const getCmsCategory = async (source: IModels['site']): Promise<number> => {
   const { pageIndex } = pagination.value;
 
-  const tid = active.value.folder || active.value.class;
+  const tid = active.value.folder || (active.value.class === REC_CLASS_TAG ? '' : active.value.class);
   const f = active.value.filter || {};
 
   const resp = await fetchCmsCategory({
@@ -503,8 +505,8 @@ const loadMore = async ($state: ILoadStateHdandler) => {
       !searchValue.value &&
       length === 0 &&
       filmList.value.length === 0 &&
-      classList.value.length > 1 &&
-      (active.value.folder || active.value.class) === ''
+      classList.value.length > 1 && // Always greater than 1
+      active.value.class === REC_CLASS_TAG
     ) {
       classList.value.shift();
       active.value.class = classList.value[0].type_id;
@@ -859,7 +861,7 @@ const defaultConfig = () => {
   active.value.lazyload = false;
   active.value.loadStatus = 'complete';
   active.value.folder = '';
-  active.value.class = '';
+  active.value.class = REC_CLASS_TAG;
   active.value.nav = '';
   active.value.filter = {};
 
@@ -885,7 +887,7 @@ const reloadConfig = async ({ data: eventData }) => {
 const onNavChange = async (id: string) => {
   try {
     defaultConfig();
-    active.value.class = '';
+    active.value.class = REC_CLASS_TAG;
     active.value.nav = id;
     config.value.default = config.value.list.find((item) => item.id === id)!;
 
