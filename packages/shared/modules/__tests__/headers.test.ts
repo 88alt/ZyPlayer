@@ -24,7 +24,7 @@ describe('headers', () => {
       const result = convertUriToStandard(url);
       expect(result).toEqual({
         redirect: 'https://example.com/path',
-        headers: { custom: 'abc' },
+        headers: { Custom: 'abc' },
       });
     });
 
@@ -33,7 +33,7 @@ describe('headers', () => {
       const result = convertUriToStandard(url);
       expect(result).toEqual({
         redirect: 'https://example.com/path',
-        headers: { Cookie: 'abc', custom: 'abc' },
+        headers: { Cookie: 'abc', Custom: 'abc' },
       });
     });
 
@@ -45,7 +45,7 @@ describe('headers', () => {
         redirect: 'https://example.com/path',
         headers: {
           Cookie: 'tok&en',
-          custom: '你好 & 123',
+          Custom: '你好 & 123',
         },
       });
     });
@@ -55,7 +55,7 @@ describe('headers', () => {
       const result = convertUriToStandard(url);
       expect(result).toEqual({
         redirect: 'https://example.com/path?foo=bar#section',
-        headers: { Cookie: 'abc', custom: 'abc' },
+        headers: { Cookie: 'abc', Custom: 'abc' },
       });
     });
 
@@ -65,7 +65,7 @@ describe('headers', () => {
       const result = convertUriToStandard(url);
       expect(result).toEqual({
         redirect: 'https://example.com/path',
-        headers: { Authorization: 'tok&en', custom: 'abc' },
+        headers: { Authorization: 'tok&en', Custom: 'abc' },
       });
     });
   });
@@ -82,7 +82,7 @@ describe('headers', () => {
     });
 
     it('should handle normal headers into @Headers (encoded)', () => {
-      const headers = { Authorization: 'token123', custom: 'abc' };
+      const headers = { Authorization: 'token123', Custom: 'abc' };
       const result = convertStandardToUri(baseUrl, headers, true);
 
       const expectedHeaders = encodeURIComponent(JSON.stringify(headers));
@@ -91,7 +91,7 @@ describe('headers', () => {
     });
 
     it('should handle normal headers into @Headers (not encoded)', () => {
-      const headers = { Authorization: 'token123', custom: 'abc' };
+      const headers = { Authorization: 'token123', Custom: 'abc' };
       const result = convertStandardToUri(baseUrl, headers, false);
 
       const expected = `${baseUrl}@Headers=${JSON.stringify(headers)}`;
@@ -99,39 +99,39 @@ describe('headers', () => {
     });
 
     it('should handle mixed UNSAFE_HEADERS and normal headers', () => {
-      const headers = { Cookie: 'abc', custom: 'abc' };
+      const headers = { Cookie: 'abc', Custom: 'abc' };
       const result = convertStandardToUri(baseUrl, headers, true);
 
-      const expectedHeaders = encodeURIComponent(JSON.stringify({ custom: 'abc' }));
+      const expectedHeaders = encodeURIComponent(JSON.stringify({ Custom: 'abc' }));
       const expected = `${baseUrl}@Cookie=abc@Headers=${expectedHeaders}`;
       expect(result).toBe(expected);
     });
 
     it('should handle special characters in headers', () => {
-      const headers = { Cookie: 'tok&en', custom: '你好 & 123' };
+      const headers = { Cookie: 'tok&en', Custom: '你好 & 123' };
       const result = convertStandardToUri(baseUrl, headers, true);
 
-      const expectedHeaders = encodeURIComponent(JSON.stringify({ custom: '你好 & 123' }));
+      const expectedHeaders = encodeURIComponent(JSON.stringify({ Custom: '你好 & 123' }));
       const expected = `${baseUrl}@Cookie=tok&en@Headers=${expectedHeaders}`;
       expect(result).toBe(expected);
     });
 
     it('should not encode redirect, only unsafeHeaders when encode=true', () => {
       const redirect = 'https://example.com/path?foo=bar#top';
-      const headers = { Cookie: 'abc', custom: 'abc' };
+      const headers = { Cookie: 'abc', Custom: 'abc' };
       const result = convertStandardToUri(redirect, headers, true);
 
-      const expectedHeaders = encodeURIComponent(JSON.stringify({ custom: 'abc' }));
+      const expectedHeaders = encodeURIComponent(JSON.stringify({ Custom: 'abc' }));
       const expected = `${redirect}@Cookie=abc@Headers=${expectedHeaders}`;
       expect(result).toBe(expected);
     });
 
     it('should handle encode=false correctly', () => {
       const redirect = 'https://example.com/path?foo=bar#top';
-      const headers = { Cookie: 'abc', custom: 'abc' };
+      const headers = { Cookie: 'abc', Custom: 'abc' };
       const result = convertStandardToUri(redirect, headers, false);
 
-      const expected = `${redirect}@Cookie=abc@Headers=${JSON.stringify({ custom: 'abc' })}`;
+      const expected = `${redirect}@Cookie=abc@Headers=${JSON.stringify({ Custom: 'abc' })}`;
       expect(result).toBe(expected);
     });
   });
