@@ -4,11 +4,17 @@ import { base64 } from '@shared/modules/crypto';
 import { isArray, isFunction, isJsonStr, isNil } from '@shared/modules/validate';
 import workerpool from 'workerpool';
 
-import { BaseSpider, getProxy, req } from './inject';
+import { aesX, BaseSpider, desX, getProxy, local, md5X, req, rsaX } from './inject';
 
 globalThis.BaseSpider = BaseSpider;
 globalThis.getProxy = getProxy;
 globalThis.req = req;
+globalThis.local = local;
+
+globalThis.aesX = aesX;
+globalThis.desX = desX;
+globalThis.md5X = md5X;
+globalThis.rsaX = rsaX;
 
 let spider: any;
 

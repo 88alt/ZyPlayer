@@ -59,123 +59,118 @@ interface RequestOptions {
 }
 
 const fetch = (url: string, options: RequestOptions = {}) => {
-  try {
-    const method: HttpMethod = (options.method || 'GET').toUpperCase() as HttpMethod;
-    const headers = headersPascalCase(options?.headers || {});
+  const method: HttpMethod = (options.method || 'GET').toUpperCase() as HttpMethod;
+  const headers = headersPascalCase(options?.headers || {});
 
-    const config: {
-      method: HttpMethod;
-      headers: Record<string, string>;
-      timeout: number;
-      redirect: string;
-      body?: string | Buffer | Uint8Array | FormData | Record<string, any>;
-    } = {
-      method,
-      headers,
-      timeout: getTimeout(options?.timeout),
-      redirect: getRedirect(options?.redirect) > 0 ? 'follow' : 'manual',
-    };
+  const config: {
+    method: HttpMethod;
+    headers: Record<string, string>;
+    timeout: number;
+    redirect: string;
+    body?: string | Buffer | Uint8Array | FormData | Record<string, any>;
+  } = {
+    method,
+    headers,
+    timeout: getTimeout(options?.timeout),
+    redirect: getRedirect(options?.redirect) > 0 ? 'follow' : 'manual',
+  };
 
-    if (!config.headers['User-Agent']) {
-      config.headers['User-Agent'] = MOBILE_UA;
-    }
-    if (!config.headers?.Accept) {
-      config.headers!.Accept = '*/*';
-    }
+  if (!config.headers['User-Agent']) {
+    config.headers['User-Agent'] = MOBILE_UA;
+  }
+  if (!config.headers?.Accept) {
+    config.headers!.Accept = '*/*';
+  }
 
-    const contentType = config.headers?.['Content-Type'] || '';
-    let charset: string = 'utf-8';
-    if (contentType.includes('charset=')) {
-      const match = contentType.match(/charset=([\w-]+)/i);
-      if (match?.[1]) charset = match[1];
-    }
+  const contentType = config.headers?.['Content-Type'] || '';
+  let charset: string = 'utf-8';
+  if (contentType.includes('charset=')) {
+    const match = contentType.match(/charset=([\w-]+)/i);
+    if (match?.[1]) charset = match[1];
+  }
 
-    if (method !== 'GET') {
-      if (contentType.includes('application/x-www-form-urlencoded')) {
-        const rawBody = isJsonStr(options.body) ? JSON5.parse(options.body as string) : options.body;
-        const body = new URLSearchParams(rawBody).toString();
-        config.body = body;
-      } else if (['text/plain', 'text/html', 'text/xml'].includes(contentType)) {
-        config.body = options.body;
-      } else if (contentType.includes('multipart/form-data')) {
-        const fd = new FormData();
-        if (isLikelyPath(options.body as string)) {
-          fd.append('file', fs.readFileSync(options.body as string), path.basename(options.body as string));
-        } else {
-          fd.append('file', options.body as string, 'file.txt');
+  if (method !== 'GET') {
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const rawBody = isJsonStr(options.body) ? JSON5.parse(options.body as string) : options.body;
+      const body = new URLSearchParams(rawBody).toString();
+      config.body = body;
+    } else if (['text/plain', 'text/html', 'text/xml'].includes(contentType)) {
+      config.body = options.body;
+    } else if (contentType.includes('multipart/form-data')) {
+      const fd = new FormData();
+      if (isLikelyPath(options.body as string)) {
+        fd.append('file', fs.readFileSync(options.body as string), path.basename(options.body as string));
+      } else {
+        fd.append('file', options.body as string, 'file.txt');
+      }
+      config.body = fd as unknown as { [key: string]: string };
+    } else if (contentType.includes('application/octet-stream')) {
+      let raw: Buffer;
+      if (isLikelyPath(options.body as string)) {
+        raw = Buffer.from(fs.readFileSync(options.body as string));
+      } else {
+        raw = Buffer.from(options.body as string);
+      }
+      config.body = raw;
+    } else if (contentType.includes('application/x-protobuf')) {
+      let raw: Buffer | Uint8Array;
+      if (
+        typeof options.body === 'object' &&
+        ['proto', 'bin', 'type'].every((key) => key in (options.body as Record<string, any>))
+      ) {
+        let { proto, bin, type } = options.body as Record<string, any>;
+        if (isLikelyPath(proto)) {
+          proto = fs.readFileSync(proto);
         }
-        config.body = fd as unknown as { [key: string]: string };
-      } else if (contentType.includes('application/octet-stream')) {
-        let raw: Buffer;
+        if (isLikelyPath(bin)) {
+          bin = fs.readFileSync(bin);
+        }
+        const root = protobuf.parse(proto).root;
+        const module = root.lookupType(type);
+        const message = module.create(bin);
+        raw = module.encode(message).finish();
+      } else {
         if (isLikelyPath(options.body as string)) {
           raw = Buffer.from(fs.readFileSync(options.body as string));
         } else {
           raw = Buffer.from(options.body as string);
         }
-        config.body = raw;
-      } else if (contentType.includes('application/x-protobuf')) {
-        let raw: Buffer | Uint8Array;
-        if (
-          typeof options.body === 'object' &&
-          ['proto', 'bin', 'type'].every((key) => key in (options.body as Record<string, any>))
-        ) {
-          let { proto, bin, type } = options.body as Record<string, any>;
-          if (isLikelyPath(proto)) {
-            proto = fs.readFileSync(proto);
-          }
-          if (isLikelyPath(bin)) {
-            bin = fs.readFileSync(bin);
-          }
-          const root = protobuf.parse(proto).root;
-          const module = root.lookupType(type);
-          const message = module.create(bin);
-          raw = module.encode(message).finish();
-        } else {
-          if (isLikelyPath(options.body as string)) {
-            raw = Buffer.from(fs.readFileSync(options.body as string));
-          } else {
-            raw = Buffer.from(options.body as string);
-          }
-        }
-        config.body = raw;
-      } else {
-        if (!contentType) config.headers!['Content-Type'] = 'application/json';
-
-        const rawBody = isJsonStr(options.body) ? JSON5.parse(options.body as string) : options.body;
-        const body = JSON.stringify(rawBody);
-        config.body = body;
       }
+      config.body = raw;
+    } else {
+      if (!contentType) config.headers!['Content-Type'] = 'application/json';
+
+      const rawBody = isJsonStr(options.body) ? JSON5.parse(options.body as string) : options.body;
+      const body = JSON.stringify(rawBody);
+      config.body = body;
     }
-
-    // console.warn(`[request] url: ${url} | method: ${method} | options: ${JSON.stringify(config)}`);
-
-    const resp = syncFetch(url, config);
-    resp.getBody = function (encoding: BufferEncoding | undefined): string | Buffer {
-      const buffer = resp.buffer();
-      return encoding ? buffer.toString(encoding) : buffer;
-    };
-
-    const { onlyHeaders, withHeaders, withStatusCode, toHex } = options || {};
-
-    if (onlyHeaders) {
-      return toString(resp.headers.raw());
-    }
-
-    const content = toHex ? resp.getBody('hex') : resp.getBody(charset);
-
-    if (!(withHeaders || withStatusCode)) {
-      return toString(content);
-    }
-
-    return toString({
-      headers: resp.headers.raw(),
-      statusCode: resp.status,
-      body: content,
-    });
-  } catch (error) {
-    console.error(error);
-    return null;
   }
+
+  // console.warn(`[request] url: ${url} | method: ${method} | options: ${JSON.stringify(config)}`);
+
+  const resp = syncFetch(url, config);
+  resp.getBody = function (encoding: BufferEncoding | undefined): string | Buffer {
+    const buffer = resp.buffer();
+    return encoding ? buffer.toString(encoding) : buffer;
+  };
+
+  const { onlyHeaders, withHeaders, withStatusCode, toHex } = options || {};
+
+  if (onlyHeaders) {
+    return toString(resp.headers.raw());
+  }
+
+  const content = toHex ? resp.getBody('hex') : resp.getBody(charset);
+
+  if (!(withHeaders || withStatusCode)) {
+    return toString(content);
+  }
+
+  return toString({
+    headers: resp.headers.raw(),
+    statusCode: resp.status,
+    body: content,
+  });
 };
 
 const request = fetch;
@@ -218,22 +213,17 @@ const postPC = (url: string, options: RequestOptions = {}) => {
 };
 
 const convertBase64Image = (url: string, options: RequestOptions = {}) => {
-  try {
-    if (options?.withHeaders) delete options.withHeaders;
-    if (options?.withStatusCode) delete options.withStatusCode;
-    if (options?.toHex) delete options.toHex;
-    if (options?.onlyHeaders) delete options.onlyHeaders;
+  if (options?.withHeaders) delete options.withHeaders;
+  if (options?.withStatusCode) delete options.withStatusCode;
+  if (options?.toHex) delete options.toHex;
+  if (options?.onlyHeaders) delete options.onlyHeaders;
 
-    options = Object.assign(options, { toHex: true });
+  options = Object.assign(options, { toHex: true });
 
-    const hexStr = fetch(url, options);
-    if (!hexStr) return '';
-    const base64String = Buffer.from(hexStr, 'hex').toString('base64');
-    return `data:${mime.lookup(url) || 'image/png'};base64,${base64String}`;
-  } catch (error) {
-    console.error(error);
-    return '';
-  }
+  const hexStr = fetch(url, options);
+  if (!hexStr) return '';
+  const base64String = Buffer.from(hexStr, 'hex').toString('base64');
+  return `data:${mime.lookup(url) || 'image/png'};base64,${base64String}`;
 };
 
 const batchFetch = (requests: any[], threads: number = 16) => {

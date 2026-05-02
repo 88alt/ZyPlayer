@@ -15,43 +15,49 @@ const valueStartsWith = (obj: Record<string, string>, propertyName: string, pref
 const req = (url: string, cobj: Record<string, any>): { content: string; headers?: Record<string, string> } => {
   const obj = { ...cobj };
 
-  if (obj.data) {
-    obj.body = obj.data;
-    const isForm =
-      obj.postType === 'form' ||
-      (hasPropertyIgnoreCase(obj.headers, 'Content-Type') &&
-        valueStartsWith(obj.headers, 'Content-Type', 'application/x-www-form-urlencoded'));
+  try {
+    if (obj.data) {
+      obj.body = obj.data;
+      const isForm =
+        obj.postType === 'form' ||
+        (hasPropertyIgnoreCase(obj.headers, 'Content-Type') &&
+          valueStartsWith(obj.headers, 'Content-Type', 'application/x-www-form-urlencoded'));
 
-    if (isForm) {
-      obj.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      obj.body = new URLSearchParams(obj.data).toString();
-      delete obj.postType;
+      if (isForm) {
+        obj.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        obj.body = new URLSearchParams(obj.data).toString();
+        delete obj.postType;
+      }
+      delete obj.data;
     }
-    delete obj.data;
+
+    if (Object.hasOwn(obj, 'redirect')) obj.redirect = !!obj.redirect;
+    if (obj.buffer === 2) obj.toHex = true;
+
+    if (url === 'https://api.nn.ci/ocr/b64/text' && obj.headers) {
+      obj.headers['Content-Type'] = 'text/plain';
+    }
+
+    const res: { content: string; headers?: Record<string, string> } = { content: '' };
+    let resp: any = fetch(url, obj);
+    if (obj.withHeaders) {
+      resp = JSON5.parse(resp);
+      res.content = resp.body;
+      res.headers = Object.fromEntries(Object.entries(resp.headers || {}).map(([k, v]) => [k, v?.[0]]));
+    } else {
+      res.content = resp;
+    }
+
+    if (obj.buffer === 2) {
+      res.content = Buffer.from(resp!.body, 'hex').toString('base64');
+    }
+
+    return res;
+  } catch (error) {
+    console.error(error);
+    if (obj.withHeaders) return { headers: {}, content: '' };
+    return { content: '' };
   }
-
-  if (Object.hasOwn(obj, 'redirect')) obj.redirect = !!obj.redirect;
-  if (obj.buffer === 2) obj.toHex = true;
-
-  if (url === 'https://api.nn.ci/ocr/b64/text' && obj.headers) {
-    obj.headers['Content-Type'] = 'text/plain';
-  }
-
-  const res: { content: string; headers?: Record<string, string> } = { content: '' };
-  let resp: any = fetch(url, obj);
-  if (obj.withHeaders) {
-    resp = JSON5.parse(resp!);
-    res.content = resp.body;
-    res.headers = Object.fromEntries(Object.entries(resp.headers || {}).map(([k, v]) => [k, v?.[0]]));
-  } else {
-    res.content = resp!;
-  }
-
-  if (obj.buffer === 2) {
-    res.content = Buffer.from(resp!.body, 'hex').toString('base64');
-  }
-
-  return res;
 };
 
 export { batchFetch, req };

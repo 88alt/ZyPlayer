@@ -72,119 +72,114 @@ interface RequestOptions {
 }
 
 const fetch = (url: string, options: RequestOptions = {}) => {
-  try {
-    const method: HttpMethod = (options.method || 'GET').toUpperCase() as HttpMethod;
-    const headers = headersPascalCase(options?.headers || {});
+  const method: HttpMethod = (options.method || 'GET').toUpperCase() as HttpMethod;
+  const headers = headersPascalCase(options?.headers || {});
 
-    const config: Options = {
-      headers,
-      timeout: getTimeout(options?.timeout),
-      maxRedirects: getRedirect(options?.redirect),
-    };
+  const config: Options = {
+    headers,
+    timeout: getTimeout(options?.timeout),
+    maxRedirects: getRedirect(options?.redirect),
+  };
 
-    if (!config.headers?.['User-Agent']) {
-      config.headers!['User-Agent'] = MOBILE_UA;
-    }
-    if (!config.headers?.Accept) {
-      config.headers!.Accept = '*/*';
-    }
+  if (!config.headers?.['User-Agent']) {
+    config.headers!['User-Agent'] = MOBILE_UA;
+  }
+  if (!config.headers?.Accept) {
+    config.headers!.Accept = '*/*';
+  }
 
-    const contentType: string = (config.headers?.['Content-Type'] as string) || '';
-    let charset: string = 'utf-8';
-    if (contentType.includes('charset=')) {
-      const match = contentType.match(/charset=([\w-]+)/i);
-      if (match?.[1]) charset = match[1];
-    }
+  const contentType: string = (config.headers?.['Content-Type'] as string) || '';
+  let charset: string = 'utf-8';
+  if (contentType.includes('charset=')) {
+    const match = contentType.match(/charset=([\w-]+)/i);
+    if (match?.[1]) charset = match[1];
+  }
 
-    if (method !== 'GET') {
-      if (contentType.includes('application/x-www-form-urlencoded')) {
-        const rawBody = isJsonStr(options.body) ? JSON5.parse(options.body as string) : options.body;
-        const body = Object.fromEntries(new URLSearchParams(rawBody));
-        const fd = new FormData();
-        Object.entries(body).forEach(([key, value]) => fd.append(key, value as string));
-        config.form = fd;
-      } else if (['text/plain', 'text/html', 'text/xml'].includes(contentType)) {
-        config.body = options.body as string | Buffer<ArrayBufferLike>;
-      } else if (contentType.includes('multipart/form-data')) {
-        const fd = new FormData();
-        if (isLikelyPath(options.body as string)) {
-          fd.append('file', fs.readFileSync(options.body as string), path.basename(options.body as string));
-        } else {
-          fd.append('file', options.body as string, 'file.txt');
+  if (method !== 'GET') {
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const rawBody = isJsonStr(options.body) ? JSON5.parse(options.body as string) : options.body;
+      const body = Object.fromEntries(new URLSearchParams(rawBody));
+      const fd = new FormData();
+      Object.entries(body).forEach(([key, value]) => fd.append(key, value as string));
+      config.form = fd;
+    } else if (['text/plain', 'text/html', 'text/xml'].includes(contentType)) {
+      config.body = options.body as string | Buffer<ArrayBufferLike>;
+    } else if (contentType.includes('multipart/form-data')) {
+      const fd = new FormData();
+      if (isLikelyPath(options.body as string)) {
+        fd.append('file', fs.readFileSync(options.body as string), path.basename(options.body as string));
+      } else {
+        fd.append('file', options.body as string, 'file.txt');
+      }
+      config.form = fd;
+    } else if (contentType.includes('application/octet-stream')) {
+      let raw: Buffer;
+      if (isLikelyPath(options.body as string)) {
+        raw = Buffer.from(fs.readFileSync(options.body as string));
+      } else {
+        raw = Buffer.from(options.body as string);
+      }
+      config.body = raw;
+    } else if (contentType.includes('application/x-protobuf')) {
+      let raw: Buffer | Uint8Array;
+      if (
+        typeof options.body === 'object' &&
+        ['proto', 'bin', 'type'].every((key) => key in (options.body as Record<string, any>))
+      ) {
+        let { proto, bin, type } = options.body as Record<string, any>;
+        if (isLikelyPath(proto)) {
+          proto = fs.readFileSync(proto);
         }
-        config.form = fd;
-      } else if (contentType.includes('application/octet-stream')) {
-        let raw: Buffer;
+        if (isLikelyPath(bin)) {
+          bin = fs.readFileSync(bin);
+        }
+        const root = protobuf.parse(proto).root;
+        const module = root.lookupType(type);
+        const message = module.create(bin);
+        raw = module.encode(message).finish();
+      } else {
         if (isLikelyPath(options.body as string)) {
           raw = Buffer.from(fs.readFileSync(options.body as string));
         } else {
           raw = Buffer.from(options.body as string);
         }
-        config.body = raw;
-      } else if (contentType.includes('application/x-protobuf')) {
-        let raw: Buffer | Uint8Array;
-        if (
-          typeof options.body === 'object' &&
-          ['proto', 'bin', 'type'].every((key) => key in (options.body as Record<string, any>))
-        ) {
-          let { proto, bin, type } = options.body as Record<string, any>;
-          if (isLikelyPath(proto)) {
-            proto = fs.readFileSync(proto);
-          }
-          if (isLikelyPath(bin)) {
-            bin = fs.readFileSync(bin);
-          }
-          const root = protobuf.parse(proto).root;
-          const module = root.lookupType(type);
-          const message = module.create(bin);
-          raw = module.encode(message).finish();
-        } else {
-          if (isLikelyPath(options.body as string)) {
-            raw = Buffer.from(fs.readFileSync(options.body as string));
-          } else {
-            raw = Buffer.from(options.body as string);
-          }
-        }
-        config.body = raw as string | Buffer<ArrayBufferLike>;
-      } else {
-        const body = isJsonStr(options.body) ? JSON5.parse(options.body as string) : options.body;
-        config.json = body;
       }
+      config.body = raw as string | Buffer<ArrayBufferLike>;
+    } else {
+      const body = isJsonStr(options.body) ? JSON5.parse(options.body as string) : options.body;
+      config.json = body;
     }
-    // json和form会自动设置Content-Type
-    if (config.json || config.form) delete config.headers?.['Content-Type'];
-
-    // console.warn(`[request] url: ${url} | method: ${method} | options: ${JSON.stringify(config)}`);
-
-    const resp = syncRequest(method, url, config);
-    // @ts-expect-error override getBody
-    resp.getBody = function (encoding: BufferEncoding | undefined): string | Buffer {
-      return encoding ? this.body.toString(encoding) : this.body;
-    };
-    // @ts-expect-error override headers
-    resp.headers = serialize2dict(resp.headers);
-
-    const { onlyHeaders, withHeaders, withStatusCode, toHex } = options || {};
-
-    if (onlyHeaders) {
-      return toString(resp.headers);
-    }
-
-    const content = toHex ? resp.getBody('hex') : resp.getBody(charset);
-
-    if (!(withHeaders || withStatusCode)) {
-      return toString(content);
-    }
-
-    return toString({
-      headers: resp.headers,
-      statusCode: resp.statusCode,
-      body: content,
-    });
-  } catch (error) {
-    console.error(error);
-    return null;
   }
+  // json和form会自动设置Content-Type
+  if (config.json || config.form) delete config.headers?.['Content-Type'];
+
+  // console.warn(`[request] url: ${url} | method: ${method} | options: ${JSON.stringify(config)}`);
+
+  const resp = syncRequest(method, url, config);
+  // @ts-expect-error override getBody
+  resp.getBody = function (encoding: BufferEncoding | undefined): string | Buffer {
+    return encoding ? this.body.toString(encoding) : this.body;
+  };
+  // @ts-expect-error override headers
+  resp.headers = serialize2dict(resp.headers);
+
+  const { onlyHeaders, withHeaders, withStatusCode, toHex } = options || {};
+
+  if (onlyHeaders) {
+    return toString(resp.headers);
+  }
+
+  const content = toHex ? resp.getBody('hex') : resp.getBody(charset);
+
+  if (!(withHeaders || withStatusCode)) {
+    return toString(content);
+  }
+
+  return toString({
+    headers: resp.headers,
+    statusCode: resp.statusCode,
+    body: content,
+  });
 };
 
 const request = fetch;
@@ -227,22 +222,17 @@ const postPC = (url: string, options: RequestOptions = {}) => {
 };
 
 const convertBase64Image = (url: string, options: RequestOptions = {}) => {
-  try {
-    if (options?.withHeaders) delete options.withHeaders;
-    if (options?.withStatusCode) delete options.withStatusCode;
-    if (options?.toHex) delete options.toHex;
-    if (options?.onlyHeaders) delete options.onlyHeaders;
+  if (options?.withHeaders) delete options.withHeaders;
+  if (options?.withStatusCode) delete options.withStatusCode;
+  if (options?.toHex) delete options.toHex;
+  if (options?.onlyHeaders) delete options.onlyHeaders;
 
-    options = Object.assign(options, { toHex: true });
+  options = Object.assign(options, { toHex: true });
 
-    const hexStr = fetch(url, options);
-    if (!hexStr) return '';
-    const base64String = Buffer.from(hexStr, 'hex').toString('base64');
-    return `data:${mime.lookup(url) || 'image/png'};base64,${base64String}`;
-  } catch (error) {
-    console.error(error);
-    return '';
-  }
+  const hexStr = fetch(url, options);
+  if (!hexStr) return '';
+  const base64String = Buffer.from(hexStr, 'hex').toString('base64');
+  return `data:${mime.lookup(url) || 'image/png'};base64,${base64String}`;
 };
 
 const batchFetch = (requests: any[], threads: number = 16) => {
