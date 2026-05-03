@@ -64,84 +64,104 @@ export function fetchSiteDetailByKey(key) {
 
 /** cms */
 
-export function fetchCmsInit(doc) {
+export function fetchCmsInit(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/init',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsHome(doc) {
+export function fetchCmsHome(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/home',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsHomeVod(doc) {
+export function fetchCmsHomeVod(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/homeVod',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsCategory(doc) {
+export function fetchCmsCategory(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/category',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsSearch(doc) {
+export function fetchCmsSearch(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/search',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsDetail(doc) {
+export function fetchCmsDetail(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/detail',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsPlay(doc) {
+export function fetchCmsPlay(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/play',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsAction(doc) {
+export function fetchCmsAction(opt) {
+  const { signal, timeout, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/action',
     method: 'get',
     params: doc,
-    ...(doc.timeout ? { timeout: doc.timeout } : {}),
+    ...(timeout ? { timeout } : {}),
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsProxy(doc) {
+export function fetchCmsProxy(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/proxy',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 
-export function fetchCmsCheck(doc) {
+export function fetchCmsCheck(opt) {
+  const { signal, ...doc } = opt;
   return request.request({
     url: '/v1/film/cms/check',
     method: 'get',
     params: doc,
+    ...(signal ? { signal } : {}),
   });
 }
 

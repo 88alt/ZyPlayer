@@ -230,6 +230,7 @@ import DialogDetailView from './components/DialogDetail.vue';
 const REC_CLASS_TAG = '__rec__';
 
 const storePlayer = usePlayerStore();
+const signalCancelers = new Map<string, AbortController>();
 
 const renderDefaultLazy = () => <LazyBg class="render-icon" />;
 
@@ -297,10 +298,33 @@ onActivated(() => {
   emitter.on(emitterChannel.SEARCH_FILM_RECOMMEND, onSearchRecommend);
 });
 
-const changeFilterEvent = (key: string, value: string | number) => {
-  active.value.filter[key] = value;
+const addCanceler = (id: string, sigle: AbortController) => {
+  removeCanceler(id);
+  if (!signalCancelers.has(id)) {
+    signalCancelers.set(id, sigle);
+  }
+};
 
+const removeCanceler = (id: string) => {
+  if (signalCancelers.has(id)) {
+    const cancel = signalCancelers.get(id);
+    if (cancel) cancel.abort();
+    signalCancelers.delete(id);
+  }
+};
+
+const removeAllCanceller = () => {
+  signalCancelers.forEach((cancel) => {
+    if (cancel) cancel.abort();
+  });
+  signalCancelers.clear();
+};
+
+const changeFilterEvent = (key: string, value: string | number) => {
+  removeAllCanceller();
   resetPagination();
+
+  active.value.filter[key] = value;
 
   filmList.value = [];
   infiniteId.value = Date.now();
@@ -366,7 +390,13 @@ const getSetting = async () => {
 };
 
 const getCmsHome = async (source: IModels['site']): Promise<number> => {
-  const resp = await fetchCmsHome({ uuid: source.id });
+  const tag = 'cmsHome';
+  const cancel = new AbortController();
+  addCanceler(tag, cancel);
+
+  const resp = await fetchCmsHome({ uuid: source.id, signal: cancel.signal }).finally(() => {
+    removeCanceler(tag);
+  });
 
   if (isArray(resp.class) && !isArrayEmpty(resp.class)) {
     classList.value = [
@@ -384,12 +414,15 @@ const getCmsHome = async (source: IModels['site']): Promise<number> => {
     resetFilter();
   }
 
-  return resp.class.length;
+  return resp.class.length ?? 0;
 };
 
 const getCmsCategory = async (source: IModels['site']): Promise<number> => {
-  const { pageIndex } = pagination.value;
+  const tag = 'cmsCategory';
+  const cancel = new AbortController();
+  addCanceler(tag, cancel);
 
+  const { pageIndex } = pagination.value;
   const tid = active.value.folder || (active.value.class === REC_CLASS_TAG ? '' : active.value.class);
   const f = active.value.filter || {};
 
@@ -398,6 +431,9 @@ const getCmsCategory = async (source: IModels['site']): Promise<number> => {
     tid,
     page: pageIndex,
     extend: JSON.stringify(f),
+    signal: cancel.signal,
+  }).finally(() => {
+    removeCanceler(tag);
   });
 
   if (isArray(resp.list) && !isArrayEmpty(resp.list)) {
@@ -406,7 +442,41 @@ const getCmsCategory = async (source: IModels['site']): Promise<number> => {
   }
   if (resp.total) pagination.value.total = resp.total;
 
-  return resp.list.length;
+  return resp.list.length ?? 0;
+};
+
+const getCmsSearch = async (source: IModels['site']): Promise<number> => {
+  const tag = 'cmsSearch';
+  const cancel = new AbortController();
+  addCanceler(tag, cancel);
+
+  const { pageIndex } = pagination.value;
+
+  const resp = await fetchCmsSearch({
+    uuid: source.id,
+    wd: searchValue.value,
+    page: pageIndex,
+    signal: cancel.signal,
+  }).finally(() => {
+    removeCanceler(tag);
+  });
+
+  if (isArray(resp.list) && !isArrayEmpty(resp.list)) {
+    if (config.value.extra.filter) {
+      resp.list = resp.list.filter((item: ICmsInfo) => item.vod_name.includes(searchValue.value));
+    }
+
+    resp.list = resp.list.map((item: ICmsInfo) => ({ ...item, relateSite: source }));
+    resp.list = differenceBy(
+      resp.list,
+      filmList.value,
+      (item: ICmsInfo & { relateSite: IModels['site'] }) => `${item.relateSite?.id ?? '0'}-${item.vod_id}`,
+    );
+    filmList.value.push(...resp.list);
+  }
+  if (resp.total) pagination.value.total = resp.total;
+
+  return resp.list.length ?? 0;
 };
 
 const loadMoreCategory = async (): Promise<number> => {
@@ -432,7 +502,6 @@ const loadMoreCategory = async (): Promise<number> => {
 };
 
 const loadMoreSearch = async (): Promise<number> => {
-  const { pageIndex } = pagination.value;
   const searchSiteList = config.value.searchList;
   const currentSiteId = active.value.searchCurrent;
   const siteIndex = searchSiteList.findIndex((item) => item.id === currentSiteId);
@@ -450,39 +519,14 @@ const loadMoreSearch = async (): Promise<number> => {
   };
 
   try {
-    const resp = await fetchCmsSearch({
-      uuid: currentSiteId,
-      wd: searchValue.value,
-      page: pageIndex,
-    });
-
-    if (isArray(resp.list) && !isArrayEmpty(resp.list) && config.value.extra.filter) {
-      resp.list = resp.list.filter((item: ICmsInfo) => item.vod_name.includes(searchValue.value));
-    }
-
-    if (!isArray(resp.list) || isArrayEmpty(resp.list)) {
+    const length = await getCmsSearch(currentSite);
+    if (length === 0) {
       return switchNextSearchSite();
+    } else if (length > 0) {
+      pagination.value.pageIndex++;
+      return length;
     }
-
-    const normalizedList = resp.list.map((item: ICmsInfo) => ({
-      ...item,
-      relateSite: currentSite,
-    }));
-
-    const uniqueList = differenceBy(
-      normalizedList,
-      filmList.value,
-      (item: ICmsInfo & { relateSite: IModels['site'] }) => `${item.relateSite?.id ?? '0'}-${item.vod_id}`,
-    );
-
-    if (isArrayEmpty(uniqueList)) {
-      return switchNextSearchSite();
-    }
-
-    filmList.value.push(...uniqueList);
-    pagination.value.pageIndex++;
-
-    return uniqueList.length;
+    return 0;
   } catch (error) {
     console.error('Failed to load search data:', error);
     return switchNextSearchSite();
@@ -490,6 +534,8 @@ const loadMoreSearch = async (): Promise<number> => {
 };
 
 const loadMore = async ($state: ILoadStateHdandler) => {
+  removeAllCanceller();
+
   try {
     if (active.value.loadStatus !== 'complete') {
       if (!(searchValue.value && !isArrayEmpty(config.value.searchList))) {
@@ -599,6 +645,7 @@ const handleCmsTag = (type: 'folder' | 'action', doc: ICmsInfo) => {
 };
 
 const handleCmsFolder = (doc: ICmsInfo) => {
+  removeAllCanceller();
   resetPagination();
 
   const prefixPath = folderBreadcrumb.value.map((item) => item.value).join('');
@@ -806,6 +853,7 @@ const handleCmsAction = async (doc: ICmsInfo) => {
 };
 
 const handleSearch = async () => {
+  removeAllCanceller();
   resetPagination();
 
   filmList.value = [];
@@ -838,6 +886,7 @@ const onSearchRecommend = async ({ data: eventData }) => {
 };
 
 const onClassChange = (id: string) => {
+  removeAllCanceller();
   resetPagination();
 
   active.value.folder = '';
@@ -853,6 +902,7 @@ const onClassChange = (id: string) => {
 };
 
 const defaultConfig = () => {
+  removeAllCanceller();
   resetPagination();
 
   searchValue.value = '';
@@ -900,6 +950,7 @@ const onNavChange = async (id: string) => {
 };
 
 const handleFolderBreadcrumbClick = (item: { label: ICmsInfo['vod_name']; value: ICmsInfo['vod_id'] | null }) => {
+  removeAllCanceller();
   resetPagination();
 
   const index = folderBreadcrumb.value.findIndex((i) => i.value === item.value);

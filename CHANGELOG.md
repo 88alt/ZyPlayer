@@ -4,8 +4,7 @@
 
 ## 3.4.6
 
-- 修复: 影视类只有一个同时存在筛选导致整体被隐藏
-- 修复: T3Catopen适配器兼容性
+- 修复: 影视类只有一个时整体隐藏(导致筛选隐藏); 数据冲突(旧数据没加载完触发新数据); T3Catopen适配器兼容性
 - 变动: 依赖库升级
 
 [View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.6)
