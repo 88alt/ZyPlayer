@@ -232,7 +232,11 @@ const connectTerminal = () => {
   fitAddonRef.value = fitAddon;
 
   const unicode11Addon = new Unicode11Addon();
-  const webLinksAddon = new WebLinksAddon();
+  const webLinksAddon = new WebLinksAddon((event, uri) => {
+    event.preventDefault();
+    const isModifier = isMacOS ? event.metaKey : event.ctrlKey;
+    if (isModifier) props.onLinkClickCallback?.(uri);
+  });
   const search = new SearchAddon();
   const searchBar = new SearchBarAddon({
     searchAddon: search,
