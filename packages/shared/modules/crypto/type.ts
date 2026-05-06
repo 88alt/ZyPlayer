@@ -139,6 +139,7 @@ export interface RsaOptions {
   pad?: RsaPad;
   type?: 0 | 1; // 0: 公钥加密, 私钥解密; 1: 私钥加密, 公钥解密
   long?: boolean;
+  longBlock?: number | 'auto';
   passphrase?: string;
   passphraseEncode?: Encode;
   inputEncode?: Encode;
