@@ -29,7 +29,14 @@ import { PROXY_TYPE } from '@shared/config/setting';
 import type { IShortcutConfig, IShortcutType } from '@shared/config/shortcut';
 import { WINDOW_NAME } from '@shared/config/window';
 import type { ILang } from '@shared/locales';
-import { isHttp, isObject, isObjectEmpty, isPositiveFiniteNumber, isSecurityScheme } from '@shared/modules/validate';
+import {
+  isFile,
+  isHttp,
+  isObject,
+  isObjectEmpty,
+  isPositiveFiniteNumber,
+  isSecurityScheme,
+} from '@shared/modules/validate';
 import type { ProxyConfig } from 'electron';
 import { BrowserWindow, ipcMain, shell, webContents } from 'electron';
 import { getDomain } from 'tldts';
@@ -539,7 +546,7 @@ export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
   ipcMain.handle(
     IPC_CHANNEL.WINDOW_BROWSER,
     (_event: Electron.IpcMainInvokeEvent, url: string, headers?: Record<string, any>) => {
-      if (!isHttp(url)) return;
+      if (!isHttp(url) && !isFile(url)) return;
 
       let mainWindow = windowService.getWindow(WINDOW_NAME.BROWSER);
       if (mainWindow && !mainWindow.isDestroyed()) {

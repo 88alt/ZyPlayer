@@ -8,6 +8,7 @@
 - 优化: rsa长文本区块计算; sm4参数名同步
 - 修复: 影视类只有一个时整体隐藏(导致筛选隐藏); 数据冲突(旧数据没加载完触发新数据); 启动应用时初始化环境; T3Catopen适配器兼容性; T3Py重构(zeromq -> grpc)
 - 修复: terminal组件触发applyTheme但搜索框dom未创建时报错; 未调用onLinkClickCallback
+- 修复: 实验室ui插件预览按钮不生效
 - 修复: 部分情况自动下集不稳定 [issue #488]
 - 变动: 依赖库升级
 

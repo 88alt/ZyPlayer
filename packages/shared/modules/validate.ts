@@ -260,6 +260,16 @@ export function isHttp(value: unknown, strict: boolean = false): boolean {
 }
 
 /**
+ * Check if string is a file URL
+ * @param value - String to check
+ * @returns Returns true if string is a file URL, otherwise false
+ */
+export function isFile(value: unknown): boolean {
+  if (!isString(value) || isValEmpty(value)) return false;
+  return /^file:\/\//i.test(value);
+}
+
+/**
  * Check if value is a security scheme (http, https, file, zy, mailto, tel)
  * @param value - String to check
  * @returns Returns true if URL is a security scheme, otherwise false
@@ -451,6 +461,7 @@ export default {
   isValEmpty,
   isPathMatch,
   isHttp,
+  isFile,
   isSecurityScheme,
   isSystemScheme,
   isURI,
