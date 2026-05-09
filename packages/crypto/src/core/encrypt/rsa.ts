@@ -45,7 +45,7 @@ const getKey = (
     if (key.includes('ENCRYPTED')) {
       if (!passphrase) throw new Error('Passphrase is required for encrypted private key');
 
-      const passphraseBuffer = wordArrayParse[passphraseEncode](passphrase);
+      const passphraseBuffer = wordArrayParse[passphraseEncode as keyof typeof wordArrayParse](passphrase);
       rsaKey = forge.pki.decryptRsaPrivateKey(
         key,
         forgeArrayToBytes(wordArrayToArray(passphraseBuffer) as unknown as ArrayBuffer).getBytes(),
@@ -82,9 +82,9 @@ const getSchemeOptions = (
   if (!algorithm) return undefined;
 
   return {
-    md: forge.md[algorithm].create(),
+    md: (forge.md as unknown as Record<string, { create: () => forge.md.MessageDigest }>)[algorithm].create(),
     mgf1: {
-      md: forge.md[algorithm].create(),
+      md: (forge.md as unknown as Record<string, { create: () => forge.md.MessageDigest }>)[algorithm].create(),
     },
   };
 };
@@ -105,7 +105,9 @@ const getMaxMsgBytes = (
   if (padding === 'RSA-OAEP') {
     const algorithm = getHashAlgorithm(pad);
     if (!algorithm) throw new Error(`Unsupported OAEP hash algorithm for pad: ${pad}`);
-    const hashSizeBytes = forge.md[algorithm].create().digestLength;
+    const hashSizeBytes = (forge.md as unknown as Record<string, { create: () => forge.md.MessageDigest }>)[
+      algorithm
+    ].create().digestLength;
 
     return keySizeBytes - 2 * hashSizeBytes - 2; // ≈‌ Math.ceil(keySizeBits / 8) - 2 * hashSizeBytes - 2
   } else if (padding === 'RSAES-PKCS1-V1_5') {
@@ -177,7 +179,7 @@ export const rsa = {
     const scheme = getPad(pad);
     const schemeOptions = getSchemeOptions(pad);
 
-    const plaintextBuffer = wordArrayParse[inputEncode](src);
+    const plaintextBuffer = wordArrayParse[inputEncode as keyof typeof wordArrayParse](src);
     const plaintextBytes = forgeArrayToBytes(wordArrayToArray(plaintextBuffer) as unknown as ArrayBuffer).getBytes();
 
     const encryptFn = (data: string): string => {
@@ -240,7 +242,7 @@ export const rsa = {
       encrypted = encryptFn(plaintextBytes);
     }
 
-    return forgeStringify[outputEncode](encrypted);
+    return forgeStringify[outputEncode as keyof typeof forgeStringify](encrypted);
   },
   /**
    * RSA 解密
@@ -320,7 +322,7 @@ export const rsa = {
     const schemeOptions = getSchemeOptions(pad);
     const scheme = getPad(pad);
 
-    const cipherBuffer = wordArrayParse[inputEncode](src);
+    const cipherBuffer = wordArrayParse[inputEncode as keyof typeof wordArrayParse](src);
     const cipherBytes = forgeArrayToBytes(wordArrayToArray(cipherBuffer) as unknown as ArrayBuffer).getBytes();
 
     const decryptFn = (data: string): string => {
@@ -386,6 +388,6 @@ export const rsa = {
       decrypted = decryptFn(cipherBytes);
     }
 
-    return forgeStringify[outputEncode](decrypted);
+    return forgeStringify[outputEncode as keyof typeof forgeStringify](decrypted);
   },
 };

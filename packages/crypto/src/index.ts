@@ -9,3 +9,4 @@ export * from './core/base';
 export * from './core/encode';
 export * from './core/encrypt';
 export * from './core/mac';
+export * from './type';

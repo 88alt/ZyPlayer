@@ -12,8 +12,12 @@ const bytesToUtf8 = (bytes: string): string => {
   return forge.util.decodeUtf8(bytes);
 };
 
-const bytesToUtf16 = (bytes: Uint8Array<ArrayBufferLike>): string => {
-  return forge.util.text.utf16.decode(bytes);
+const bytesToUtf16 = (bytes: string): string => {
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) {
+    arr[i] = bytes.charCodeAt(i);
+  }
+  return forge.util.text.utf16.decode(arr);
 };
 
 const hexToBytes = (str: string): string => {
@@ -28,8 +32,13 @@ const utf8ToBytes = (str: string): string => {
   return forge.util.encodeUtf8(str);
 };
 
-const utf16ToBytes = (str: string): Uint8Array => {
-  return forge.util.text.utf16.encode(str);
+const utf16ToBytes = (str: string): string => {
+  const bytes: Uint8Array = forge.util.text.utf16.encode(str);
+  let result = '';
+  for (let i = 0; i < bytes.length; i++) {
+    result += String.fromCharCode(bytes[i]);
+  }
+  return result;
 };
 
 export const parse = {

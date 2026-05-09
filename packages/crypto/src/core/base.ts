@@ -1,8 +1,5 @@
 import type { UUIDTypes } from 'uuid';
-import { v3 as uuidv3, v4 as uuidv4, v5 as uuidv5 } from 'uuid';
-
-import { toString } from '../../toString';
-import { isPositiveFiniteNumber, isUUID } from '../../validate';
+import { v3 as uuidv3, v4 as uuidv4, v5 as uuidv5, validate as isUUID } from 'uuid';
 
 /**
  * Generate a random version 4 UUID
@@ -30,7 +27,7 @@ export const randomUUID = (): string => {
  * @returns {string} A random nanoid
  */
 export const randomNanoid = (len?: number): string => {
-  if (!isPositiveFiniteNumber(len)) len = 21;
+  if (typeof len !== 'number' || len <= 0) len = 21;
 
   const URL_ALPHABET = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
 
@@ -58,7 +55,12 @@ export const randomNanoid = (len?: number): string => {
  * @returns {string} UUID
  */
 export const generateStrUUID = (value: string, namespace?: UUIDTypes, version?: number): string => {
-  const content = toString(value);
+  const content =
+    typeof value === 'string'
+      ? value
+      : typeof value === 'object' && value !== null
+        ? JSON.stringify(value)
+        : String(value);
 
   const safeNamespace = isUUID(namespace) ? namespace! : '00000000-0000-0000-0000-000000000000';
   const safeVersion = version === 3 || version === 5 ? version : 5;

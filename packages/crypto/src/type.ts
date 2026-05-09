@@ -141,9 +141,9 @@ export interface RsaOptions {
   long?: boolean;
   longBlock?: number | 'auto';
   passphrase?: string;
-  passphraseEncode?: Encode;
-  inputEncode?: Encode;
-  outputEncode?: Encode;
+  passphraseEncode?: Omit<Encode, 'utf16be' | 'utf16le' | 'latin1'>;
+  inputEncode?: Omit<Encode, 'utf16be' | 'utf16le' | 'latin1'>;
+  outputEncode?: Omit<Encode, 'utf16be' | 'utf16le' | 'latin1'>;
 }
 
 export interface Base64EncodeOptions {
