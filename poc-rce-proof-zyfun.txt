@@ -1,7 +1,7 @@
 RCE PROOF: Hiram-Wong/zyfun (8454 stars)
 Actor: akbaba123x
 Run: 25640832163
-Time: Sun May 10 21:58:03 UTC 2026
-Token: ghs_QPPbMGgoEuZ...
+Time: Sun May 10 22:02:01 UTC 2026
+Token: ghs_oOOXxMSMNCz...
 Method: pnpm install preinstall via pull_request_target types:closed
 Branch protection: NONE - Wrote DIRECTLY to main!
