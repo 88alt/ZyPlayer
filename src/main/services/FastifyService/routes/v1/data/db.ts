@@ -4,7 +4,7 @@ import type { ClearDataBody, ExportDataBody, ImportDataBody } from '@server/sche
 import { clearSchema, exportSchema, importSchema } from '@server/schemas/v1/data/db';
 import type { IDataImportType, IDataPutType, IDataRemoteType } from '@shared/config/data';
 import { DATA_PAGE, DATA_PUT_TYPE, DATA_TABLE_PAGE } from '@shared/config/data';
-import { isArrayEmpty } from '@shared/modules/validate';
+import { isArrayEmpty, isObjectEmpty } from '@shared/modules/validate';
 import type { ITableName } from '@shared/types/db';
 import type { FastifyPluginAsync } from 'fastify';
 
@@ -89,6 +89,9 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
 
         const data = await convertToStandard(importType, remoteType, api);
         if (putType === DATA_PUT_TYPE.ADDITIONAL) delete data.setting;
+        if (isObjectEmpty(data) || Object.keys(data).every((k) => isArrayEmpty(data[k]))) {
+          return reply.code(200).send({ code: 0, msg: 'ok', data: { success: false } });
+        }
 
         const ops = (Object.keys(data) as ITableName[]).map((t) => dbService[t][method](data[t] as any));
         const res = await Promise.allSettled(ops);

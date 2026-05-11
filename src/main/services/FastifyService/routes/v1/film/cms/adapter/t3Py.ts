@@ -8,8 +8,9 @@ import { APP_PUBLIC_PATH } from '@main/utils/path';
 import { request } from '@main/utils/request';
 import { getTimeout } from '@main/utils/tool';
 import { SITE_LOGGER_MAP, SITE_TYPE } from '@shared/config/film';
-import { isJson } from '@shared/modules/validate';
+import { isJson, isJsonStr } from '@shared/modules/validate';
 import type { ICmsParams, ICmsResultPromise, IConstructorOptions } from '@shared/types/cms';
+import JSON5 from 'json5';
 
 const logger = loggerService.withContext(SITE_LOGGER_MAP[SITE_TYPE.T3_PY]);
 
@@ -82,16 +83,12 @@ class ConnectService extends PythonService {
     return ConnectService.instance;
   }
 
-  private createClient(): ISpiderGrpcClient {
-    const ClientCtor = createGrpcClientCtor();
-    return new ClientCtor(`0.0.0.0:${this.port}`, grpc.credentials.createInsecure());
-  }
-
-  private async connectRpc(): Promise<void> {
+  private async connect(): Promise<void> {
     if (this.client) return;
 
     try {
-      const client = this.createClient();
+      const ClientCtor = createGrpcClientCtor();
+      const client = new ClientCtor(`0.0.0.0:${this.port}`, grpc.credentials.createInsecure());
       const deadline = new Date(Date.now() + 5 * 1000);
 
       await new Promise<void>((resolve, reject) => {
@@ -107,31 +104,8 @@ class ConnectService extends PythonService {
       this.client = client;
     } catch (error) {
       this.client = null;
-      throw new Error(`Failed to connect to Python gRPC service: ${error}`);
+      throw new Error(`Failed to connect gRPC service: ${(error as Error).message}`);
     }
-  }
-
-  private closeClient(): void {
-    if (this.client) {
-      this.client.close();
-      this.client = null;
-    }
-  }
-
-  private handlePythonLog(content: string): void {
-    let parsed: { type?: string; msg?: any[] } | null = null;
-
-    try {
-      parsed = JSON.parse(content) as { type?: string; msg?: any[] };
-    } catch {
-      logger.debug(content);
-      return;
-    }
-
-    const msgList = parsed?.msg ?? [];
-    const log = msgList.map((t: any) => (isJson(t) ? JSON.stringify(t) : t)).join(' ');
-
-    logger.verbose(log || content);
   }
 
   private handlePythonStdout(chunk: string): void {
@@ -141,9 +115,19 @@ class ConnectService extends PythonService {
     this.stdoutBuffer = lines.pop() ?? '';
 
     for (const line of lines) {
-      const content = line.trim();
-      if (!content) continue;
-      this.handlePythonLog(content);
+      const payload = line.trim();
+      if (!payload) continue;
+
+      const { type, level, msg } = isJsonStr(payload) ? JSON5.parse(payload) : {};
+
+      if (type === 'log') {
+        // const msgType = msg.type;
+        const msgList = msg?.msg ?? [];
+
+        const log = msgList.map((t: any) => (isJson(t) ? JSON.stringify(t) : t)).join(' ');
+
+        logger[level](log);
+      }
     }
   }
 
@@ -151,123 +135,91 @@ class ConnectService extends PythonService {
     const lines = chunk.split(/\r?\n/).map((line) => line.trim());
 
     for (const line of lines) {
-      if (!line) continue;
-      logger.warn(line);
+      const payload = line.trim();
+      if (!payload) continue;
+      if (/I\d+/.test(payload)) continue;
+
+      logger.warn(payload);
     }
-  }
-
-  private async connect(): Promise<void> {
-    await this.connectRpc();
-  }
-
-  private async exec(payload: IGrpcRequest): Promise<any> {
-    if (!this.client) {
-      throw new Error('gRPC client is not initialized.');
-    }
-
-    return await new Promise<any>((resolve, reject) => {
-      const deadline = new Date(Date.now() + getTimeout());
-
-      this.client!.Exec(payload, { deadline }, (error, response) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        if (!response) {
-          reject(new Error('Empty response from Python gRPC service'));
-          return;
-        }
-
-        if (response.error) {
-          reject(new Error(response.error));
-          return;
-        }
-
-        resolve(response.result);
-      });
-    });
   }
 
   public async prepare(): Promise<void> {
-    await this.checkBinary();
-    await this.installDep();
-
-    const pids = await this.matchPort(this.port);
-
-    if (pids.length) {
-      this.pids = pids;
-      await this.connect();
-      return;
-    }
-
     try {
-      await new Promise<void>((resolve, reject) => {
-        let settled = false;
+      const isBinaryEnv = await this.checkBinary();
+      if (!isBinaryEnv) throw new Error('UV binary is not ready');
 
-        const done = (): void => {
-          if (settled) return;
-          settled = true;
-          resolve();
-        };
+      const isPipInstalled = await this.pipInstall();
+      if (!isPipInstalled) throw new Error('Failed to install pip dependencies');
 
-        const fail = (error: Error): void => {
-          if (settled) return;
-          settled = true;
-          reject(error);
-        };
+      const pids = this.pids.length ? this.pids : await this.matchPort(this.port);
+      if (!pids.length) {
+        await new Promise<void>((resolve, reject) => {
+          this.runSpawn(['main.py', '--port', String(this.port)], true, {
+            stdoutCb: async (data) => {
+              this.handlePythonStdout(data);
 
-        this.runSpawn(['main.py', '--port', String(this.port)], true, {
-          stdoutCb: async (data) => {
-            this.handlePythonStdout(data);
-
-            if (data.includes('Spider gRPC server started')) {
-              const runningPids = await this.matchPort(this.port);
-              if (runningPids.length) {
-                this.pids = runningPids;
-                done();
+              if (data.includes('Spider gRPC server started')) {
+                const pids = await this.matchPort(this.port);
+                if (pids.length) {
+                  this.pids = pids;
+                  resolve();
+                }
               }
-            }
-          },
-          stderrCb: (data) => {
-            this.handlePythonStderr(data);
-          },
-          errorCb: (error) => {
-            fail(error);
-          },
-          closeCb: (code) => {
-            if (settled) return;
-            fail(new Error(`Python t3Py process exited unexpectedly: ${code ?? 'unknown'}`));
-          },
+            },
+            stderrCb: (data) => {
+              this.handlePythonStderr(data);
+            },
+            errorCb: (error) => {
+              reject(new Error(`Python process error: ${(error as Error).message}`));
+            },
+            closeCb: (code) => {
+              reject(new Error(`Python process exited: ${code ?? 'unknown'}`));
+            },
+          });
         });
-      });
+      }
 
       await this.connect();
     } catch (error) {
-      throw new Error(`Failed to start Python t3Py service: ${error}`);
+      logger.error(`Failed to prepare: ${(error as Error).message}`);
+      throw error;
     }
   }
 
   public async terminate(): Promise<void> {
     try {
-      this.closeClient();
+      if (this.client) {
+        this.client.close();
+      }
 
       if (!this.pids.length) {
         const pids = await this.matchPort(this.port);
         if (pids.length) this.pids = pids;
       }
-
       if (this.pids.length) await this.killProcess(this.pids);
+
+      this.client = null;
       this.pids = [];
       this.stdoutBuffer = '';
     } catch (error) {
-      logger.error('Error during termination:', error as Error);
+      logger.error(`Error on termination: ${(error as Error).message}`);
     }
   }
 
   public async execCtx(code: string, type: string, options: any[] = []): Promise<any> {
-    const payload: IGrpcRequest = { code, type, options };
-    return await this.exec(payload);
+    if (!this.client) throw new Error('gRPC client is not initialized');
+
+    return await new Promise<any>((resolve, reject) => {
+      const payload: IGrpcRequest = { code, type, options };
+      const deadline = new Date(Date.now() + getTimeout());
+
+      this.client!.Exec(payload, { deadline }, (error, response) => {
+        if (error) return reject(error);
+        if (!response) return reject(new Error('response is empty'));
+        if (response.error) return reject(new Error(response.error));
+        resolve(response.result);
+      });
+    });
   }
 }
 

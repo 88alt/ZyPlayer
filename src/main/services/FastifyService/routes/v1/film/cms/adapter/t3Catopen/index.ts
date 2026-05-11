@@ -61,6 +61,7 @@ class T3CatopenAdapter {
           const msgList = msg?.msg ?? [];
 
           const log = msgList.map((t: any) => (isJson(t) ? JSON.stringify(t) : t)).join(' ');
+          if (/\(node:\d+\)/.test(log)) return;
 
           logger[level](log);
         }

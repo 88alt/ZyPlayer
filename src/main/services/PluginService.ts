@@ -347,6 +347,7 @@ class PluginService {
                   const msgList = msg?.msg ?? [];
 
                   const log = msgList.map((t: any) => (isJson(t) ? JSON.stringify(t) : t)).join(' ');
+                  if (/\(node:\d+\)/.test(log)) return;
 
                   const logger = loggerService.withContext(`${LOG_MODULE.PLUGIN}<${pluginInfo.pluginName}>`);
                   logger[level](log);
@@ -410,6 +411,7 @@ class PluginService {
                   const msgList = msg?.msg ?? [];
 
                   const log = msgList.map((t: any) => (isJson(t) ? JSON.stringify(t) : t)).join(' ');
+                  if (/\(node:\d+\)/.test(log)) return;
 
                   const logger = loggerService.withContext(`${LOG_MODULE.PLUGIN}<${pluginInfo.pluginName}>`);
                   logger[level](log);

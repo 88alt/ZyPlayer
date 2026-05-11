@@ -2,15 +2,23 @@
 
 > All notable changes to this project will be documented in this file.
 
-## 3.4.6
+## 3.4.7
+
+- 变动: 依赖库升级
+
+[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.7)
+
+## 3.4.6 (2026-05-11)
 
 - 优化: 默认ui参数调整
 - 优化: 独立crypto模块: rsa支持非标模式(私加公解), 优化分块计算; sm4参数名同步
 - 优化: 视频类型识别加入数据头识别
 - 修复: 影视类只有一个时整体隐藏(导致筛选隐藏); 数据冲突(旧数据没加载完触发新数据); 启动应用时初始化环境; T3Catopen适配器兼容性; T3Py重构(zeromq -> grpc)
+- 修复: python项目重复检测uv环境和pip依赖问题
 - 修复: terminal组件触发applyTheme但搜索框dom未创建时报错; 未调用onLinkClickCallback
 - 修复: 实验室ui插件预览按钮不生效
 - 修复: 部分情况自动下集不稳定 [issue #488]
+- 修复: 导入数据格式化后为空数据提示导入成功
 - 变动: 依赖库升级
 
 [View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.6)

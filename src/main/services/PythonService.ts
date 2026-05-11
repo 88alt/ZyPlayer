@@ -10,7 +10,7 @@ import { HOME_BIN_PATH } from '@main/utils/path';
 import { chmodBinary, getBinaryName, killPid, matchPort, matchPs } from '@main/utils/process';
 import { execAsync } from '@main/utils/shell';
 import { LOG_MODULE } from '@shared/config/logger';
-import { isArray, isArrayEmpty, isNil } from '@shared/modules/validate';
+import { isArray, isArrayEmpty } from '@shared/modules/validate';
 
 const logger = loggerService.withContext(LOG_MODULE.PYTHON);
 
@@ -20,22 +20,44 @@ export interface IPythonOptions {
 
 export class PythonService {
   projectBasePath: string;
-  uvBinaryPath: string;
+  pyprojectTomlPath: string;
+  requirementsPath: string;
   registry: string;
+
+  uvBinaryPath: string;
+  isUvBinaryCheck: boolean = false;
+  isPipCheck: boolean = false;
+
   childProcess: ChildProcessByStdio<null, Stream.Readable, Stream.Readable> | null = null;
 
   constructor(options: IPythonOptions) {
     this.projectBasePath = options.projectBasePath;
+    this.pyprojectTomlPath = join(this.projectBasePath, 'pyproject.toml');
+    this.requirementsPath = join(this.projectBasePath, 'requirements.txt');
     this.uvBinaryPath = join(HOME_BIN_PATH, getBinaryName('uv'));
     this.registry = appLocale.isCHS() ? 'https://mirrors.aliyun.com/pypi/simple' : 'https://pypi.org/simple';
   }
 
-  async checkBinary() {
-    if (!(await pathExist(this.uvBinaryPath))) {
-      throw new Error('uv binary does not exist.');
-    }
-    if (!(await chmodBinary(this.uvBinaryPath, 0o755))) {
-      throw new Error('Failed to set executable permissions for uv binary.');
+  async checkBinary(): Promise<boolean> {
+    if (this.isUvBinaryCheck) return true;
+
+    try {
+      if (!(await pathExist(this.uvBinaryPath))) {
+        this.isUvBinaryCheck = false;
+        return false;
+      }
+
+      if (!(await chmodBinary(this.uvBinaryPath, 0o755))) {
+        this.isUvBinaryCheck = false;
+        return false;
+      }
+
+      this.isUvBinaryCheck = true;
+      return true;
+    } catch (error) {
+      logger.error('Failed to check uv binary:', error as Error);
+      this.isUvBinaryCheck = false;
+      return false;
     }
   }
 
@@ -51,35 +73,107 @@ export class PythonService {
     return await killPid(pids);
   }
 
-  async installDep(pkgs: string[] = []): Promise<boolean> {
+  async pipInstall(pkgs: string[] = []): Promise<boolean> {
+    const isPkgs = isArray(pkgs) && !isArrayEmpty(pkgs);
+
     try {
-      const tomlPath = join(this.projectBasePath, 'pyproject.toml');
-      const requirementsPath = join(this.projectBasePath, 'requirements.txt');
+      const isPipCheck = await this.pipCheck(pkgs);
+      if (isPipCheck) {
+        logger.info('Pip dependencies are already satisfied');
+        return true;
+      }
 
-      const cmd = (await pathExist(tomlPath))
-        ? [this.uvBinaryPath, 'sync', '--native-tls', '', '--default-index', this.registry]
-        : (await pathExist(requirementsPath))
-          ? [this.uvBinaryPath, 'pip', 'install', '-r', 'requirements.txt', '-i', this.registry]
-          : isArray(pkgs) && !isArrayEmpty(pkgs)
-            ? [this.uvBinaryPath, 'pip', 'install', ...pkgs, '-i', this.registry]
-            : null;
+      let cmdArgs: string[] = [];
 
-      if (isNil(cmd)) {
-        logger.warn('No pyproject.toml or requirements.txt found, skipping dependency installation.');
+      if (isPkgs) {
+        cmdArgs = [this.uvBinaryPath, 'pip', 'install', ...pkgs, '-i', this.registry];
+      } else if (await pathExist(this.pyprojectTomlPath)) {
+        cmdArgs = [this.uvBinaryPath, 'sync', '--native-tls', '--default-index', this.registry];
+      } else if (await pathExist(this.requirementsPath)) {
+        cmdArgs = [this.uvBinaryPath, 'pip', 'install', '-r', 'requirements.txt', '-i', this.registry];
+      }
+
+      if (!cmdArgs.length) {
+        logger.warn('No pip dependencies should be installed');
+        if (!isPkgs) this.isPipCheck = true;
+        return true;
+      }
+
+      const cmd = cmdArgs.join(' ');
+      logger.debug(`Install pip dependencies with command: ${cmd}`);
+
+      try {
+        const { stdout, stderr } = await execAsync(cmd, {
+          cwd: this.projectBasePath,
+        });
+
+        if (stdout) logger.debug(stdout.toString());
+        if (stderr) logger.debug(stderr.toString());
+
+        if (!isPkgs) this.isPipCheck = true;
+        return true;
+      } catch {
+        if (!isPkgs) this.isPipCheck = false;
         return false;
       }
-      logger.debug(`Installing Python dependencies with command: ${cmd.join(' ')}`);
-
-      const { stdout, stderr } = await execAsync(cmd.join(' '), {
-        cwd: this.projectBasePath,
-      });
-
-      if (stdout) logger.debug(stdout.toString());
-      if (stderr) logger.debug(stderr.toString());
-
-      return true;
     } catch (error) {
       logger.error('Failed to install dependencies:', error as Error);
+      if (!isPkgs) this.isPipCheck = false;
+      throw error;
+    }
+  }
+
+  async pipCheck(pkgs: string[] = []): Promise<boolean> {
+    const isPkgs = isArray(pkgs) && !isArrayEmpty(pkgs);
+    if (!isPkgs && this.isPipCheck) return true;
+
+    try {
+      let cmdArgs: string[] = [];
+
+      if (isPkgs) {
+        cmdArgs = [this.uvBinaryPath, 'pip', 'show', ...pkgs];
+      } else if (await pathExist(this.pyprojectTomlPath)) {
+        cmdArgs = [this.uvBinaryPath, 'sync', '--dry-run', '--native-tls', '--default-index', this.registry];
+      } else if (await pathExist(this.requirementsPath)) {
+        cmdArgs = [
+          this.uvBinaryPath,
+          'pip',
+          'install',
+          '-r',
+          'requirements.txt',
+          '--dry-run',
+          '--strict',
+          '-i',
+          this.registry,
+        ];
+      }
+
+      if (!cmdArgs.length) {
+        logger.warn('No pip dependencies should be checked');
+        if (!isPkgs) this.isPipCheck = true;
+        return true;
+      }
+
+      const cmd = cmdArgs.join(' ');
+      logger.debug(`Check pip dependencies with command: ${cmd}`);
+
+      try {
+        const { stdout, stderr } = await execAsync(cmd, {
+          cwd: this.projectBasePath,
+        });
+
+        if (stdout) logger.debug(stdout.toString());
+        if (stderr) logger.debug(stderr.toString());
+
+        if (!isPkgs) this.isPipCheck = true;
+        return true;
+      } catch {
+        if (!isPkgs) this.isPipCheck = false;
+        return false;
+      }
+    } catch (error) {
+      logger.error('Failed to check dependencies:', error as Error);
+      if (!isPkgs) this.isPipCheck = false;
       throw error;
     }
   }
@@ -120,6 +214,7 @@ export class PythonService {
       });
 
       child.on('close', (code) => {
+        this.childProcess = null;
         cb?.closeCb?.(code);
       });
     } catch (error) {

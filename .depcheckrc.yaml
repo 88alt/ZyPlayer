@@ -1,0 +1,17 @@
+ignores:
+  - '@commitlint/*'
+  - '@electron-toolkit/eslint-config-ts'
+  - '@fontsource-variable/jetbrains-mono'
+  - '@fontsource-variable/noto-sans-sc'
+  - '@nodable/entities'
+  - '@oplayer/plugins'
+  - '@types/*'
+  - '@vitest/*'
+  - commitizen
+  - cz-conventional-changelog
+  - postcss-html
+  - postcss-less
+  - prettier-plugin-sort-json
+  - stylelint-config-standard
+  - stylelint-order
+  - tar

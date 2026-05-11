@@ -21,9 +21,14 @@ builtins.original_print = builtins.print
 
 def custom_print(*args: Any, **kwargs: Any) -> None:
     try:
-        log: Dict[str, Any] = {
+        msg: Dict[str, Any] = {
             "type": "multiple" if len(args) > 0 else "single",
             "msg": [*args, *[f'{k}={v}' for k, v in kwargs.items()]]
+        }
+        log: Dict[str, Any] = {
+            "type": "log",
+            "level": "verbose",
+            "msg": msg
         }
         builtins.original_print(json.dumps(log, ensure_ascii=False))  # type: ignore[attr-defined]
         sys.stdout.flush()
@@ -148,10 +153,10 @@ def serve(port: int) -> None:
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
     server.add_generic_rpc_handlers((generic_handler,))
     # Bind the control endpoint on the configured port.
-    server.add_insecure_port(f'[::]:{port}')
+    server.add_insecure_port(f'0.0.0.0:{port}')
     server.start()
 
-    sys.stdout.write(f"Spider grpc server started on [::]:{port}\n")
+    sys.stdout.write(f"Spider gRPC server started\n")
     sys.stdout.flush()
 
     try:
