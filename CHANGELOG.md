@@ -2,7 +2,7 @@
 
 > All notable changes to this project will be documented in this file.
 
-## 3.4.6
+## 3.4.6 (2026-05-11)
 
 - 优化: 默认ui参数调整
 - 优化: 独立crypto模块: rsa支持非标模式(私加公解), 优化分块计算; sm4参数名同步
