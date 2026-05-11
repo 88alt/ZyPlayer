@@ -4,6 +4,7 @@
 
 ## 3.4.7
 
+- 修复: win11全屏下左右存在白边 [issue #529]
 - 变动: 依赖库升级
 
 [View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.7)
