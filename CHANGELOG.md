@@ -2,6 +2,12 @@
 
 > All notable changes to this project will be documented in this file.
 
+## 3.4.7
+
+- 变动: 依赖库升级
+
+[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.7)
+
 ## 3.4.6 (2026-05-11)
 
 - 优化: 默认ui参数调整

@@ -1,6 +1,6 @@
 {
   "name": "zyfun",
-  "version": "3.4.6",
+  "version": "3.4.7-rc1",
   "private": true,
   "description": "Discover the world by watching movies.",
   "main": "./out/main/index.js",
@@ -76,7 +76,6 @@
     "workerpool": "^10.0.2"
   },
   "devDependencies": {
-    "@ag-ui/core": "^0.0.53",
     "@ai-sdk/anthropic": "^3.0.76",
     "@ai-sdk/google": "^3.0.71",
     "@ai-sdk/openai-compatible": "^2.0.47",
