@@ -5,6 +5,7 @@
 ## 3.4.7
 
 - 修复: win11全屏下左右存在白边 [issue #529]
+- 修复: T3Py代理路径参数缺失
 - 变动: 依赖库升级
 
 [View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.7)
