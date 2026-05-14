@@ -2,8 +2,8 @@ import { loggerService } from '@main/services/LoggerService';
 import type { Catvod, Tvbox, TvboxLiveNewItem, TvboxLiveOldItem } from '@main/types/tvbox';
 import { pathExist, readFile } from '@main/utils/file';
 import { request } from '@main/utils/request';
-import type { IDataImportType, IDataRemoteType } from '@shared/config/data';
-import { DATA_COMPLETE_TYPE, DATA_IMPORT_TYPE, DATA_SIMPLE_TYPE } from '@shared/config/data';
+import type { IDataSimpleType } from '@shared/config/data';
+import { DATA_SIMPLE_TYPE } from '@shared/config/data';
 import { PROXY_API } from '@shared/config/env';
 import { LOG_MODULE } from '@shared/config/logger';
 import type { ISettingKey } from '@shared/config/tblSetting';
@@ -569,49 +569,50 @@ const contentToStandard = (config: IDbStore): Partial<IDbStore> => {
   return data;
 };
 
-/**
- * Convert standard
- * @param importType simple | complete
- * @param remoteType simple: catvod | tvbox | drpy ; complete: local | remote
- * @param path url | file path
- * @returns standard content
- */
-export const convertToStandard = async (importType: IDataImportType, remoteType: IDataRemoteType, path: string) => {
-  let content: string | Record<string, any> | null = null;
-  if (
-    importType === DATA_IMPORT_TYPE.SIMPLE ||
-    (importType === DATA_IMPORT_TYPE.COMPLETE && remoteType === DATA_COMPLETE_TYPE.REMOTE)
-  ) {
-    try {
+const getContent = async (path: string): Promise<string> => {
+  let content: string = '';
+
+  try {
+    if (isHttp(path)) {
       const { data: resp } = await request.request({ url: path, method: 'GET', responseType: 'text' });
       content = resp;
-    } catch (error) {
-      logger.error(`Failed fetch ${path} cause of ${(error as Error).message}`);
-      content = null;
+    } else if (await pathExist(path)) {
+      content = (await readFile(path)) || '';
     }
-  } else if (importType === DATA_IMPORT_TYPE.COMPLETE && remoteType === DATA_COMPLETE_TYPE.LOCAL) {
-    if (await pathExist(path)) content = await readFile(path);
-  }
-  if (isNil(content) || isStrEmpty(content)) return {};
-
-  if (importType === DATA_IMPORT_TYPE.SIMPLE && remoteType !== DATA_SIMPLE_TYPE.CATVOD) {
-    content = tvboxDecryption(content as string);
+  } catch (error) {
+    logger.error(`Failed fetch ${path} cause of ${(error as Error).message}`);
+    content = '';
   }
 
-  if (isJsonStr(content)) content = jsonStrToObj(content as string);
+  return content;
+};
 
+export const convertCompleteToStandard = async (path: string) => {
+  const text = await getContent(path);
+  if (isNil(text) || isStrEmpty(text) || !isJsonStr(text)) return {};
+
+  const content: Record<string, any> = jsonStrToObj(text);
+  const standard: Partial<IDbStore> = content;
+
+  const res = contentToStandard(standard);
+  return res;
+};
+
+export const convertSimpleToStandard = async (path: string, remoteType: IDataSimpleType) => {
+  let text = await getContent(path);
+  if (isNil(text) || isStrEmpty(text)) return {};
+
+  if (remoteType !== DATA_SIMPLE_TYPE.CATVOD) text = tvboxDecryption(text as string);
+  if (!isJsonStr(text)) return {};
+
+  const content: Record<string, any> = jsonStrToObj(text);
   let standard: Partial<IDbStore> = {};
-  if (importType === DATA_IMPORT_TYPE.SIMPLE) {
-    if (remoteType === 'catvod') {
-      standard = catvodToStandard(content as Catvod, path);
-    } else {
-      standard = tvboxToStandard(content as Tvbox, path, remoteType);
-    }
-  } else if (importType === DATA_IMPORT_TYPE.COMPLETE) {
-    standard = content as Partial<IDbStore>;
+  if (remoteType === 'catvod') {
+    standard = catvodToStandard(content as Catvod, path);
+  } else {
+    standard = tvboxToStandard(content as Tvbox, path, remoteType);
   }
 
   const res = contentToStandard(standard);
-
   return res;
 };

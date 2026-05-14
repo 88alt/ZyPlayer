@@ -1,5 +1,5 @@
 import { tableNames } from '@main/services/DbService/schemas';
-import { dataImportTypes, dataPages, dataPutTypes, dataRemoteTypes } from '@shared/config/data';
+import { dataPages, dataPutTypes, dataRemoteTypes } from '@shared/config/data';
 import type { Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
 
@@ -57,14 +57,36 @@ export const exportSchema = {
   },
 };
 
-export const importSchema = {
+export const importCompleteSchema = {
   tags: [API_PREFIX],
-  summary: 'Import data',
-  description: 'Import data',
+  summary: 'Import  complete data',
+  description: 'Import complete data',
   body: Type.Object({
     api: Type.String({ description: 'api' }),
     putType: Type.String({ enum: dataPutTypes, description: 'put type' }),
-    importType: Type.String({ enum: dataImportTypes, description: 'import type' }),
+  }),
+  response: {
+    200: Type.Object(
+      {
+        ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
+        data: Type.Object({
+          success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+          message: Type.Optional(Type.String({ description: 'Error message' })),
+        }),
+      },
+      { description: 'Response schema for data import' },
+    ),
+    500: ResponseErrorSchema,
+  },
+};
+
+export const importSimpleSchema = {
+  tags: [API_PREFIX],
+  summary: 'Import simple data',
+  description: 'Import simple data',
+  body: Type.Object({
+    api: Type.String({ description: 'api' }),
+    putType: Type.String({ enum: dataPutTypes, description: 'put type' }),
     remoteType: Type.String({ enum: dataRemoteTypes, description: 'remote type' }),
   }),
   response: {
@@ -73,6 +95,7 @@ export const importSchema = {
         ...Type.Omit(ResponseSuccessSchema, ['data']).properties,
         data: Type.Object({
           success: Type.Boolean({ description: 'Indicates whether the operation was successful' }),
+          message: Type.Optional(Type.String({ description: 'Error message' })),
         }),
       },
       { description: 'Response schema for data import' },
@@ -83,4 +106,5 @@ export const importSchema = {
 
 export type ClearDataBody = Static<typeof clearSchema.body>;
 export type ExportDataBody = Static<typeof exportSchema.body>;
-export type ImportDataBody = Static<typeof importSchema.body>;
+export type ImportCompleteDataBody = Static<typeof importCompleteSchema.body>;
+export type ImportSimpleDataBody = Static<typeof importSimpleSchema.body>;

@@ -16,9 +16,17 @@ export function dataDbExport(doc) {
   });
 }
 
-export function dataDbImport(doc) {
+export function dataDbCompleteImport(doc) {
   return request.request({
-    url: '/v1/data/db/import',
+    url: '/v1/data/db/import/complete',
+    method: 'post',
+    data: doc,
+  });
+}
+
+export function dataDbSimpleImport(doc) {
+  return request.request({
+    url: '/v1/data/db/import/simple',
     method: 'post',
     data: doc,
   });

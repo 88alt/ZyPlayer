@@ -166,22 +166,22 @@ export default {
         clear: 'The selected type will be erased data.',
       },
     },
-    easyConfig: {
-      title: 'Quick Config',
-      field: {
-        typeMap: {
-          catvod: 'Catvod',
-          drpy: 'Drpy(js0)',
-          tvbox: 'Tvbox',
-        },
-      },
-    },
     configImport: {
       title: 'Data Import',
-      field: {
-        typeMap: {
-          remote: 'Remote',
-          local: 'Local',
+      complete: {
+        title: 'Complete',
+        tips: {
+          1: 'Please strictly follow the corresponding version data format for configuration, otherwise it may cause data errors or even make the application unusable.',
+        },
+      },
+      simple: {
+        title: 'Simple',
+        field: {
+          typeMap: {
+            catvod: 'Catvod',
+            drpy: 'Drpy(js0)',
+            tvbox: 'Tvbox',
+          },
         },
       },
     },

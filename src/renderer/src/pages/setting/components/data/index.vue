@@ -2,112 +2,115 @@
   <div class="setting-data view-component-container">
     <div class="content">
       <t-collapse default-expand-all>
-        <t-collapse-panel value="simple-import" :header="$t('pages.setting.data.easyConfig.title')">
+        <t-collapse-panel value="simple-import" :header="$t('pages.setting.data.configImport.title')">
           <div class="form">
-            <t-radio-group v-model="importSimpleFormData.type">
-              <t-radio :value="DATA_SIMPLE_TYPE.TVBOX">
-                {{ $t('pages.setting.data.easyConfig.field.typeMap.tvbox') }}
-              </t-radio>
-              <t-radio :value="DATA_SIMPLE_TYPE.CATVOD">
-                {{ $t('pages.setting.data.easyConfig.field.typeMap.catvod') }}
-              </t-radio>
-              <t-radio :value="DATA_SIMPLE_TYPE.DRPY">
-                {{ $t('pages.setting.data.easyConfig.field.typeMap.drpy') }}
-              </t-radio>
+            <t-radio-group v-model="importFormData.type" variant="default-filled">
+              <t-radio-button :value="DATA_IMPORT_TYPE.SIMPLE">
+                {{ $t('pages.setting.data.configImport.simple.title') }}
+              </t-radio-button>
+              <t-radio-button :value="DATA_IMPORT_TYPE.COMPLETE">
+                {{ $t('pages.setting.data.configImport.complete.title') }}
+              </t-radio-button>
             </t-radio-group>
-            <t-select
-              v-model="importSimpleFormData.url"
-              :label="$t('pages.setting.data.config.field.url')"
-              creatable
-              filterable
-              @create="createHistoryOptions(DATA_IMPORT_TYPE.SIMPLE, $event as string)"
-            >
-              <t-option
-                v-for="item in importSimpleHistoryList"
-                :key="item.value"
-                :value="item.value"
-                :label="item.label"
-                @click="handleHistoryFillFormData(DATA_IMPORT_TYPE.SIMPLE, item.type, item.value)"
-              />
-            </t-select>
-            <div class="action">
-              <t-popconfirm
-                :content="$t('pages.setting.data.config.popup.additional')"
-                placement="bottom"
-                @confirm="importData(DATA_IMPORT_TYPE.SIMPLE, DATA_PUT_TYPE.ADDITIONAL)"
-              >
-                <t-button theme="default" variant="base" block>
-                  {{ $t('pages.setting.data.additional') }}
-                </t-button>
-              </t-popconfirm>
-              <t-popconfirm
-                :content="$t('pages.setting.data.config.popup.override')"
-                placement="bottom"
-                @confirm="importData(DATA_IMPORT_TYPE.SIMPLE, DATA_PUT_TYPE.OVERWRITE)"
-              >
-                <t-button theme="primary" variant="base" block>
-                  {{ $t('pages.setting.data.override') }}
-                </t-button>
-              </t-popconfirm>
-            </div>
-          </div>
-        </t-collapse-panel>
-      </t-collapse>
 
-      <t-collapse>
-        <t-collapse-panel value="complete-import" :header="$t('pages.setting.data.configImport.title')">
-          <div class="form">
-            <t-radio-group v-model="importCompleteFormData.type">
-              <t-radio :value="DATA_COMPLETE_TYPE.REMOTE">
-                {{ $t('pages.setting.data.configImport.field.typeMap.remote') }}
-              </t-radio>
-              <t-radio :value="DATA_COMPLETE_TYPE.LOCAL">
-                {{ $t('pages.setting.data.configImport.field.typeMap.local') }}
-              </t-radio>
-            </t-radio-group>
-            <div class="form-item-group">
-              <t-select
-                v-model="importCompleteFormData.url"
-                :label="$t('pages.setting.data.config.field.url')"
-                creatable
-                filterable
-                @create="createHistoryOptions(DATA_IMPORT_TYPE.COMPLETE, $event as string)"
-              >
-                <t-option
-                  v-for="item in importCompleteHistoryList"
-                  :key="item.value"
-                  :value="item.value"
-                  :label="item.label"
-                  @click="handleHistoryFillFormData(DATA_IMPORT_TYPE.COMPLETE, item.type, item.value)"
-                />
-              </t-select>
-              <t-button
-                v-if="importCompleteFormData.type === DATA_COMPLETE_TYPE.LOCAL"
-                theme="default"
-                @click="uploadFileEvent"
-              >
-                {{ $t('common.upload') }}
-              </t-button>
+            <div v-show="importFormData.type === DATA_IMPORT_TYPE.SIMPLE" class="form">
+              <t-radio-group v-model="importSimpleFormData.type">
+                <t-radio :value="DATA_SIMPLE_TYPE.TVBOX">
+                  {{ $t('pages.setting.data.configImport.simple.field.typeMap.tvbox') }}
+                </t-radio>
+                <t-radio :value="DATA_SIMPLE_TYPE.CATVOD">
+                  {{ $t('pages.setting.data.configImport.simple.field.typeMap.catvod') }}
+                </t-radio>
+                <t-radio :value="DATA_SIMPLE_TYPE.DRPY">
+                  {{ $t('pages.setting.data.configImport.simple.field.typeMap.drpy') }}
+                </t-radio>
+              </t-radio-group>
+              <div class="form-item-group">
+                <t-select
+                  v-model="importSimpleFormData.api"
+                  :label="$t('pages.setting.data.config.field.url')"
+                  creatable
+                  filterable
+                  @create="createHistoryOptions(DATA_IMPORT_TYPE.SIMPLE, $event as string)"
+                >
+                  <t-option
+                    v-for="item in importSimpleHistoryList"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                    @click="handleSimpleHistoryFillFormData(item.type, item.value)"
+                  />
+                </t-select>
+                <t-button theme="default" @click="uploadFileEvent(DATA_IMPORT_TYPE.SIMPLE)">
+                  {{ $t('common.upload') }}
+                </t-button>
+              </div>
+              <div class="action">
+                <t-popconfirm
+                  :content="$t('pages.setting.data.config.popup.additional')"
+                  placement="bottom"
+                  @confirm="importSimpleData(DATA_PUT_TYPE.ADDITIONAL)"
+                >
+                  <t-button theme="default" variant="base" block>
+                    {{ $t('pages.setting.data.additional') }}
+                  </t-button>
+                </t-popconfirm>
+                <t-popconfirm
+                  :content="$t('pages.setting.data.config.popup.override')"
+                  placement="bottom"
+                  @confirm="importSimpleData(DATA_PUT_TYPE.OVERWRITE)"
+                >
+                  <t-button theme="primary" variant="base" block>
+                    {{ $t('pages.setting.data.override') }}
+                  </t-button>
+                </t-popconfirm>
+              </div>
             </div>
-            <div class="action">
-              <t-popconfirm
-                :content="$t('pages.setting.data.config.popup.additional')"
-                placement="bottom"
-                @confirm="importData(DATA_IMPORT_TYPE.COMPLETE, DATA_PUT_TYPE.ADDITIONAL)"
-              >
-                <t-button theme="default" variant="base" block>
-                  {{ $t('pages.setting.data.additional') }}
+
+            <div v-show="importFormData.type === DATA_IMPORT_TYPE.COMPLETE" class="form">
+              <div class="tips">
+                <p>{{ $t('pages.setting.data.configImport.complete.tips.1') }}</p>
+              </div>
+              <div class="form-item-group">
+                <t-select
+                  v-model="importCompleteFormData.api"
+                  :label="$t('pages.setting.data.config.field.url')"
+                  creatable
+                  filterable
+                  @create="createHistoryOptions(DATA_IMPORT_TYPE.COMPLETE, $event as string)"
+                >
+                  <t-option
+                    v-for="item in importCompleteHistoryList"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                    @click="handleCompleteHistoryFillFormData(item.value)"
+                  />
+                </t-select>
+                <t-button theme="default" @click="uploadFileEvent(DATA_IMPORT_TYPE.COMPLETE)">
+                  {{ $t('common.upload') }}
                 </t-button>
-              </t-popconfirm>
-              <t-popconfirm
-                :content="$t('pages.setting.data.config.popup.override')"
-                placement="bottom"
-                @confirm="importData(DATA_IMPORT_TYPE.COMPLETE, DATA_PUT_TYPE.OVERWRITE)"
-              >
-                <t-button theme="primary" variant="base" block>
-                  {{ $t('pages.setting.data.override') }}
-                </t-button>
-              </t-popconfirm>
+              </div>
+              <div class="action">
+                <t-popconfirm
+                  :content="$t('pages.setting.data.config.popup.additional')"
+                  placement="bottom"
+                  @confirm="importCompleteData(DATA_PUT_TYPE.ADDITIONAL)"
+                >
+                  <t-button theme="default" variant="base" block>
+                    {{ $t('pages.setting.data.additional') }}
+                  </t-button>
+                </t-popconfirm>
+                <t-popconfirm
+                  :content="$t('pages.setting.data.config.popup.override')"
+                  placement="bottom"
+                  @confirm="importCompleteData(DATA_PUT_TYPE.OVERWRITE)"
+                >
+                  <t-button theme="primary" variant="base" block>
+                    {{ $t('pages.setting.data.override') }}
+                  </t-button>
+                </t-popconfirm>
+              </div>
             </div>
           </div>
         </t-collapse-panel>
@@ -221,27 +224,22 @@
   </div>
 </template>
 <script setup lang="ts">
-import type {
-  IDataCompleteType,
-  IDataImportType,
-  IDataPutType,
-  IDataRemoteType,
-  IDataSimpleType,
-} from '@shared/config/data';
-import {
-  DATA_COMPLETE_TYPE,
-  DATA_IMPORT_TYPE,
-  DATA_PUT_TYPE,
-  DATA_SIMPLE_TYPE,
-  dataImportTypes,
-} from '@shared/config/data';
+import type { IDataImportType, IDataPutType, IDataSimpleType } from '@shared/config/data';
+import { DATA_IMPORT_TYPE, DATA_PUT_TYPE, DATA_SIMPLE_TYPE, dataImportTypes } from '@shared/config/data';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { toUnix } from '@shared/modules/date';
 import { isArray, isArrayEmpty, isHttp, isStrEmpty, isString } from '@shared/modules/validate';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, ref } from 'vue';
 
-import { dataCloudBackup, dataCloudResume, dataDbClear, dataDbExport, dataDbImport } from '@/api/data';
+import {
+  dataCloudBackup,
+  dataCloudResume,
+  dataDbClear,
+  dataDbCompleteImport,
+  dataDbExport,
+  dataDbSimpleImport,
+} from '@/api/data';
 import { addHistory, fetchHistoryPage } from '@/api/moment';
 import { getSettingDetail, putSetting } from '@/api/setting';
 import { emitterChannel, emitterSource } from '@/config/emitterChannel';
@@ -261,17 +259,13 @@ const TABLE_OPTIONS = computed(() => [
 
 const HISTORY_TYPE_MAP: Record<IDataImportType, 6 | 7> = { simple: 6, complete: 7 };
 
-const importSimpleFormData = ref<{ type: IDataSimpleType; url: string }>({
-  type: DATA_SIMPLE_TYPE.TVBOX,
-  url: '',
-});
-const importSimpleHistoryList = ref<Array<{ label: string; value: string; type: IDataSimpleType }>>([]);
+const importFormData = ref<{ type: IDataImportType }>({ type: DATA_IMPORT_TYPE.SIMPLE });
 
-const importCompleteFormData = ref<{ type: IDataCompleteType; url: string }>({
-  type: DATA_COMPLETE_TYPE.REMOTE,
-  url: '',
-});
-const importCompleteHistoryList = ref<Array<{ label: string; value: string; type: IDataCompleteType }>>([]);
+const importCompleteFormData = ref<{ api: string }>({ api: '' });
+const importCompleteHistoryList = ref<Array<{ label: string; value: string }>>([]);
+
+const importSimpleFormData = ref<{ type: IDataSimpleType; api: string }>({ type: DATA_SIMPLE_TYPE.TVBOX, api: '' });
+const importSimpleHistoryList = ref<Array<{ label: string; value: string; type: IDataSimpleType }>>([]);
 
 const exportFormData = ref({
   site: false,
@@ -372,52 +366,61 @@ const getCloudConf = async () => {
 
 const createHistoryOptions = async (importType: IDataImportType, val: string) => {
   try {
+    const MAX_HISTORY_LENGTH = 5;
     const target = importType === DATA_IMPORT_TYPE.SIMPLE ? importSimpleHistoryList : importCompleteHistoryList;
-    const targetIndex = target.value.findIndex((item) => item.value === val);
-    if (targetIndex === -1) {
-      if (target.value.length >= 5) {
-        target.value.pop();
-      }
-      const type: IDataRemoteType =
-        importType === DATA_IMPORT_TYPE.SIMPLE ? importSimpleFormData.value.type : importCompleteFormData.value.type;
-      target.value.unshift({ value: val, label: val, type } as any);
 
-      await addHistory({
-        videoName: val,
-        videoId: val,
-        relateId: type,
-        type: HISTORY_TYPE_MAP[importType],
-      });
+    const isExist = target.value.some((item) => item.value === val);
+    if (isExist) return;
+
+    if (target.value.length >= MAX_HISTORY_LENGTH) {
+      target.value.pop();
     }
+
+    if (importType === DATA_IMPORT_TYPE.SIMPLE) {
+      (target.value as typeof importSimpleHistoryList.value).unshift({
+        value: val,
+        label: val,
+        type: importSimpleFormData.value.type,
+      });
+    } else {
+      (target.value as typeof importCompleteHistoryList.value).unshift({ value: val, label: val });
+    }
+
+    await addHistory({
+      videoName: val,
+      videoId: val,
+      relateId: importType === DATA_IMPORT_TYPE.SIMPLE ? importSimpleFormData.value.type : '',
+      type: HISTORY_TYPE_MAP[importType],
+    });
   } catch (error) {
     console.error('Failed to create history options:', error);
   }
 };
 
-const handleHistoryFillFormData = async (importType: IDataImportType, form: IDataRemoteType, value: string) => {
-  const target = importType === DATA_IMPORT_TYPE.SIMPLE ? importSimpleFormData : importCompleteFormData;
-  target.value.url = value;
-  target.value.type = form;
+const handleCompleteHistoryFillFormData = async (value: string) => {
+  importCompleteFormData.value.api = value;
 };
 
-const importData = async (importType: IDataImportType, putType: IDataPutType) => {
+const handleSimpleHistoryFillFormData = async (form: IDataSimpleType, value: string) => {
+  importSimpleFormData.value.api = value;
+  importSimpleFormData.value.type = form;
+};
+
+const importCompleteData = async (putType: IDataPutType) => {
   try {
-    const api =
-      importType === DATA_IMPORT_TYPE.SIMPLE ? importSimpleFormData.value.url : importCompleteFormData.value.url;
-    const type =
-      importType === DATA_IMPORT_TYPE.SIMPLE ? importSimpleFormData.value.type : importCompleteFormData.value.type;
+    const api = importCompleteFormData.value.api;
 
     if (isStrEmpty(api)) {
       MessagePlugin.warning(t('common.message.noRequiredParam'));
       return;
     }
 
-    const resp = await dataDbImport({ importType, putType, api, remoteType: type });
+    const resp = await dataDbCompleteImport({ putType, api });
     if (resp.success) {
       refreshEmitter();
       MessagePlugin.success(t('common.success'));
     } else {
-      MessagePlugin.warning(t('common.fail'));
+      MessagePlugin.warning(`${t('common.fail')}: ${resp.message || 'unknown error'}`);
     }
   } catch (error) {
     console.error('Failed to import data:', error);
@@ -425,7 +428,29 @@ const importData = async (importType: IDataImportType, putType: IDataPutType) =>
   }
 };
 
-const uploadFileEvent = async () => {
+const importSimpleData = async (putType: IDataPutType) => {
+  try {
+    const { api, type: remoteType } = importSimpleFormData.value;
+
+    if (isStrEmpty(api)) {
+      MessagePlugin.warning(t('common.message.noRequiredParam'));
+      return;
+    }
+
+    const resp = await dataDbSimpleImport({ putType, api, remoteType });
+    if (resp.success) {
+      refreshEmitter();
+      MessagePlugin.success(t('common.success'));
+    } else {
+      MessagePlugin.warning(`${t('common.fail')}: ${resp.message || 'unknown error'}`);
+    }
+  } catch (error) {
+    console.error('Failed to import data:', error);
+    MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
+  }
+};
+
+const uploadFileEvent = async (importType: IDataImportType) => {
   try {
     const resp = await window.electron.ipcRenderer.invoke(IPC_CHANNEL.FILE_SELECT_FILE_DIALOG, {});
     if (!isArray(resp) || isArrayEmpty(resp)) {
@@ -434,10 +459,11 @@ const uploadFileEvent = async () => {
     }
 
     const path = resp[0];
-    importCompleteFormData.value.url = path;
+    const target = importType === DATA_IMPORT_TYPE.SIMPLE ? importSimpleFormData : importCompleteFormData;
+    target.value.api = path;
 
     try {
-      createHistoryOptions(DATA_IMPORT_TYPE.COMPLETE, path);
+      createHistoryOptions(importType, path);
     } catch {
       // do nothing
     }
@@ -581,6 +607,11 @@ const cloudResume = async () => {
       .action {
         display: flex;
         gap: var(--td-size-4);
+      }
+
+      .tips {
+        color: var(--td-text-color-secondary);
+        font: var(--td-font-link-small);
       }
     }
   }

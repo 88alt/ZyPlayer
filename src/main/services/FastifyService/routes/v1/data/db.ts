@@ -1,14 +1,19 @@
 import { dbService } from '@main/services/DbService';
 import { fileStorage } from '@main/services/FileStorage';
-import type { ClearDataBody, ExportDataBody, ImportDataBody } from '@server/schemas/v1/data/db';
-import { clearSchema, exportSchema, importSchema } from '@server/schemas/v1/data/db';
-import type { IDataImportType, IDataPutType, IDataRemoteType } from '@shared/config/data';
+import type {
+  ClearDataBody,
+  ExportDataBody,
+  ImportCompleteDataBody,
+  ImportSimpleDataBody,
+} from '@server/schemas/v1/data/db';
+import { clearSchema, exportSchema, importCompleteSchema, importSimpleSchema } from '@server/schemas/v1/data/db';
+import type { IDataPutType, IDataSimpleType } from '@shared/config/data';
 import { DATA_PAGE, DATA_PUT_TYPE, DATA_TABLE_PAGE } from '@shared/config/data';
 import { isArrayEmpty, isObjectEmpty } from '@shared/modules/validate';
 import type { ITableName } from '@shared/types/db';
 import type { FastifyPluginAsync } from 'fastify';
 
-import { convertToStandard } from './utils/data';
+import { convertCompleteToStandard, convertSimpleToStandard } from './utils/data';
 
 const API_PREFIX = 'data/db';
 
@@ -72,31 +77,74 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
     },
   );
 
-  fastify.post<{ Body: ImportDataBody }>(
-    `/${API_PREFIX}/import`,
+  fastify.post<{ Body: ImportCompleteDataBody }>(
+    `/${API_PREFIX}/import/complete`,
     {
-      schema: importSchema,
+      schema: importCompleteSchema,
     },
     async (req, reply) => {
       try {
-        const { api, putType, importType, remoteType } = req.body as {
-          api: string;
-          putType: IDataPutType;
-          importType: IDataImportType;
-          remoteType: IDataRemoteType;
-        };
+        const { api, putType } = req.body as { api: string; putType: IDataPutType };
         const method = putType === DATA_PUT_TYPE.ADDITIONAL ? 'add' : 'set';
 
-        const data = await convertToStandard(importType, remoteType, api);
+        const data = await convertCompleteToStandard(api);
         if (putType === DATA_PUT_TYPE.ADDITIONAL) delete data.setting;
         if (isObjectEmpty(data) || Object.keys(data).every((k) => isArrayEmpty(data[k]))) {
-          return reply.code(200).send({ code: 0, msg: 'ok', data: { success: false } });
+          return reply
+            .code(200)
+            .send({ code: 0, msg: 'ok', data: { success: false, message: 'No valid data to import' } });
         }
 
         const ops = (Object.keys(data) as ITableName[]).map((t) => dbService[t][method](data[t] as any));
         const res = await Promise.allSettled(ops);
 
         const ststus = res.filter((r) => r.status === 'rejected').length === 0;
+        if (!ststus) {
+          return reply
+            .code(200)
+            .send({ code: 0, msg: 'ok', data: { success: false, message: 'Dirty data to import' } });
+        }
+
+        return reply.code(200).send({ code: 0, msg: 'ok', data: { success: ststus } });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });
+      }
+    },
+  );
+
+  fastify.post<{ Body: ImportSimpleDataBody }>(
+    `/${API_PREFIX}/import/simple`,
+    {
+      schema: importSimpleSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { api, putType, remoteType } = req.body as {
+          api: string;
+          putType: IDataPutType;
+          remoteType: IDataSimpleType;
+        };
+        const method = putType === DATA_PUT_TYPE.ADDITIONAL ? 'add' : 'set';
+
+        const data = await convertSimpleToStandard(api, remoteType);
+        if (putType === DATA_PUT_TYPE.ADDITIONAL) delete data.setting;
+        if (isObjectEmpty(data) || Object.keys(data).every((k) => isArrayEmpty(data[k]))) {
+          return reply
+            .code(200)
+            .send({ code: 0, msg: 'ok', data: { success: false, message: 'No valid data to import' } });
+        }
+
+        const ops = (Object.keys(data) as ITableName[]).map((t) => dbService[t][method](data[t] as any));
+        const res = await Promise.allSettled(ops);
+
+        const ststus = res.filter((r) => r.status === 'rejected').length === 0;
+        if (!ststus) {
+          return reply
+            .code(200)
+            .send({ code: 0, msg: 'ok', data: { success: false, message: 'Dirty data to import' } });
+        }
+
         return reply.code(200).send({ code: 0, msg: 'ok', data: { success: ststus } });
       } catch (error) {
         fastify.log.error(error);

@@ -164,22 +164,22 @@ export default {
         clear: '選中數據將被刪除, 確認操作嗎',
       },
     },
-    easyConfig: {
-      title: '快捷配置',
-      field: {
-        typeMap: {
-          catvod: 'Catvod',
-          drpy: 'Drpy(js0)',
-          tvbox: 'Tvbox',
-        },
-      },
-    },
     configImport: {
       title: '數據導入',
-      field: {
-        typeMap: {
-          remote: '遠程',
-          local: '本地',
+      complete: {
+        title: '完整配置',
+        tips: {
+          1: '請嚴格按照對應版本數據格式進行配置, 否則可能導致數據錯誤甚至應用無法使用。',
+        },
+      },
+      simple: {
+        title: '快捷配置',
+        field: {
+          typeMap: {
+            catvod: 'Catvod',
+            drpy: 'Drpy(js0)',
+            tvbox: 'Tvbox',
+          },
         },
       },
     },
