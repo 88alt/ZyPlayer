@@ -171,7 +171,8 @@ export default {
       complete: {
         title: 'Complete',
         tips: {
-          1: 'Please strictly follow the corresponding version data format for configuration, otherwise it may cause data errors or even make the application unusable.',
+          1: 'When adding data, if there is a conflict with the unique field (id/key), it will be considered dirty data and will cause the import to fail.',
+          2: 'Please strictly follow the corresponding version data format for configuration, otherwise it may cause data errors or even make the application unusable.',
         },
       },
       simple: {
@@ -182,6 +183,9 @@ export default {
             drpy: 'Drpy(js0)',
             tvbox: 'Tvbox',
           },
+        },
+        tips: {
+          1: 'When adding data, if there is a conflict with the unique field (id/key), it will be considered dirty data and will cause the import to fail.',
         },
       },
     },
