@@ -14,7 +14,7 @@ on:
         type: choice
         options:
           - all
-          - windows
+          - win
           - mac
           - linux
   push:
@@ -51,10 +51,14 @@ jobs:
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
   build:
-    needs:
-      - prepare
+    needs: prepare
+    if: |
+      github.event_name == 'push' ||
+      inputs.platform == 'all' ||
+      inputs.platform == 'win' && contains(matrix.platform, 'win') ||
+      inputs.platform == 'mac' && contains(matrix.platform, 'mac') ||
+      inputs.platform == 'linux' && contains(matrix.platform, 'linux')
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         include:
@@ -88,13 +92,6 @@ jobs:
             arch: arm64
             build_command: pnpm build:linux:arm64
       fail-fast: false
-
-    if: |
-      inputs.platform == 'all' ||
-      (inputs.platform == 'windows' && startsWith(matrix.platform, 'win')) ||
-      (inputs.platform == 'mac' && matrix.platform == 'mac')) ||
-      (inputs.platform == 'linux' && matrix.platform == 'linux')) ||
-      github.event_name == 'push'
 
     steps:
       - name: Checkout repo
@@ -153,37 +150,31 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: --max-old-space-size=8192
 
-      - name: Rename windows build info file
+      - name: Rename Windows Build Metadata
         if: matrix.platform == 'win'
         shell: bash
         run: |
-          set -e
-
-          if [[ "${{ matrix.arch }}" == "arm64" ]]; then
-            if [[ -f dist/latest.yml ]]; then
-              mv dist/latest.yml dist/latest-win-arm64.yml
-            fi
-          fi
-
-          if [[ "${{ matrix.arch }}" == "x64" ]]; then
-            if [[ -f dist/latest.yml ]]; then
-              mv dist/latest.yml dist/latest-win-x64.yml
-            fi
+          if [ -f dist/latest.yml ]; then
+            mv dist/latest.yml dist/latest-win-${{ matrix.arch }}.yml
           fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: zyfun-${{ matrix.platform }}-${{ matrix.arch }}
-          path: dist/**
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/latest*.yml
           if-no-files-found: ignore
           retention-days: 1
           compression-level: 8
 
   publish:
-    needs:
-      - prepare
-      - build
+    needs: [prepare, build]
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
@@ -192,48 +183,27 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Merge Windows latest.yml
+      - name: Merge Windows Update Metadata
         if: hashFiles('dist/latest-win-x64.yml') != '' && hashFiles('dist/latest-win-arm64.yml') != ''
         shell: bash
         run: |
           set -e
 
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
-          sudo chmod +x /usr/local/bin/yq
+          # sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          # sudo chmod +x /usr/local/bin/yq
 
           WIN_X64="dist/latest-win-x64.yml"
           WIN_ARM="dist/latest-win-arm64.yml"
 
-          # case 1: both exist → merge
           if [[ -f "$WIN_X64" && -f "$WIN_ARM" ]]; then
-            echo "Merging Windows updater files"
-
-            yq eval-all '
-              select(fileIndex == 0) as $x64 |
-              select(fileIndex == 1) as $arm |
-              $x64 |
-              .files = (($x64.files // []) + ($arm.files // []))
-            ' "$WIN_X64" "$WIN_ARM" > dist/latest-windows.yml
-
+            yq eval-all 'select(fi == 0) * {"files": (select(fi == 0).files + select(fi == 1).files)}' "$WIN_X64" "$WIN_ARM" > dist/latest.yml
             rm -f "$WIN_X64" "$WIN_ARM"
             exit 0
+          elif [[ -f "$WIN_X64" ]]; then
+            mv "$WIN_X64" dist/latest.yml
+          elif [[ -f "$WIN_ARM" ]]; then
+            mv "$WIN_ARM" dist/latest.yml
           fi
-
-          # case 2: only x64
-          if [[ -f "$WIN_X64" ]]; then
-            echo "Only windows x64 updater found"
-            mv "$WIN_X64" dist/latest-windows.yml
-            exit 0
-          fi
-
-          # case 3: only arm64
-          if [[ -f "$WIN_ARM" ]]; then
-            echo "Only windows arm64 updater found"
-            mv "$WIN_ARM" dist/latest-windows.yml
-            exit 0
-          fi
-
-          echo "No Windows updater files found"
 
       - name: Release
         uses: ncipollo/release-action@v1
@@ -242,5 +212,5 @@ jobs:
           allowUpdates: true
           makeLatest: false
           tag: ${{ needs.prepare.outputs.tag }}
-          artifacts: 'dist/*.exe,dist/*.dmg,dist/*.AppImage,dist/*.deb,dist/*.rpm,dist/latest*.yml'
+          artifacts: 'dist/*'
           token: ${{ secrets.GITHUB_TOKEN }}
