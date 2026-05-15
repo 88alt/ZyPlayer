@@ -60,7 +60,7 @@ jobs:
           ${{ fromJSON(
             (github.event_name == 'push' || github.event_name == 'pull_request_target' || inputs.platform == 'all') && '[
               {"os": "macos-latest", "platform": "mac", "arch": "arm64", "build_command": "pnpm build:mac:arm64"},
-              {"os": "macos-13", "platform": "mac", "arch": "x64", "build_command": "pnpm build:mac:x64"},
+              {"os": "macos-15-intel", "platform": "mac", "arch": "x64", "build_command": "pnpm build:mac:x64"},
               {"os": "windows-latest", "platform": "win", "arch": "x64", "build_command": "pnpm build:win:x64"},
               {"os": "windows-11-arm", "platform": "win", "arch": "arm64", "build_command": "pnpm build:win:arm64"},
               {"os": "ubuntu-latest", "platform": "linux", "arch": "x64", "build_command": "pnpm build:linux:x64"},
@@ -68,7 +68,7 @@ jobs:
             ]' ||
             inputs.platform == 'mac' && '[
               {"os": "macos-latest", "platform": "mac", "arch": "arm64", "build_command": "pnpm build:mac:arm64"},
-              {"os": "macos-13", "platform": "mac", "arch": "x64", "build_command": "pnpm build:mac:x64"}
+              {"os": "macos-15-intel", "platform": "mac", "arch": "x64", "build_command": "pnpm build:mac:x64"}
             ]' ||
             inputs.platform == 'win' && '[
               {"os": "windows-latest", "platform": "win", "arch": "x64", "build_command": "pnpm build:win:x64"},
