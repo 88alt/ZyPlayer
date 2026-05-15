@@ -14,6 +14,9 @@
             </t-radio-group>
 
             <div v-show="importFormData.type === DATA_IMPORT_TYPE.SIMPLE" class="form">
+              <div class="tips">
+                <p>{{ $t('pages.setting.data.configImport.simple.tips.1') }}</p>
+              </div>
               <t-radio-group v-model="importSimpleFormData.type">
                 <t-radio :value="DATA_SIMPLE_TYPE.TVBOX">
                   {{ $t('pages.setting.data.configImport.simple.field.typeMap.tvbox') }}
@@ -70,6 +73,7 @@
             <div v-show="importFormData.type === DATA_IMPORT_TYPE.COMPLETE" class="form">
               <div class="tips">
                 <p>{{ $t('pages.setting.data.configImport.complete.tips.1') }}</p>
+                <p>{{ $t('pages.setting.data.configImport.complete.tips.2') }}</p>
               </div>
               <div class="form-item-group">
                 <t-select

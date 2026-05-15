@@ -1,9 +1,9 @@
 name: Nightly Build
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 17 * * *' # 1:00 BJ Time
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,15 +14,48 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_run: ${{ github.repository == 'Hiram-Wong/zyfun' }}
+      should_build: ${{ steps.check.outputs.should_build }}
     steps:
-      - name: Check if running in main repository
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Check repository & build condition
+        id: check
+        shell: bash
         run: |
           echo "Running in repository: ${{ github.repository }}"
-          echo "Should run: ${{ github.repository == 'Hiram-Wong/zyfun' }}"
+
+          SHOULD_RUN=$([[ "${{ github.repository }}" == "Hiram-Wong/zyfun" ]] && echo true || echo false)
+          echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
+
+          if [[ "$SHOULD_RUN" != "true" ]]; then
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Manual trigger always builds
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Check if any commits landed in the last 25 hours
+          LAST_COMMIT_TS=$(git log -1 --format='%ct')
+          NOW=$(date +%s)
+
+          if (( NOW - LAST_COMMIT_TS < 90000 )); then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+          fi
 
   cleanup-artifacts:
     needs: check-repository
-    if: needs.check-repository.outputs.should_run == 'true'
+    if: |
+      needs.check-repository.outputs.should_run == 'true' &&
+      needs.check-repository.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Delete old artifacts
@@ -45,7 +78,9 @@ jobs:
 
   metadata:
     needs: check-repository
-    if: needs.check-repository.outputs.should_run == 'true'
+    if: |
+      needs.check-repository.outputs.should_run == 'true' &&
+      needs.check-repository.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     outputs:
       date: ${{ steps.meta.outputs.date }}
@@ -55,28 +90,60 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Resolve build metadata
         id: meta
         shell: bash
         run: |
           SHA=$(git rev-parse HEAD)
+          echo "Building at $SHA"
+
           echo "sha=$SHA" >> $GITHUB_OUTPUT
           echo "short_sha=${SHA:0:7}" >> $GITHUB_OUTPUT
           echo "date=$(TZ=Asia/Shanghai date +'%Y%m%d')" >> $GITHUB_OUTPUT
-          echo "Building at $SHA"
 
   nightly-build:
     needs:
       - check-repository
       - metadata
-    if: needs.check-repository.outputs.should_run == 'true'
+    if: |
+      needs.check-repository.outputs.should_run == 'true' &&
+      needs.check-repository.outputs.should_build == 'true'
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, windows-11-arm, ubuntu-latest]
+        include:
+          - os: macos-latest
+            name: mac-arm64
+            platform: mac
+            arch: arm64
+            build_command: pnpm build:mac:arm64
+          - os: macos-15-intel
+            name: mac-x64
+            platform: mac
+            arch: x64
+            build_command: pnpm build:mac:x64
+          - os: windows-latest
+            name: win-x64
+            platform: win
+            arch: x64
+            build_command: pnpm build:win:x64
+          - os: windows-11-arm
+            name: win-arm64
+            platform: win
+            arch: arm64
+            build_command: pnpm build:win:arm64
+          - os: ubuntu-latest
+            name: linux-x64
+            platform: linux
+            arch: x64
+            build_command: pnpm build:linux:x64
+          - os: ubuntu-24.04-arm
+            name: linux-arm64
+            platform: linux
+            arch: arm64
+            build_command: pnpm build:linux:arm64
       fail-fast: false
 
     steps:
@@ -84,17 +151,12 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.metadata.outputs.sha }}
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
           node-version-file: '.node-version'
-
-      - name: macos-latest dependencies fix
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install python-setuptools
 
       - name: Install pnpm
         uses: pnpm/action-setup@v5
@@ -108,59 +170,42 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-
+            ${{ runner.os }}-${{ runner.arch }}-pnpm-
 
       - name: Install Dependencies
         run: pnpm install
+
+      - name: Fix macOS dependencies
+        if: matrix.platform == 'mac'
+        shell: bash
+        run: |
+          brew install python-setuptools
+
+      - name: Fix Linux dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm libevdev-dev libxtst-dev libx11-dev libxfixes-dev libwayland-dev
 
       - name: Prepare env file
         shell: bash
         run: cp -f .env.example .env
 
-      - name: Generate date tag
-        id: date
-        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+      - name: Build
         shell: bash
-
-      - name: Build Linux
-        if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get install -y rpm libevdev-dev libxtst-dev libx11-dev libxfixes-dev libwayland-dev
-          pnpm build:linux
+          ${{ matrix.build_command }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: --max-old-space-size=8192
 
-      - name: Build Mac
-        if: matrix.os == 'macos-latest'
-        run: |
-          pnpm build:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: --max-old-space-size=8192
-
-      - name: Build Windows(x64)
-        if: matrix.os == 'windows-latest'
-        run: |
-          pnpm build:win:x64
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: --max-old-space-size=8192
-
-      - name: Build Windows(arm64)
-        if: matrix.os == 'windows-11-arm'
-        run: |
-          pnpm build:win:arm64
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: --max-old-space-size=8192
-
-      - name: Rename artifacts with nightly format
+      - name: Rename artifacts
         shell: bash
         run: |
           mkdir -p renamed-artifacts
+
           DATE="${{ needs.metadata.outputs.date }}"
           PREFIX="zyfun-nightly-${DATE}"
 
@@ -174,141 +219,58 @@ jobs:
             fi
           }
 
-          if [ "${{ matrix.os }}" == "windows-latest" ] || [ "${{ matrix.os }}" == "windows-11-arm" ]; then
-            copy_first "*-x64-setup.exe" "${PREFIX}-x64-setup.exe"
-            copy_first "*-arm64-setup.exe" "${PREFIX}-arm64-setup.exe"
-            copy_first "*-x64-portable.exe" "${PREFIX}-x64-portable.exe"
-            copy_first "*-arm64-portable.exe" "${PREFIX}-arm64-portable.exe"
-          fi
+          case "${{ matrix.name }}" in
+            win-x64)
+              copy_first "*-x64-setup.exe" "${PREFIX}-win-x64-setup.exe"
+              copy_first "*-x64-portable.exe" "${PREFIX}-win-x64-portable.exe"
+              ;;
 
-          if [ "${{ matrix.os }}" = "macos-latest" ]; then
-            copy_first "*-arm64.dmg" "${PREFIX}-arm64.dmg"
-            copy_first "*-x64.dmg" "${PREFIX}-x64.dmg"
-          fi
+            win-arm64)
+              copy_first "*-arm64-setup.exe" "${PREFIX}-win-arm64-setup.exe"
+              copy_first "*-arm64-portable.exe" "${PREFIX}-win-arm64-portable.exe"
+              ;;
 
-          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            copy_first "*-x86_64.AppImage" "${PREFIX}-x86_64.AppImage"
-            copy_first "*-arm64.AppImage" "${PREFIX}-arm64.AppImage"
-            copy_first "*-amd64.deb" "${PREFIX}-amd64.deb"
-            copy_first "*-arm64.deb" "${PREFIX}-arm64.deb"
-            copy_first "*-x86_64.rpm" "${PREFIX}-x86_64.rpm"
-            copy_first "*-arm64.rpm" "${PREFIX}-arm64.rpm"
-          fi
+            mac-arm64)
+              copy_first "*-arm64.dmg" "${PREFIX}-mac-arm64.dmg"
+              ;;
 
-          cp dist/latest*.yml renamed-artifacts/ 2>/dev/null || true
+            mac-x64)
+              copy_first "*-x64.dmg" "${PREFIX}-mac-x64.dmg"
+              ;;
 
-      - name: List files to be uploaded
+            linux-x64)
+              copy_first "*-x86_64.AppImage" "${PREFIX}-linux-x64.AppImage"
+              copy_first "*-amd64.deb" "${PREFIX}-linux-x64.deb"
+              copy_first "*-x86_64.rpm" "${PREFIX}-linux-x64.rpm"
+              ;;
+
+            linux-arm64)
+              copy_first "*-arm64.AppImage" "${PREFIX}-linux-arm64.AppImage"
+              copy_first "*-arm64.deb" "${PREFIX}-linux-arm64.deb"
+              copy_first "*-arm64.rpm" "${PREFIX}-linux-arm64.rpm"
+              ;;
+          esac
+
+      - name: Show uploaded files
         shell: bash
         run: |
           echo "Files to upload:"
-          if [ -x "$(command -v tree)" ]; then
-            tree renamed-artifacts
-          elif [ "$RUNNER_OS" = "Windows" ]; then
-            dir renamed-artifacts
-          else
-            ls -la renamed-artifacts
+
+          if [ -d renamed-artifacts ]; then
+            find renamed-artifacts -type f
           fi
-          echo "Total: $(find renamed-artifacts -type f | wc -l) files"
 
-      - name: Upload Windows x64 setup
-        if: matrix.os == 'windows-latest'
+          echo "Total files:"
+          find renamed-artifacts -type f | wc -l
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-x64-setup.exe
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-x64-setup.exe
+          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-${{ matrix.name }}
+          path: renamed-artifacts/*
           if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload Windows arm64 setup
-        if: matrix.os == 'windows-11-arm'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64-setup.exe
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64-setup.exe
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload macOS arm64 dmg
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64.dmg
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64.dmg
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload macOS x64 dmg
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-x64.dmg
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-x64.dmg
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload Linux x86_64 AppImage
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-x86_64.AppImage
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-x86_64.AppImage
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload Linux arm64 AppImage
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64.AppImage
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64.AppImage
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload Linux amd64 deb
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-amd64.deb
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-amd64.deb
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload Linux arm64 deb
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64.deb
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64.deb
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload Linux x86_64 rpm
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-x86_64.rpm
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-x86_64.rpm
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload Linux arm64 rpm
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64.rpm
-          path: renamed-artifacts/zyfun-nightly-${{ needs.metadata.outputs.date }}-arm64.rpm
-          if-no-files-found: ignore
-          retention-days: 7
-          compression-level: 0
+          retention-days: 3
+          compression-level: 8
 
   build-summary:
     needs:
@@ -318,25 +280,27 @@ jobs:
     if: always() && needs.check-repository.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Check out workflow scripts
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.metadata.outputs.sha }}
-          fetch-depth: 0
-
       - name: Create summary report
         shell: bash
         env:
+          SHOULD_BUILD: ${{ needs.check-repository.outputs.should_build }}
           BUILD_RESULT: ${{ needs.nightly-build.result }}
           BUILD_DATE: ${{ needs.metadata.outputs.date }}
           BUILD_SHA: ${{ needs.metadata.outputs.sha }}
           SHORT_SHA: ${{ needs.metadata.outputs.short_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          echo "## Nightly Build" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Commit: \`${SHORT_SHA}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Date: \`${BUILD_DATE}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Status: \`${BUILD_RESULT}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Download: [Actions artifacts](${RUN_URL})" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Nightly Build"
+            echo ""
+
+            if [[ "$SHOULD_BUILD" != "true" ]]; then
+              echo "- No commits in the last 25 hours"
+            else
+              echo "- Commit: \`${SHORT_SHA}\`"
+              echo "- SHA: \`${BUILD_SHA}\`"
+              echo "- Date: \`${BUILD_DATE}\`"
+              echo "- Status: \`${BUILD_RESULT}\`"
+              echo "- Download: [Actions Artifacts](${RUN_URL})"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

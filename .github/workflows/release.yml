@@ -14,7 +14,7 @@ on:
         type: choice
         options:
           - all
-          - windows
+          - win
           - mac
           - linux
   push:
@@ -34,62 +34,69 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.get-tag.outputs.tag }}
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
-      - name: Get release tag
-        id: get-tag
+      - name: Resolve tag
+        id: tag
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" = "pull_request_target" ]; then
-            BRANCH="${{ github.event.pull_request.head.ref }}"
-            echo "tag=${BRANCH#release/}" >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
           else
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+            TAG="${GITHUB_REF#refs/tags/}"
           fi
 
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
   build:
-    needs:
-      - prepare
+    needs: prepare
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: ${{ fromJSON(
-          github.event_name == 'push' && '["macos-latest", "windows-latest", "windows-11-arm", "ubuntu-latest"]' ||
-          github.event_name == 'pull_request_target' && '["macos-latest", "windows-latest", "windows-11-arm", "ubuntu-latest"]' ||
-          github.event.inputs.platform == 'all' && '["macos-latest", "windows-latest", "windows-11-arm", "ubuntu-latest"]' ||
-          github.event.inputs.platform == 'linux' && '["ubuntu-latest"]' ||
-          github.event.inputs.platform == 'windows' && '["windows-latest", "windows-11-arm"]' ||
-          github.event.inputs.platform == 'mac' && '["macos-latest"]' ||
-          '["macos-latest", "windows-latest", "windows-11-arm", "ubuntu-latest"]'
+        include: >-
+          ${{ fromJSON(
+            (github.event_name == 'push' || github.event_name == 'pull_request_target' || inputs.platform == 'all') && '[
+              {"os": "macos-latest", "platform": "mac", "arch": "arm64", "build_command": "pnpm build:mac:arm64"},
+              {"os": "macos-15-intel", "platform": "mac", "arch": "x64", "build_command": "pnpm build:mac:x64"},
+              {"os": "windows-latest", "platform": "win", "arch": "x64", "build_command": "pnpm build:win:x64"},
+              {"os": "windows-11-arm", "platform": "win", "arch": "arm64", "build_command": "pnpm build:win:arm64"},
+              {"os": "ubuntu-latest", "platform": "linux", "arch": "x64", "build_command": "pnpm build:linux:x64"},
+              {"os": "ubuntu-24.04-arm", "platform": "linux", "arch": "arm64", "build_command": "pnpm build:linux:arm64"}
+            ]' ||
+            inputs.platform == 'mac' && '[
+              {"os": "macos-latest", "platform": "mac", "arch": "arm64", "build_command": "pnpm build:mac:arm64"},
+              {"os": "macos-15-intel", "platform": "mac", "arch": "x64", "build_command": "pnpm build:mac:x64"}
+            ]' ||
+            inputs.platform == 'win' && '[
+              {"os": "windows-latest", "platform": "win", "arch": "x64", "build_command": "pnpm build:win:x64"},
+              {"os": "windows-11-arm", "platform": "win", "arch": "arm64", "build_command": "pnpm build:win:arm64"}
+            ]' ||
+            inputs.platform == 'linux' && '[
+              {"os": "ubuntu-latest", "platform": "linux", "arch": "x64", "build_command": "pnpm build:linux:x64"},
+              {"os": "ubuntu-24.04-arm", "platform": "linux", "arch": "arm64", "build_command": "pnpm build:linux:arm64"}
+            ]' || '[]'
           ) }}
       fail-fast: false
 
     steps:
-      - name: Check out Git repository
+      - name: Checkout repo
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
-      - name: Set package.json version
+      - name: Set version
         shell: bash
         run: |
-          TAG="${{ needs.prepare.outputs.tag }}"
-          VERSION="${TAG#v}"
-          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
           node-version-file: '.node-version'
-
-      - name: macos-latest dependencies fix
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install python-setuptools
 
       - name: Install pnpm
         uses: pnpm/action-setup@v5
@@ -103,71 +110,61 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-
+            ${{ runner.os }}-${{ runner.arch }}-pnpm-
 
       - name: Install Dependencies
         run: pnpm install
+
+      - name: Install macOS deps
+        if: matrix.platform == 'mac'
+        run: brew install python-setuptools
+
+      - name: Install Linux deps
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm libevdev-dev libxtst-dev libx11-dev libxfixes-dev libwayland-dev
 
       - name: Prepare env file
         shell: bash
         run: cp -f .env.example .env
 
-      - name: Build Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get install -y rpm libevdev-dev libxtst-dev libx11-dev libxfixes-dev libwayland-dev
-          pnpm build:linux
+      - name: Build
+        shell: bash
+        run: ${{ matrix.build_command }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: --max-old-space-size=8192
 
-      - name: Build Mac
-        if: matrix.os == 'macos-latest'
+      - name: Rename Windows Build Metadata
+        if: matrix.platform == 'win'
+        shell: bash
         run: |
-          pnpm build:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: --max-old-space-size=8192
+          if [ -f dist/latest.yml ]; then
+            mv dist/latest.yml dist/latest-win-${{ matrix.arch }}.yml
+          fi
 
-      - name: Build Windows(x64)
-        if: matrix.os == 'windows-latest'
-        run: |
-          pnpm build:win:x64
-          mv dist/latest.yml dist/latest-win-x64.yml
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: --max-old-space-size=8192
-
-      - name: Build Windows(arm64)
-        if: matrix.os == 'windows-11-arm'
-        run: |
-          pnpm build:win:arm64
-          mv dist/latest.yml dist/latest-win-arm64.yml
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: --max-old-space-size=8192
-
-      - name: Upload build artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: zyfun-${{ matrix.os }}
+          name: zyfun-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
             dist/*.exe
             dist/*.dmg
             dist/*.AppImage
-            dist/*.snap
             dist/*.deb
             dist/*.rpm
-            dist/*.tar.gz
             dist/latest*.yml
+          if-no-files-found: ignore
+          retention-days: 1
+          compression-level: 8
 
   publish:
-    needs:
-      - prepare
-      - build
+    needs: [prepare, build]
     runs-on: ubuntu-latest
+    if: always() && needs.build.result == 'success'
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -175,22 +172,23 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Merge Windows latest.yml
-        if: hashFiles('dist/latest-win-x64.yml') != '' && hashFiles('dist/latest-win-arm64.yml') != ''
+      - name: Merge Windows Update Metadata
         shell: bash
         run: |
-          set -euo pipefail
+          set -e
 
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
-          sudo chmod +x /usr/local/bin/yq
+          WIN_X64="dist/latest-win-x64.yml"
+          WIN_ARM="dist/latest-win-arm64.yml"
 
-          yq eval-all '
-            select(fileIndex == 0) as $x64 |
-            select(fileIndex == 1) as $arm |
-            $x64 |
-            .files = (($x64.files // []) + ($arm.files // []))
-          ' dist/latest-win-x64.yml dist/latest-win-arm64.yml > dist/latest.yml
-          rm -f dist/latest-win-x64.yml dist/latest-win-arm64.yml
+          if [[ -f "$WIN_X64" && -f "$WIN_ARM" ]]; then
+            yq eval-all 'select(fi == 0) .files += [select(fi == 1) .files[]] | select(fi == 0)' "$WIN_X64" "$WIN_ARM" > dist/latest.yml
+            rm -f "$WIN_X64" "$WIN_ARM"
+            exit 0
+          elif [[ -f "$WIN_X64" ]]; then
+            mv "$WIN_X64" dist/latest.yml
+          elif [[ -f "$WIN_ARM" ]]; then
+            mv "$WIN_ARM" dist/latest.yml
+          fi
 
       - name: Release
         uses: ncipollo/release-action@v1
@@ -199,5 +197,5 @@ jobs:
           allowUpdates: true
           makeLatest: false
           tag: ${{ needs.prepare.outputs.tag }}
-          artifacts: 'dist/*.exe,dist/*.dmg,dist/*.AppImage,dist/*.snap,dist/*.deb,dist/*.rpm,dist/*.tar.gz,dist/latest*.yml'
+          artifacts: 'dist/*'
           token: ${{ secrets.GITHUB_TOKEN }}
