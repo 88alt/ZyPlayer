@@ -243,7 +243,7 @@ const streamDecoder = {
 
       const mpegts = Mpegtsjs.createPlayer(
         {
-          type: 'mpegts', // mse, mpegts, m2ts, flv, mp4
+          type: 'mpegts', // mpeg, mpegts, m2ts, flv, mp4
           isLive,
           url,
           ...mediaDataSource,

@@ -71,6 +71,11 @@ const mediaUtils = (() => {
     // DASH
     'application/dash+xml': 'mpd',
 
+    // MPEG
+    'video/mp2t': 'ts',
+    'video/mpeg': 'ts',
+    'video/mpeg2': 'ts',
+
     // 视频
     'video/mp4': 'mp4',
     'video/quicktime': 'mov',
@@ -93,7 +98,6 @@ const mediaUtils = (() => {
     'audio/x-m4a': 'm4a',
 
     // 其他
-    'video/mp2t': 'ts', // MPEG传输流
     // 'application/vnd.ms-sstr+xml': 'ism',
   };
 
@@ -241,13 +245,15 @@ const mediaUtils = (() => {
   const checkMediaType = async (url: string, headers: Record<string, any> = {}): Promise<string | undefined> => {
     if (!isValidMediaUrl(url)) return undefined;
 
-    // 1. 首先尝试从URL扩展名获取类型
-    // 2. 如果扩展名无法确定，尝试从Content-Type/data获取
-    const extension = getFileExtension(url) || (await getStreamContentTypeToExtension(url, headers));
-    console.debug('[mediaUtils][checkMediaType] extension:', extension);
-    const decoder = extensionMapDecoder(extension);
-    console.debug('[mediaUtils][checkMediaType] decoder:', decoder);
-    if (decoder) return extension;
+    // 优先从 URL 扩展名判断
+    const extension1 = getFileExtension(url);
+    console.debug('[mediaUtils][checkMediaType] extension1:', extension1);
+    if (extensionMapDecoder(extension1)) return extension1;
+
+    // 其次从流内容类型判断
+    const extension2 = await getStreamContentTypeToExtension(url, headers);
+    console.debug('[mediaUtils][checkMediaType] extension2:', extension2);
+    if (extensionMapDecoder(extension2)) return extension2;
 
     return undefined;
   };
