@@ -4,8 +4,20 @@ Crypto for Node.js and Web — hash, hmac, symmetric/asymmetric encryption, enco
 
 ## Install
 
+`@zy/crypto` is not published to npm yet.
+
+Add it as a workspace dependency in your package:
+
+```json
+{
+  "dependencies": {
+    "@zy/crypto": "workspace:*"
+  }
+}
+```
+
 ```bash
-pnpm add @zy/crypto
+pnpm install
 ```
 
 ## API
@@ -112,19 +124,19 @@ pnpm build
 
 ## Modules
 
-| Module | Description |
-|--------|-------------|
-| `hash` | Hash algorithms (MD5, SHA, SM3, RIPEMD160) |
-| `hmac` | HMAC algorithms |
-| `aes` | AES encrypt/decrypt (node-forge, GCM supported) |
-| `des` / `tripleDes` | DES/3DES encrypt/decrypt (CryptoJS) |
-| `rc4` / `rc4Drop` | RC4 encrypt/decrypt |
-| `rabbit` / `rabbitLegacy` | Rabbit encrypt/decrypt |
-| `rsa` | RSA encrypt/decrypt (node-forge) |
-| `sm4` | SM4 encrypt/decrypt (国密) |
-| `base64` | Base64 encode/decode |
-| `unicode` | Unicode encode/decode |
-| `html` | HTML entity encode/decode |
-| `gzip` | Gzip compress/decompress |
-| `url` | URL encode/decode |
-| `hex` | Hex encode/decode |
+| Module                    | Description                                     |
+| ------------------------- | ----------------------------------------------- |
+| `hash`                    | Hash algorithms (MD5, SHA, SM3, RIPEMD160)      |
+| `hmac`                    | HMAC algorithms                                 |
+| `aes`                     | AES encrypt/decrypt (node-forge, GCM supported) |
+| `des` / `tripleDes`       | DES/3DES encrypt/decrypt (CryptoJS)             |
+| `rc4` / `rc4Drop`         | RC4 encrypt/decrypt                             |
+| `rabbit` / `rabbitLegacy` | Rabbit encrypt/decrypt                          |
+| `rsa`                     | RSA encrypt/decrypt (node-forge)                |
+| `sm4`                     | SM4 encrypt/decrypt (sm-crypto-v2)              |
+| `base64`                  | Base64 encode/decode                            |
+| `unicode`                 | Unicode encode/decode                           |
+| `html`                    | HTML entity encode/decode                       |
+| `gzip`                    | Gzip compress/decompress                        |
+| `url`                     | URL encode/decode                               |
+| `hex`                     | Hex encode/decode                               |
