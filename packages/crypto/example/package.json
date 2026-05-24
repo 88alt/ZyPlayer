@@ -1,8 +1,8 @@
 {
   "name": "@zy/crypto-playground",
-  "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "zy crypto playground bundle",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -21,7 +21,8 @@
     "shadcn": "^4.8.0",
     "sonner": "^1.7.4",
     "tailwind-merge": "^3.6.0",
-    "tw-animate-css": "^1.4.0"
+    "tw-animate-css": "^1.4.0",
+    "workerpool": "^10.0.2"
   },
   "devDependencies": {
     "@eslint/js": "~9.39.4",

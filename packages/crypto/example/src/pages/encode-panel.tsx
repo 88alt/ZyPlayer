@@ -1,22 +1,13 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { base64, gzip, hex, html, unicode, url } from '@zy/crypto';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useI18n } from '@/i18n';
-
-type MethodOptions = Record<string, unknown>;
-type CryptoMethod = { encode: unknown; decode: unknown };
-
-const METHOD_MAP: Record<string, CryptoMethod> = {
-  html,
-  unicode,
-  base64,
-  url,
-  hex,
-  gzip,
-};
+import { useWorkerPool } from '@/hooks/use-worker-pool';
+import type { CryptoAction, CryptoExecute } from '../workers/encode.worker';
+import encodeWorkerUrl from '../workers/encode.worker?worker&url';
 
 interface EncodePanelProps {
   algorithm: string;
@@ -26,21 +17,25 @@ export function EncodePanel({ algorithm }: EncodePanelProps) {
   const { t } = useI18n();
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
+  const [loading, setLoading] = useState<CryptoExecute | null>(null);
+  const { exec } = useWorkerPool(encodeWorkerUrl);
 
   const handleExecute = useCallback(
-    (action: 'encode' | 'decode') => {
-      if (!input) return;
+    async (action: CryptoExecute) => {
+      if (!input || loading) return;
+      setLoading(action);
       try {
-        const method = METHOD_MAP[algorithm][action] as (opts: MethodOptions) => string;
-        const result = method({ src: input });
-        setOutput(result);
+        const result = await exec('main', [algorithm as CryptoAction, action, { src: input }]);
+        setOutput(result as string);
         toast.success(t('toast.success'));
       } catch (error) {
         setOutput('');
         toast.error(`${t('toast.errorPrefix')}: ${(error as Error).message}`);
+      } finally {
+        setLoading(null);
       }
     },
-    [algorithm, input, t],
+    [algorithm, input, loading, exec, t],
   );
 
   const handleCopy = useCallback(
@@ -71,10 +66,12 @@ export function EncodePanel({ algorithm }: EncodePanelProps) {
       <div className="flex flex-col gap-2">
         <Label>{t('field.action')}</Label>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleExecute('encode')} className="flex-1">
+          <Button variant="outline" onClick={() => handleExecute('encode')} disabled={!!loading} className="flex-1">
+            {loading === 'encode' && <Loader2 className="animate-spin" />}
             {t('action.encode')}
           </Button>
-          <Button onClick={() => handleExecute('decode')} className="flex-1">
+          <Button onClick={() => handleExecute('decode')} disabled={!!loading} className="flex-1">
+            {loading === 'decode' && <Loader2 className="animate-spin" />}
             {t('action.decode')}
           </Button>
         </div>

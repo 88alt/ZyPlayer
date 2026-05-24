@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { aes, des, tripleDes, rsa, rc4, rc4Drop, rabbit, rabbitLegacy, sm4 } from '@zy/crypto';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,21 +8,11 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { type TranslationKey, useI18n } from '@/i18n';
+import { useWorkerPool } from '@/hooks/use-worker-pool';
+import type { CryptoAction, CryptoExecute } from '../workers/encrypt.worker';
+import encryptWorkerUrl from '../workers/encrypt.worker?worker&url';
 
 type MethodOptions = Record<string, unknown>;
-type CryptoMethod = { encode: unknown; decode: unknown };
-
-const METHOD_MAP: Record<string, CryptoMethod> = {
-  rsa,
-  rc4,
-  rc4Drop,
-  aes,
-  des,
-  tripleDes,
-  rabbit,
-  rabbitLegacy,
-  sm4,
-};
 
 const ENCODE_OPTIONS = [
   { value: 'utf8', label: 'UTF-8' },
@@ -123,6 +113,8 @@ export function EncryptPanel({ algorithm }: EncryptPanelProps) {
   const [inputEncode, setInputEncode] = useState('utf8');
   const [outputEncode, setOutputEncode] = useState('base64');
   const [output, setOutput] = useState('');
+  const [loading, setLoading] = useState<CryptoExecute | null>(null);
+  const { exec } = useWorkerPool(encryptWorkerUrl);
 
   // Reset mode/pad when algorithm changes
   useEffect(() => {
@@ -149,8 +141,9 @@ export function EncryptPanel({ algorithm }: EncryptPanelProps) {
   const isRsa = algorithm === 'rsa';
 
   const handleExecute = useCallback(
-    (action: 'encode' | 'decode') => {
-      if (!input) return;
+    async (action: CryptoExecute) => {
+      if (!input || loading) return;
+      setLoading(action);
       try {
         if (outputEncode === 'utf8' && action === 'encode') {
           toast.warning(t('toast.encryptUtf8OutputUnsupported'));
@@ -159,10 +152,6 @@ export function EncryptPanel({ algorithm }: EncryptPanelProps) {
         if (inputEncode === 'utf8' && action === 'decode') {
           toast.warning(t('toast.decodeUtf8InputUnsupported'));
           return;
-        }
-
-        if (isRsa && long === '1') {
-          toast.warning(t('toast.longTextWarning'));
         }
 
         let params: MethodOptions = { src: input, inputEncode, outputEncode };
@@ -181,18 +170,20 @@ export function EncryptPanel({ algorithm }: EncryptPanelProps) {
           params = { ...params, key, keyEncode, iv, ivEncode, mode, pad };
         }
 
-        const method = METHOD_MAP[algorithm][action] as (opts: MethodOptions) => string;
-        const result = method(params);
-        setOutput(result);
+        const result = await exec('main', [algorithm as CryptoAction, action, params]);
+        setOutput(result as string);
         toast.success(t('toast.success'));
       } catch (error) {
         setOutput('');
         toast.error(`${t('toast.errorPrefix')}: ${(error as Error).message}`);
+      } finally {
+        setLoading(null);
       }
     },
     [
       algorithm,
       input,
+      loading,
       key,
       keyEncode,
       passphrase,
@@ -210,6 +201,7 @@ export function EncryptPanel({ algorithm }: EncryptPanelProps) {
       inputEncode,
       outputEncode,
       isRsa,
+      exec,
       t,
     ],
   );
@@ -406,10 +398,12 @@ export function EncryptPanel({ algorithm }: EncryptPanelProps) {
       <div className="flex flex-col gap-2">
         <Label>{t('field.action')}</Label>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleExecute('encode')} className="flex-1">
+          <Button variant="outline" onClick={() => handleExecute('encode')} disabled={!!loading} className="flex-1">
+            {loading === 'encode' && <Loader2 className="animate-spin" />}
             {t('action.encode')}
           </Button>
-          <Button onClick={() => handleExecute('decode')} className="flex-1">
+          <Button onClick={() => handleExecute('decode')} disabled={!!loading} className="flex-1">
+            {loading === 'decode' && <Loader2 className="animate-spin" />}
             {t('action.decode')}
           </Button>
         </div>

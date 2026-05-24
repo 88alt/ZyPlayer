@@ -14,6 +14,7 @@ export default {
       field: {
         iv: 'IV',
         mode: 'Mode',
+        long: 'Long Text',
         pad: 'Padding',
         tag: 'Tag',
         aad: 'AAD',
@@ -70,10 +71,16 @@ export default {
           standard: 'Public Encrypt/Private Decrypt',
           nonStandard: 'Private Encrypt/Public Decrypt',
         },
+        rsaLongMap: {
+          standard: 'Standard',
+          long: 'Long Text(Block 117)',
+        },
       },
       message: {
         encodeNotUtf8: 'Encryption does not support utf8 as an output format',
         decodeNotUtf8: 'Decryption does not support utf8 as input format',
+        longTextWarning:
+          'Long text processing will block the process, please refresh the page after a long time of no response.',
       },
     },
     hash: {

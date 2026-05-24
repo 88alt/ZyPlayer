@@ -60,7 +60,14 @@
       <div class="action">
         <p class="title-label">{{ $t('common.action') }}</p>
         <div class="content-action">
-          <t-button theme="primary" variant="base" block @click="handleSubmit">
+          <t-button
+            theme="primary"
+            variant="base"
+            block
+            :loading="active.loading"
+            :disabled="!!active.loading"
+            @click="handleSubmit"
+          >
             {{ $t('common.compute') }}
           </t-button>
         </div>
@@ -83,17 +90,21 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { hash, hmac } from '@zy/crypto';
 import type { FormInstanceFunctions, SubmitContext } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import type { PropType } from 'vue';
+import { computed, ref, toRaw, useTemplateRef, watch } from 'vue';
 
+import { useWorkerPool } from '@/hooks/useWorkerPool';
 import { t } from '@/locales';
+
+import type { CryptoAction } from '../workers/hash.worker';
+import cryptoWorkerUrl from '../workers/hash.worker?worker&url';
 
 const props = defineProps({
   active: {
-    type: String,
-    default: 'rsa',
+    type: String as PropType<CryptoAction>,
+    default: 'hash',
   },
 });
 
@@ -129,6 +140,8 @@ const OUTPUT_ENCODE_OPTIONS = computed(() => [
   { value: 'base64', label: t('pages.lab.crypto.encrypt.field.encodeMap.base64') },
 ]);
 
+const { exec: executeCrypto } = useWorkerPool(cryptoWorkerUrl, { workerOpts: { type: 'module' } });
+
 const formRef = useTemplateRef<FormInstanceFunctions>('formRef');
 
 const formData = ref({
@@ -139,8 +152,9 @@ const formData = ref({
   outputEncode: 'hex',
 });
 const output = ref({ ...ALGORITHM_OPTIONS.value.map((item) => ({ [item.value]: '' })) });
-const active = ref({
+const active = ref<{ action: CryptoAction; loading: 'compute' | null }>({
   action: 'hash',
+  loading: null,
 });
 
 watch(
@@ -155,23 +169,29 @@ const defaultConf = () => {
   output.value = { ...ALGORITHM_OPTIONS.value.map((item) => ({ [item.value]: '' })) };
 };
 
-const handleExecute = () => {
+const handleExecute = async () => {
   try {
-    const action = active.value.action;
+    const { action, loading } = active.value;
     const { key, input, inputEncode, keyEncode, outputEncode } = formData.value;
+    if (!input || loading) return;
 
-    ALGORITHM_OPTIONS.value.forEach((item) => {
-      const name = item.value;
+    active.value.loading = 'compute';
 
-      if (action === 'hash') {
-        output.value[name] = hash[name]({ src: input, inputEncode, outputEncode });
-      } else if (action === 'hmac') {
-        output.value[name] = hmac[name]({ src: input, key, inputEncode, keyEncode, outputEncode });
-      }
+    const tasks = ALGORITHM_OPTIONS.value.map(async ({ value: name }) => {
+      const doc =
+        action === 'hash'
+          ? { src: input, inputEncode, outputEncode }
+          : { src: input, key, inputEncode, keyEncode, outputEncode };
+
+      output.value[name] = await executeCrypto('main', [action, name, toRaw(doc)]);
     });
+
+    await Promise.all(tasks);
   } catch (error) {
     console.error(error);
     MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
+  } finally {
+    active.value.loading = null;
   }
 };
 

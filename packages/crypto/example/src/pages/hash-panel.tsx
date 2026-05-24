@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { hash, hmac } from '@zy/crypto';
+import { Loader2 } from 'lucide-react';
 import type { Encode } from '@zy/crypto';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useI18n } from '@/i18n';
+import { useWorkerPool } from '@/hooks/use-worker-pool';
+import type { CryptoAction, CryptoName } from '../workers/hash.worker';
+import hashWorkerUrl from '../workers/hash.worker?worker&url';
 
 const ALGORITHM_OPTIONS = [
   { value: 'md5-16', label: 'MD5-16' },
@@ -48,36 +51,37 @@ export function HashPanel({ algorithm }: HashPanelProps) {
   const [keyEncode, setKeyEncode] = useState('utf8');
   const [outputEncode, setOutputEncode] = useState('hex');
   const [output, setOutput] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const { exec } = useWorkerPool(hashWorkerUrl);
 
-  const handleCompute = useCallback(() => {
-    if (!input) return;
+  const handleCompute = useCallback(async () => {
+    if (!input || loading) return;
+    setLoading(true);
     try {
-      const results: Record<string, string> = {};
-      for (const algo of ALGORITHM_OPTIONS) {
-        const name = algo.value as keyof typeof hash;
-        if (algorithm === 'hash') {
-          results[algo.value] = hash[name]({
-            src: input,
-            inputEncode: inputEncode as Encode,
-            outputEncode: outputEncode as Encode,
-          });
-        } else {
-          results[algo.value] = hmac[name]({
-            src: input,
-            key,
-            inputEncode: inputEncode as Encode,
-            keyEncode: keyEncode as Encode,
-            outputEncode: outputEncode as Encode,
-          });
-        }
-      }
-      setOutput(results);
+      const tasks = ALGORITHM_OPTIONS.map(async ({ value: name }) => {
+        const doc =
+          algorithm === 'hash'
+            ? { src: input, inputEncode: inputEncode as Encode, outputEncode: outputEncode as Encode }
+            : {
+                src: input,
+                key,
+                inputEncode: inputEncode as Encode,
+                keyEncode: keyEncode as Encode,
+                outputEncode: outputEncode as Encode,
+              };
+        const result = await exec('main', [algorithm as CryptoAction, name as CryptoName, doc]);
+        return [name, result] as const;
+      });
+      const results = await Promise.all(tasks);
+      setOutput(Object.fromEntries(results));
       toast.success(t('toast.success'));
     } catch (error) {
       setOutput({});
       toast.error(`${t('toast.errorPrefix')}: ${(error as Error).message}`);
+    } finally {
+      setLoading(false);
     }
-  }, [algorithm, input, key, inputEncode, keyEncode, outputEncode, t]);
+  }, [algorithm, input, loading, key, inputEncode, keyEncode, outputEncode, exec, t]);
 
   const handleCopy = useCallback(
     async (text: string) => {
@@ -158,7 +162,8 @@ export function HashPanel({ algorithm }: HashPanelProps) {
 
       <div className="flex flex-col gap-2">
         <Label>{t('field.action')}</Label>
-        <Button onClick={handleCompute} className="w-full">
+        <Button onClick={handleCompute} disabled={loading} className="w-full">
+          {loading && <Loader2 className="animate-spin" />}
           {t('action.compute')}
         </Button>
       </div>
