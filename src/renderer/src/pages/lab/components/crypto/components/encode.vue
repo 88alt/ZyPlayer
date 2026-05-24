@@ -25,10 +25,24 @@
       <div class="action">
         <p class="title-label">{{ $t('common.action') }}</p>
         <div class="content-action">
-          <t-button theme="default" variant="base" block @click="handleSubmit('encode')">
+          <t-button
+            theme="default"
+            variant="base"
+            block
+            :loading="active.loading === 'encode'"
+            :disabled="!!active.loading"
+            @click="handleSubmit('encode')"
+          >
             {{ $t('common.encode') }}
           </t-button>
-          <t-button theme="primary" variant="base" block @click="handleSubmit('decode')">
+          <t-button
+            theme="primary"
+            variant="base"
+            block
+            :loading="active.loading === 'decode'"
+            :disabled="!!active.loading"
+            @click="handleSubmit('decode')"
+          >
             {{ $t('common.decode') }}
           </t-button>
         </div>
@@ -49,17 +63,21 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { base64, gzip, hex, html, unicode, url } from '@zy/crypto';
 import type { FormInstanceFunctions, SubmitContext } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { ref, useTemplateRef, watch } from 'vue';
+import type { PropType } from 'vue';
+import { ref, toRaw, useTemplateRef, watch } from 'vue';
 
+import { useWorkerPool } from '@/hooks/useWorkerPool';
 import { t } from '@/locales';
+
+import type { CryptoAction, CryptoExecute } from '../workers/encode.worker';
+import cryptoWorkerUrl from '../workers/encode.worker?worker&url';
 
 const props = defineProps({
   active: {
-    type: String,
-    default: 'rsa',
+    type: String as PropType<CryptoAction>,
+    default: 'html',
   },
 });
 
@@ -67,15 +85,18 @@ const RULES = {
   input: [{ required: true }],
 };
 
+const { exec: executeCrypto } = useWorkerPool(cryptoWorkerUrl, { workerOpts: { type: 'module' } });
+
 const formRef = useTemplateRef<FormInstanceFunctions>('formRef');
 
 const formData = ref({
   input: '',
 });
-const output = ref('');
-const active = ref({
+const output = ref<string>('');
+const active = ref<{ action: CryptoAction; execute: CryptoExecute; loading: CryptoExecute | null }>({
   action: 'html',
-  execute: '',
+  execute: 'encode',
+  loading: null,
 });
 
 watch(
@@ -90,22 +111,24 @@ const defaultConf = () => {
   output.value = '';
 };
 
-const handleExecute = () => {
+const handleExecute = async () => {
   try {
-    const execute = active.value.execute;
+    const { execute, action, loading } = active.value;
     const { input } = formData.value;
-    if (!input) return;
+    if (!input || !execute || loading) return;
 
-    const action = active.value.action;
-    const METHOD_MAP = { html, unicode, base64, url, hex, gzip };
+    active.value.loading = execute;
 
-    output.value = METHOD_MAP[action][execute]({ src: input });
+    const doc = { src: input };
+    output.value = await executeCrypto('main', [action, execute, toRaw(doc)]);
 
     MessagePlugin.success(t('common.success'));
   } catch (error) {
     output.value = '';
     console.error(error);
     MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
+  } finally {
+    active.value.loading = null;
   }
 };
 

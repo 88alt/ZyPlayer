@@ -74,6 +74,15 @@
             </t-radio-group>
           </t-form-item>
           <t-form-item
+            v-if="active.action === 'rsa' && formData.mode === 0"
+            :label="$t('pages.lab.crypto.encrypt.field.long')"
+            name="long"
+          >
+            <t-radio-group v-model="formData.long" variant="default-filled">
+              <t-radio-button v-for="item in LONG_OPTIONS" :key="item.value" :value="item.value" :label="item.label" />
+            </t-radio-group>
+          </t-form-item>
+          <t-form-item
             v-if="
               !['rc4', 'rc4Drop', 'rabbit', 'rabbitLegacy'].includes(active.action) &&
               ((['aes', 'des', '3des', 'sm4'].includes(active.action) &&
@@ -147,10 +156,24 @@
       <div class="action">
         <p class="title-label">{{ $t('common.action') }}</p>
         <div class="content-action">
-          <t-button theme="default" variant="base" block @click="handleSubmit('encode')">
+          <t-button
+            theme="default"
+            variant="base"
+            block
+            :loading="active.loading === 'encode'"
+            :disabled="!!active.loading"
+            @click="handleSubmit('encode')"
+          >
             {{ $t('common.encode') }}
           </t-button>
-          <t-button theme="primary" variant="base" block @click="handleSubmit('decode')">
+          <t-button
+            theme="primary"
+            variant="base"
+            block
+            :loading="active.loading === 'decode'"
+            :disabled="!!active.loading"
+            @click="handleSubmit('decode')"
+          >
             {{ $t('common.decode') }}
           </t-button>
         </div>
@@ -171,16 +194,20 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { aes, des, rabbit, rabbitLegacy, rc4, rc4Drop, rsa, sm4, tripleDes } from '@zy/crypto';
 import type { FormInstanceFunctions, SubmitContext } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import type { PropType } from 'vue';
+import { computed, ref, toRaw, useTemplateRef, watch } from 'vue';
 
+import { useWorkerPool } from '@/hooks/useWorkerPool';
 import { t } from '@/locales';
+
+import type { CryptoAction, CryptoExecute } from '../workers/encrypt.worker';
+import cryptoWorkerUrl from '../workers/encrypt.worker?worker&url';
 
 const props = defineProps({
   active: {
-    type: String,
+    type: String as PropType<CryptoAction>,
     default: 'rsa',
   },
 });
@@ -189,7 +216,7 @@ const RULES = {
   input: [{ required: true }],
   key: [{ required: true }],
   mode: [{ required: true }],
-  rsaMode: [{ required: true }],
+  long: [{ required: true }],
   pad: [{ required: true }],
   drop: [{ required: true }, { number: true }, { validator: (val: number) => val >= 0 }],
   ivEncode: [{ required: true }],
@@ -262,16 +289,30 @@ const MODE_OPTIONS = computed(() => {
       ];
   }
 });
+const LONG_OPTIONS = computed(() => {
+  if (active.value.action === 'rsa' && formData.value.mode === 0) {
+    return [
+      { value: false, label: t('pages.lab.crypto.encrypt.field.rsaLongMap.standard') },
+      { value: true, label: t('pages.lab.crypto.encrypt.field.rsaLongMap.long') },
+    ];
+  } else {
+    return [];
+  }
+});
 const ENCODE_OPTIONS = computed(() => [
   { value: 'utf8', label: t('pages.lab.crypto.encrypt.field.encodeMap.utf8') },
   { value: 'base64', label: t('pages.lab.crypto.encrypt.field.encodeMap.base64') },
   { value: 'hex', label: t('pages.lab.crypto.encrypt.field.encodeMap.hex') },
 ]);
+
+const { exec: executeCrypto } = useWorkerPool(cryptoWorkerUrl, { workerOpts: { type: 'module' } });
+
 const formRef = useTemplateRef<FormInstanceFunctions>('formRef');
 
 const formData = ref({
   input: '',
   mode: 0 as string | number,
+  long: false,
   pad: 'rsa-oaep',
   iv: '',
   key: '',
@@ -287,10 +328,11 @@ const formData = ref({
   inputEncode: 'utf8',
   outputEncode: 'base64',
 });
-const output = ref('');
-const active = ref({
+const output = ref<string>('');
+const active = ref<{ action: CryptoAction; execute: CryptoExecute; loading: CryptoExecute | null }>({
   action: 'rsa',
-  execute: '',
+  execute: 'encode',
+  loading: null,
 });
 
 watch(
@@ -312,16 +354,13 @@ const defaultConf = () => {
   }
 };
 
-const handleExecute = () => {
+const handleExecute = async () => {
   try {
-    const execute = active.value.execute;
-    const { input } = formData.value;
-    if (!input) return;
-
-    const action = active.value.action;
-    const METHOD_MAP = { rsa, rc4, rc4Drop, aes, des, tripleDes, rabbit, rabbitLegacy, sm4 };
+    const { execute, action, loading } = active.value;
     const {
+      input,
       mode,
+      long,
       pad,
       iv,
       key,
@@ -337,6 +376,9 @@ const handleExecute = () => {
       inputEncode,
       outputEncode,
     } = formData.value;
+    if (!input || !execute || loading) return;
+
+    active.value.loading = execute;
 
     if (outputEncode === 'utf8' && execute === 'encode') {
       MessagePlugin.warning(`${t('pages.lab.crypto.encrypt.message.encodeNotUtf8')}`);
@@ -350,7 +392,7 @@ const handleExecute = () => {
 
     let doc: Record<string, any> = { src: input, inputEncode, outputEncode };
     if (action === 'rsa') {
-      doc = { ...doc, key, pad, passphrase, passphraseEncode, type: mode };
+      doc = { ...doc, key, pad, passphrase, passphraseEncode, type: mode, long };
     } else if (action === 'rc4') {
       doc = { ...doc, key, keyEncode };
     } else if (action === 'rc4Drop') {
@@ -363,13 +405,15 @@ const handleExecute = () => {
       doc = { ...doc, key, keyEncode, iv, ivEncode, mode, pad };
     }
 
-    output.value = METHOD_MAP[action][execute](doc);
+    output.value = await executeCrypto('main', [action, execute, toRaw(doc)]);
 
     MessagePlugin.success(t('common.success'));
   } catch (error) {
     output.value = '';
     console.error(error);
     MessagePlugin.error(`${t('common.error')}: ${(error as Error).message}`);
+  } finally {
+    active.value.loading = null;
   }
 };
 

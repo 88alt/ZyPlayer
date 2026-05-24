@@ -14,6 +14,7 @@ export default {
       field: {
         iv: '偏移',
         mode: '运算',
+        long: '长文本',
         pad: '填充',
         tag: '标签',
         aad: '附加数据',
@@ -67,13 +68,18 @@ export default {
           sm4: 'SM4',
         },
         rsaModeMap: {
-          standard: '公加私解',
-          nonStandard: '私加公解',
+          standard: '标准(公加私解)',
+          nonStandard: '非标(私加公解)',
+        },
+        rsaLongMap: {
+          standard: '标准',
+          long: '长文本(区块117)',
         },
       },
       message: {
         encodeNotUtf8: '加密不支持utf8作为输出格式',
         decodeNotUtf8: '解密不支持utf8作为输入格式',
+        longTextWarning: '长文本处理会阻塞进程, 长时间未响应请刷新页面',
       },
     },
     hash: {
