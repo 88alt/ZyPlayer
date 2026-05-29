@@ -1,0 +1,554 @@
+@control-transition:
+  background-color 0.16s ease,
+  color 0.16s ease,
+  transform 0.16s ease;
+@fade-transition:
+  opacity 0.22s ease,
+  transform 0.22s ease;
+
+.fill-parent() {
+  width: 100%;
+  height: 100%;
+}
+
+.button-reset() {
+  appearance: none;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+  transition: @control-transition;
+}
+
+.button-hover() {
+  &:hover,
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.glass-panel(@background; @blur; @shadow) {
+  background: @background;
+  backdrop-filter: blur(@blur) saturate(180%);
+  -webkit-backdrop-filter: blur(@blur) saturate(180%);
+  box-shadow: @shadow;
+}
+
+.center-grid() {
+  display: grid;
+  place-items: center;
+}
+
+.range-thumb() {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(38, 38, 38, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+}
+
+.tooltip() {
+  content: attr(aria-label);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+#vlc-player {
+  --bg: #090d12;
+  --panel: rgba(25, 38, 58, 0.66);
+  --panel-strong: rgba(12, 20, 33, 0.76);
+  --line: rgba(255, 255, 255, 0.16);
+  --line-strong: rgba(255, 255, 255, 0.24);
+  --text: #f2f7ff;
+  --muted: rgba(242, 247, 255, 0.88);
+  --subtle: rgba(242, 247, 255, 0.5);
+  --theme: #00c452;
+  --process: linear-gradient(270deg, #00e038, #32ccff);
+  --radius: 14px;
+  --video-safe-top: 0px;
+  --video-safe-bottom: 0px;
+
+  color-scheme: dark;
+  position: relative;
+  .fill-parent();
+  background: transparent;
+
+  &:focus {
+    outline: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 48%, rgba(0, 0, 0, 0.45) 80%, rgba(0, 0, 0, 0.7) 100%);
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+
+  /* Stage */
+  #video-stage {
+    position: relative;
+    .fill-parent();
+    background: transparent;
+    overflow: hidden;
+    cursor: default;
+  }
+
+  #video-area {
+    position: absolute;
+    inset: 0;
+    background: #000000;
+    .center-grid();
+
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      .center-grid();
+      color: rgba(237, 240, 246, 0.38);
+      pointer-events: none;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+    }
+
+    .loading {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      gap: 10px;
+      color: rgba(242, 247, 255, 0.82);
+      pointer-events: none;
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      opacity: 1;
+      transition: opacity 0.18s ease;
+    }
+
+    .loading-spinner {
+      width: 56px;
+      height: 56px;
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      border-top-color: var(--theme);
+      border-radius: 50%;
+      animation: vlc-loading-spin 0.8s linear infinite;
+    }
+
+    .loading-text {
+      min-height: 18px;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.72);
+    }
+  }
+
+  #video-canvas {
+    display: block;
+    object-fit: contain;
+  }
+
+  .notice {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    z-index: 10;
+    padding: 6px 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    .glass-panel(rgba(30, 30, 30, 0.72); 40px; 0 22px 44px rgba(3, 7, 14, 0.54));
+    font-size: 12px;
+    color: #fff;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+
+    &.show {
+      opacity: 1;
+    }
+  }
+
+  #controls-stage {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12px;
+    z-index: 8;
+    pointer-events: auto;
+    display: grid;
+    width: 450px;
+    margin-inline: auto;
+    padding: 10px 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 24px;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s ease;
+    will-change: opacity, transform;
+    .glass-panel(
+      rgba(30, 30, 30, 0.72);
+      30px;
+      0 18px 36px rgba(0, 0, 0, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.24)
+    );
+
+    background-clip: padding-box;
+  }
+
+  .XPlayer_playerCtrlPCW {
+    padding-bottom: 10px;
+    padding-top: 10px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .defaultController_playCtrl {
+    padding: 0 12px;
+    pointer-events: auto;
+    width: 100%;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-direction: row;
+    position: relative;
+    bottom: 0;
+    left: 0;
+  }
+
+  #playCtrlLeft,
+  #playCtrlCenter,
+  #playCtrlRight {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 32px;
+  }
+
+  #playCtrlLeft {
+    justify-self: start;
+  }
+
+  #playCtrlCenter {
+    justify-self: center;
+  }
+
+  #playCtrlRight {
+    justify-self: end;
+  }
+
+  .progressBar_progressTouchArea {
+    touch-action: none;
+    margin-top: 6px;
+  }
+
+  .progressEx_container {
+    align-items: center;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: row;
+    height: 5px;
+    justify-content: flex-start;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .progressBar_playProg {
+    background: #0000;
+    cursor: pointer;
+    height: 20px;
+    left: 0;
+    overflow: visible;
+    padding: 0 56px;
+    top: 0;
+    width: 100%;
+    display: flex;
+    position: relative;
+    align-items: center;
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  #timePos,
+  #timeLen {
+    color: #ffffffe6;
+    font-size: 12px;
+    pointer-events: none;
+    position: absolute;
+    text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #timePos {
+    left: 0;
+  }
+
+  #timeLen {
+    right: 0;
+  }
+
+  /* Buttons */
+  .playerButtons_MuteBtn,
+  .playerButtons_prevBtn,
+  .playerButtons_pauseBtn,
+  .playerButtons_nextBtn,
+  .playerButtons_rateBtn,
+  .playerButtons_pipBtn,
+  .playerButtons_fullScreenBtn {
+    .button-reset();
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    color: #cccccc;
+    .button-hover();
+
+    &:hover,
+    &:focus-visible {
+      color: #ffffff;
+
+      .icon {
+        color: #ffffff;
+      }
+    }
+
+    &[aria-label]::after {
+      .tooltip();
+    }
+
+    &:hover::after {
+      opacity: 1;
+    }
+  }
+
+  .playerButtons_rateBtn {
+    width: auto;
+    min-width: 42px;
+    padding: 0 11px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .icon {
+    width: 16px;
+    height: 16px;
+    color: #cccccc;
+    fill: currentColor;
+    stroke: none;
+    transition: color 0.16s ease;
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .btn-aux {
+    display: none;
+  }
+
+  /* Ranges */
+  .progressBar_playProg > #prog,
+  .playerButtons_volumeProg > #prog {
+    background-color: initial;
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 100%;
+    height: 100%;
+
+    #progBk {
+      width: 100%;
+      height: 4px;
+      border-radius: 4px;
+      background-color: #0003;
+      box-shadow:
+        inset 0 -1px 0 0 #ffffff1a,
+        inset 0 1px 0 0 #0003;
+    }
+
+    #buf,
+    #sub {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      max-width: 100%;
+      width: 0;
+      border-radius: 4px;
+    }
+
+    #buf {
+      height: 4px;
+      background-color: #fff3;
+    }
+
+    #sub {
+      height: 8px;
+      background: var(--process);
+
+      #subEnd {
+        position: absolute;
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #fff;
+        box-shadow: 0 0 8px 0 var(--theme);
+      }
+    }
+  }
+
+  .playerButtons_volumeProg {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 100%;
+    overflow: visible;
+
+    & > #prog {
+      #progBk {
+        background-color: #fff3;
+      }
+    }
+
+    #prog {
+      width: 80px;
+      height: 6px;
+      cursor: pointer;
+      touch-action: none;
+      user-select: none;
+      overflow: visible;
+    }
+  }
+
+  /* Playback rate */
+  .rate-menu {
+    position: relative;
+
+    &:hover .rate-options {
+      display: flex;
+    }
+  }
+
+  .rate-options {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 4px 10px;
+    border-radius: 10px;
+    .glass-panel(rgba(30, 30, 30, 0.88); 20px; 0 8px 24px rgba(0, 0, 0, 0.4));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .rate-option {
+    .button-reset();
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 6px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.12s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    &.active {
+      color: var(--theme);
+      background: rgba(90, 214, 217, 0.12);
+    }
+  }
+
+  /* State */
+  .hidden {
+    display: none !important;
+  }
+
+  .controls-fade {
+    opacity: 1;
+  }
+
+  &.ui-hidden {
+    #controls-stage {
+      opacity: 0;
+      transform: translate3d(0, 20px, 0);
+
+      &:hover {
+        opacity: 1 !important;
+        transform: translate3d(0, 0, 0) !important;
+      }
+    }
+
+    &::after {
+      opacity: 0;
+    }
+
+    #video-stage {
+      cursor: none;
+    }
+  }
+
+  &.vlc-fullscreen-web {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    background: #000 !important;
+
+    #video-stage,
+    #video-area,
+    #video-canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
+}
+
+@keyframes vlc-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
