@@ -43,16 +43,13 @@ export default defineConfig({
         extends: true,
         resolve: {
           alias: {
-            '@shared': resolve('packages/shared'),
+            '@shared': resolve('src/shared'),
           },
         },
         test: {
           name: 'shared',
           environment: 'node',
-          include: [
-            'packages/shared/**/*.{test,spec}.{ts,tsx}',
-            'packages/shared/**/__tests__/**/*.{test,spec}.{ts,tsx}',
-          ],
+          include: ['src/shared/**/*.{test,spec}.{ts,tsx}', 'src/shared/**/__tests__/**/*.{test,spec}.{ts,tsx}'],
         },
       },
       // script

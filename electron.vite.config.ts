@@ -32,7 +32,7 @@ export default defineConfig({
     resolve: {
       alias: {
         '@main': resolve('src/main'),
-        '@shared': resolve('packages/shared'),
+        '@shared': resolve('src/shared'),
         '@logger': resolve('src/main/services/LoggerService'),
         '@db': resolve('src/main/services/DatabaseService'),
         '@server': resolve('src/main/services/FastifyService'),
@@ -89,7 +89,7 @@ export default defineConfig({
     plugins: [],
     resolve: {
       alias: {
-        '@shared': resolve('packages/shared'),
+        '@shared': resolve('src/shared'),
         '@pkg': resolve('package.json'),
       },
     },
@@ -135,7 +135,7 @@ export default defineConfig({
         '@': resolve('src/renderer/src'),
         '@pkg': resolve('package.json'),
         '@renderer': resolve('src/renderer'),
-        '@shared': resolve('packages/shared'),
+        '@shared': resolve('src/shared'),
         '@logger': resolve('src/main/services/LoggerService'),
       },
     },

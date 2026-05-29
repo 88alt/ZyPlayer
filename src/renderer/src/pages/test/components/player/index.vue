@@ -35,6 +35,7 @@
               <t-option value="nplayer" label="nplayer"></t-option>
               <t-option value="oplayer" label="oplayer"></t-option>
               <t-option value="xgplayer" label="xgplayer"></t-option>
+              <t-option value="vlcplayer" label="vlcplayer"></t-option>
             </t-select>
             <t-button theme="default" @click="createEvent">创建</t-button>
             <t-button theme="default" @click="destroyEvent">摧毁</t-button>

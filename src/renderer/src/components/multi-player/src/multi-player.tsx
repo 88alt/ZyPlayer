@@ -3,7 +3,14 @@ import './assets/css/index.less';
 import type { SetupContext, SlotsType } from 'vue';
 import { defineComponent, onUnmounted, ref, shallowRef, toRaw } from 'vue';
 
-import { ArtPlayerAdapter, DPlayerAdapter, NPlayerAdapter, OPlayerAdapter, XgPlayerAdapter } from './core';
+import {
+  ArtPlayerAdapter,
+  DPlayerAdapter,
+  NPlayerAdapter,
+  OPlayerAdapter,
+  VlcPlayerAdapter,
+  XgPlayerAdapter,
+} from './core';
 import type {
   IBarrage,
   IDecoderType,
@@ -20,8 +27,9 @@ const adapterRelation: Record<IMultiPlayerType, new () => any> = {
   artplayer: ArtPlayerAdapter,
   dplayer: DPlayerAdapter,
   nplayer: NPlayerAdapter,
-  xgplayer: XgPlayerAdapter,
   oplayer: OPlayerAdapter,
+  vlcplayer: VlcPlayerAdapter,
+  xgplayer: XgPlayerAdapter,
 };
 
 const MultiPlayer = defineComponent({

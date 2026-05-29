@@ -1,0 +1,14 @@
+# Project Root
+../
+
+# TypeScript Incremental Build
+**/*.tsbuildinfo
+
+# Dependencies
+node_modules
+
+# Build Outputs
+native/target
+native/Cargo.lock
+build
+lib

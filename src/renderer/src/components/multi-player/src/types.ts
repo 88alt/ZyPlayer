@@ -9,7 +9,7 @@ import type Shakajs from 'shaka-player/dist/shaka-player.compiled';
 
 type IHeaders = Record<string, any>;
 
-export type IMultiPlayerType = 'artplayer' | 'dplayer' | 'nplayer' | 'xgplayer' | 'oplayer';
+export type IMultiPlayerType = 'artplayer' | 'dplayer' | 'nplayer' | 'oplayer' | 'vlcplayer' | 'xgplayer';
 export type IDecoderType = 'audio' | 'mp4' | 'dash' | 'hls' | 'flv' | 'mpegts' | 'shaka' | 'torrent';
 export type IDecoderWithAutoType = IDecoderType | 'auto';
 

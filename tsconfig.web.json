@@ -3,7 +3,7 @@
   "include": [
     "src/renderer/src/**/*",
     "src/preload/*.d.ts",
-    "packages/shared/**/*",
+    "src/shared/**/*",
     // "node_modules/tdesign-vue-next/global.d.ts"
   ],
   "exclude": [
@@ -24,7 +24,7 @@
       "@main/*": ["./src/main/*"],
       "@preload/*": ["./src/preload/*"],
       "@renderer/*": ["./src/renderer/*"],
-      "@shared/*": ["./packages/shared/*"],
+      "@shared/*": ["./src/shared/*"],
       "@logger": ["./src/main/services/LoggerService"],
       "@pkg": ["./package.json"]
     },

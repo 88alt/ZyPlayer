@@ -92,6 +92,7 @@ const PLAYER_OPTIONS = computed(() => [
   { value: PLAYER_TYPE.ARTPLAYER, label: t('media.playerMap.artplayer') },
   // { value: PLAYER_TYPE.NPLAYER, label: t('media.playerMap.nplayer') },
   // { value: PLAYER_TYPE.OPLAYER, label: t('media.playerMap.oplayer') },
+  { value: PLAYER_TYPE.VLCPLAYER, label: t('media.playerMap.vlcplayer') },
 ]);
 const DECODER_OPTIONS = computed(() => [
   { value: 'auto', label: t('common.auto') },

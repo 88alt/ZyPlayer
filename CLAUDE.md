@@ -45,7 +45,7 @@ Before upgrading any dependency, check `patches/` for custom patches.
 
 - Strict mode enabled; use `tsgo` (native TypeScript compiler preview) for typechecking
 - Separate configs: `tsconfig.node.json` (main), `tsconfig.web.json` (renderer)
-- Type definitions centralized in `src/renderer/src/types/` and `packages/shared/`
+- Type definitions centralized in `src/renderer/src/types/` and `src/shared/`
 
 ### File Naming
 

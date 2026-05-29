@@ -17,6 +17,10 @@ pnpm install
 
 ### Development
 
+### Setup Rust
+
+Download [rust-lang](https://forge.rust-lang.org/infra/other-installation-methods.html) and install
+
 ### Setup Node.js
 
 The required Node.js version is defined in `.node-version`. Use a version manager like [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to install it automatically:

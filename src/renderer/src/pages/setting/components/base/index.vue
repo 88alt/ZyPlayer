@@ -179,7 +179,10 @@
               {{ $t('pages.setting.base.player.barrage') }}
             </span>
           </t-space>
-          <t-space v-if="formData.player.type === PLAYER_TYPE.CUSTOM" align="center">
+          <t-space
+            v-if="([PLAYER_TYPE.CUSTOM, PLAYER_TYPE.VLCPLAYER] as IPlayerType[]).includes(formData.player.type)"
+            align="center"
+          >
             <t-input
               v-model="formData.player.external"
               :label="$t('pages.setting.base.player.command')"
@@ -237,6 +240,7 @@
 </template>
 <script setup lang="ts">
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
+import type { IPlayerType } from '@shared/config/setting';
 import { AIGC_PROVIDER_TYPE, PLAYER_TYPE, REC_ASSOCIATION_TYPE, REC_HOT_TYPE } from '@shared/config/setting';
 import type { ISetting } from '@shared/config/tblSetting';
 import { settingObj as tblSetting } from '@shared/config/tblSetting';
@@ -329,6 +333,7 @@ const PLAYER_OPTIONS = computed(() => [
   { value: PLAYER_TYPE.ARTPLAYER, label: t('media.playerMap.artplayer') },
   // { value: PLAYER_TYPE.NPLAYER, label: t('media.playerMap.nplayer') },
   // { value: PLAYER_TYPE.OPLAYER, label: t('media.playerMap.oplayer') },
+  { value: PLAYER_TYPE.VLCPLAYER, label: t('media.playerMap.vlcplayer') },
   { value: PLAYER_TYPE.CUSTOM, label: t('media.playerMap.customplayer') },
 ]);
 

@@ -6,7 +6,7 @@
     "src/main/**/*",
     "src/main/env.d.ts",
     "src/preload/**/*",
-    "packages/shared/**/*",
+    "src/shared/**/*",
   ],
   "exclude": [
     "src/main/services/FastifyService/routes/v1/film/cms/adapter/t3AppMumo.ts",
@@ -24,7 +24,7 @@
       "@main/*": ["./src/main/*"],
       "@preload/*": ["./src/preload/*"],
       "@renderer/*": ["./src/renderer/*"],
-      "@shared/*": ["./packages/shared/*"],
+      "@shared/*": ["./src/shared/*"],
       "@db/*": ["./src/main/services/DatabaseService/*"],
       "@server/*": ["./src/main/services/FastifyService/*"],
       "@logger": ["./src/main/services/LoggerService"],

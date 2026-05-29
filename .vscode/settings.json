@@ -41,7 +41,7 @@
   "i18n-ally.enabledParsers": ["ts", "js", "json"],
   "i18n-ally.fullReloadOnChanged": true,
   "i18n-ally.keystyle": "nested",
-  "i18n-ally.localesPaths": ["packages/shared/locales/lang"],
+  "i18n-ally.localesPaths": ["src/shared/locales/lang"],
   "i18n-ally.namespace": true,
   "i18n-ally.pathMatcher": "{locale}/{namespaces}.{ext}",
   "i18n-ally.sortKeys": true,

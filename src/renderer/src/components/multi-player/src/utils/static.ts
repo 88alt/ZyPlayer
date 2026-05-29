@@ -1,4 +1,4 @@
-import { useSettingStore } from '@/store';
+import { usePlayerStore, useSettingStore } from '@/store';
 
 const iconModules = import.meta.glob('../assets/img/icon/*.svg', {
   eager: true,
@@ -38,4 +38,12 @@ const language = () => {
   return lang;
 };
 
-export { color, icons, language };
+const libvlcPath = () => {
+  const storePlayer = usePlayerStore();
+  const external = storePlayer.player.external.trim();
+  const [libPath, pluginPath] = external.split(';').map((item) => item.trim());
+
+  return { libPath, pluginPath };
+};
+
+export { color, icons, language, libvlcPath };
