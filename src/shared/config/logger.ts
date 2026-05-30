@@ -70,6 +70,7 @@ export enum LOG_MODULE {
   UTIL_ZIP = 'UtilsZip',
 
   PLUGIN = 'Plugin',
+  VLC = 'Vlc',
 
   I18N = 'I18n',
 }

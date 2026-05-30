@@ -10,6 +10,29 @@ use crate::api::LibVlcApi;
 use crate::event::{on_vlc_event, VlcEventTsfn};
 use crate::ffi::{LibvlcEventType, LibvlcInstance, LibvlcMediaPlayer};
 
+#[derive(Copy, Clone)]
+pub struct FrameFormat {
+  pub width: u32,
+  pub height: u32,
+  pub pitch: u32,
+}
+
+impl FrameFormat {
+  pub const fn new(width: u32, height: u32, pitch: u32) -> Self {
+    Self {
+      width,
+      height,
+      pitch,
+    }
+  }
+}
+
+impl Default for FrameFormat {
+  fn default() -> Self {
+    Self::new(1280, 720, 1280 * 4)
+  }
+}
+
 pub struct PlayerContext {
   pub instance: *mut LibvlcInstance,
   pub player: *mut LibvlcMediaPlayer,
@@ -22,13 +45,8 @@ pub struct VlcAddonState {
   pub api: Option<LibVlcApi>,
   pub context: Option<PlayerContext>,
 
-  pub frame_width: u32,
-  pub frame_height: u32,
-  pub frame_pitch: u32,
-  pub next_frame_width: u32,
-  pub next_frame_height: u32,
-  pub next_frame_pitch: u32,
-  pub frame_format_pending: bool,
+  pub current_frame: FrameFormat,
+  pub pending_frame: Option<FrameFormat>,
   pub frame_buffer: Vec<u8>,
   pub frame_dirty: bool,
   pub frame_in_use: bool,
@@ -38,8 +56,6 @@ pub struct VlcAddonState {
   pub attached_events: Vec<LibvlcEventType>,
   pub debug_enabled: bool,
 
-  pub volume: f64,
-  pub muted: bool,
   pub pending_start_progress: Option<f64>,
 
   #[cfg(target_os = "macos")]
@@ -58,13 +74,8 @@ impl VlcAddonState {
       index,
       api: None,
       context: None,
-      frame_width: 1280,
-      frame_height: 720,
-      frame_pitch: 1280 * 4,
-      next_frame_width: 1280,
-      next_frame_height: 720,
-      next_frame_pitch: 1280 * 4,
-      frame_format_pending: false,
+      current_frame: FrameFormat::default(),
+      pending_frame: None,
       frame_buffer: vec![0; (1280 * 720 * 4) as usize],
       frame_dirty: false,
       frame_in_use: false,
@@ -74,8 +85,6 @@ impl VlcAddonState {
       attached_events: Vec::new(),
       debug_enabled: false,
 
-      volume: 0.5,
-      muted: false,
       pending_start_progress: None,
 
       #[cfg(target_os = "macos")]
@@ -139,13 +148,12 @@ impl VlcAddonState {
     }
     self.context = None;
     self.api = None;
-    self.frame_format_pending = false;
+    self.current_frame = FrameFormat::default();
+    self.pending_frame = None;
     self.frame_in_use = false;
     self.frame_dirty = false;
     self.latest_buffering_percent = 0.0;
     self.debug_enabled = false;
-    self.volume = 0.5;
-    self.muted = false;
     self.pending_start_progress = None;
     self.frame_buffer.clear();
   }

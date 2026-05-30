@@ -60,6 +60,10 @@ type libvlc_audio_set_volume_t = unsafe extern "C" fn(*mut LibvlcMediaPlayer, c_
 #[allow(non_camel_case_types)]
 type libvlc_audio_get_volume_t = unsafe extern "C" fn(*mut LibvlcMediaPlayer) -> c_int;
 #[allow(non_camel_case_types)]
+type libvlc_audio_get_mute_t = unsafe extern "C" fn(*mut LibvlcMediaPlayer) -> c_int;
+#[allow(non_camel_case_types)]
+type libvlc_audio_toggle_mute_t = unsafe extern "C" fn(*mut LibvlcMediaPlayer);
+#[allow(non_camel_case_types)]
 type libvlc_media_player_get_state_t = unsafe extern "C" fn(*mut LibvlcMediaPlayer) -> c_int;
 #[allow(non_camel_case_types)]
 type libvlc_media_player_event_manager_t =
@@ -139,6 +143,8 @@ pub struct LibVlcApi {
   pub libvlc_media_player_set_rate: libvlc_media_player_set_rate_t,
   pub libvlc_audio_set_volume: libvlc_audio_set_volume_t,
   pub libvlc_audio_get_volume: libvlc_audio_get_volume_t,
+  pub libvlc_audio_get_mute: libvlc_audio_get_mute_t,
+  pub libvlc_audio_toggle_mute: libvlc_audio_toggle_mute_t,
   pub libvlc_media_player_get_state: libvlc_media_player_get_state_t,
   pub libvlc_media_player_event_manager: libvlc_media_player_event_manager_t,
   pub libvlc_event_attach: libvlc_event_attach_t,
@@ -234,6 +240,10 @@ impl LibVlcApi {
       *load_sym::<libvlc_audio_set_volume_t>(&lib, b"libvlc_audio_set_volume\0")?;
     let libvlc_audio_get_volume =
       *load_sym::<libvlc_audio_get_volume_t>(&lib, b"libvlc_audio_get_volume\0")?;
+    let libvlc_audio_get_mute =
+      *load_sym::<libvlc_audio_get_mute_t>(&lib, b"libvlc_audio_get_mute\0")?;
+    let libvlc_audio_toggle_mute =
+      *load_sym::<libvlc_audio_toggle_mute_t>(&lib, b"libvlc_audio_toggle_mute\0")?;
     let libvlc_media_player_get_state =
       *load_sym::<libvlc_media_player_get_state_t>(&lib, b"libvlc_media_player_get_state\0")?;
     let libvlc_media_player_event_manager = *load_sym::<libvlc_media_player_event_manager_t>(
@@ -304,6 +314,8 @@ impl LibVlcApi {
       libvlc_media_player_set_rate,
       libvlc_audio_set_volume,
       libvlc_audio_get_volume,
+      libvlc_audio_get_mute,
+      libvlc_audio_toggle_mute,
       libvlc_media_player_get_state,
       libvlc_media_player_event_manager,
       libvlc_event_attach,
