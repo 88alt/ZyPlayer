@@ -2,7 +2,7 @@ import type { IVlcEventPayload, IVlcInitOptions, IVlcInitPath } from '../../type
 import { resolveDemoIconSvg } from '../icons';
 import { createI18nResolver } from '../lang/locales';
 import { clamp01, formatTime, setElementA11yLabel, shouldIgnoreHotkeyTarget } from '../utils';
-import type { VlcPlayer } from '../vlc-player';
+import type { IVlcPlayer } from '../vlc-player';
 import { createVlcPlayer } from '../vlc-player';
 import { createCanvasRenderer } from './canvas-renderer';
 
@@ -10,8 +10,8 @@ const UI_HIDE_DELAY = 2200;
 const DEFAULT_PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
 export interface IVlcRuntime {
-  player: VlcPlayer;
-  adapter: VlcPlayer['adapter'];
+  player: IVlcPlayer;
+  adapter: IVlcPlayer['adapter'];
   destroy: () => void;
 }
 
@@ -44,14 +44,14 @@ function createCleanupBag(): { add: (cleanup: CleanupFn) => void; runAll: () => 
   };
 }
 
-export function setupVlc(path: IVlcInitPath, options: IVlcInitOptions): IVlcRuntime {
+function createVlcRuntime(path: IVlcInitPath, options: IVlcInitOptions): IVlcRuntime {
   const t = createI18nResolver(options);
   const cleanupBag = createCleanupBag();
 
   const playbackRates = options.playbackRates ?? DEFAULT_PLAYBACK_RATES;
 
   // --- Create player (mixin host with template) ---
-  const player: VlcPlayer = createVlcPlayer({ ...options, playbackRates });
+  const player: IVlcPlayer = createVlcPlayer({ ...options, playbackRates });
   const { adapter, template } = player;
 
   adapter.create(path, {
@@ -826,4 +826,22 @@ export function setupVlc(path: IVlcInitPath, options: IVlcInitOptions): IVlcRunt
       template.destroy(true);
     },
   };
+}
+
+export class VlcPlayer implements IVlcRuntime {
+  player: IVlcPlayer;
+  adapter: IVlcPlayer['adapter'];
+
+  private readonly teardown: () => void;
+
+  constructor(path: IVlcInitPath, options: IVlcInitOptions) {
+    const runtime = createVlcRuntime(path, options);
+    this.player = runtime.player;
+    this.adapter = runtime.adapter;
+    this.teardown = runtime.destroy;
+  }
+
+  destroy(): void {
+    this.teardown();
+  }
 }
