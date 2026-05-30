@@ -18,7 +18,7 @@ pub struct CreatePath {
 pub struct CreateOptions {
   pub url: String,
   pub headers: Option<HashMap<String, String>>,
-  pub log: Option<bool>,
+  pub debug: Option<bool>,
   pub seek_step: Option<i64>,
   pub volume_step: Option<f64>,
   pub el: Option<String>,

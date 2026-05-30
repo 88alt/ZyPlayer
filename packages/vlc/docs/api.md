@@ -12,7 +12,7 @@
 | 导入路径               | 说明                                 |
 | ---------------------- | ------------------------------------ |
 | `@zy/vlc/control`      | 主进程 API（`VlcApi` 类 + IPC 注册） |
-| `@zy/vlc/renderer`     | 渲染进程 API（`setupVlc` 入口）      |
+| `@zy/vlc/renderer`     | 渲染进程 API（`VlcPlayer` 入口）     |
 | `@zy/vlc/renderer.css` | 渲染器样式                           |
 
 ## 架构概览
@@ -20,7 +20,7 @@
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Renderer Process                                    │
-│  setupVlc() → VlcPlayer + VlcAdapter + CanvasRenderer│
+│  new VlcPlayer() → IVlcRuntime                    │
 │       ↓ IPC Bridge (ipcRenderer.invoke)              │
 ├─────────────────────────────────────────────────────┤
 │  Main Process                                        │
@@ -29,7 +29,7 @@
 ```
 
 - **主进程** (`@zy/vlc/control`): `VlcApi` 封装 Rust 原生模块，`ipc()` 注册所有 `ipcMain.handle` 处理器
-- **渲染进程** (`@zy/vlc/renderer`): `setupVlc()` 创建完整播放器 UI，通过 IPC Bridge 与主进程通信
+- **渲染进程** (`@zy/vlc/renderer`): `new VlcPlayer()` 创建完整播放器 UI，通过 IPC Bridge 与主进程通信
 - **视频渲染**: VLC 在 Rust 内部渲染帧 → `getFrameRgba()` 返回 RGBA `Uint8Array` → Canvas 渲染器绘制到 HTML Canvas
 
 ---
@@ -100,7 +100,7 @@ interface IVlcInitOptions {
   el: string; // 挂载容器 CSS 选择器
   url: string; // 播放地址（本地路径或在线 URL）
   headers?: Record<string, string>; // 在线资源请求头
-  log?: boolean; // 是否输出 Rust 层 [vlc-native] 日志，默认 false
+  debug?: boolean; // 是否输出 Rust 层 [vlc-native] 日志，默认 false
   seekStep?: number; // 快进/快退步进（毫秒），默认 5000
   volumeStep?: number; // 音量步进，默认 0.05
   autoplay?: boolean; // 是否自动播放，默认 true
@@ -261,16 +261,20 @@ app.whenReady().then(() => {
 ## Renderer API（渲染进程）
 
 ```typescript
-import { setupVlc } from '@zy/vlc/renderer';
+import { VlcPlayer } from '@zy/vlc/renderer';
 import '@zy/vlc/renderer.css';
 ```
 
-### setupVlc()
+### VlcPlayer
 
-渲染进程入口函数，创建完整播放器实例。
+渲染进程入口类，创建完整播放器实例。
 
 ```typescript
-function setupVlc(path: IVlcInitPath, options: IVlcInitOptions): VlcDemoRuntime;
+class VlcPlayer implements IVlcRuntime {
+  constructor(path: IVlcInitPath, options: IVlcInitOptions);
+  adapter: VlcAdapter;
+  destroy(): void;
+}
 ```
 
 **参数：**
@@ -278,11 +282,10 @@ function setupVlc(path: IVlcInitPath, options: IVlcInitOptions): VlcDemoRuntime;
 - `path`: libVLC 路径配置
 - `options`: 播放器选项（`el` 为挂载容器的 CSS 选择器）
 
-**返回值：** `VlcDemoRuntime`
+**实例结构：** `IVlcRuntime`
 
 ```typescript
-interface VlcDemoRuntime {
-  player: VlcPlayer;
+interface IVlcRuntime extends IVlcPlayer {
   adapter: VlcAdapter;
   destroy: () => void;
 }
@@ -291,10 +294,10 @@ interface VlcDemoRuntime {
 #### 使用示例
 
 ```typescript
-import { setupVlc } from '@zy/vlc/renderer';
+import { VlcPlayer } from '@zy/vlc/renderer';
 import '@zy/vlc/renderer.css';
 
-const runtime = setupVlc(
+const runtime = new VlcPlayer(
   {
     libPath: '/Applications/VLC.app/Contents/MacOS/lib/libvlc.dylib',
     pluginPath: '/Applications/VLC.app/Contents/MacOS/plugins',
@@ -314,9 +317,9 @@ runtime.destroy();
 
 ---
 
-### VlcPlayer 对象
+### IVlcRuntime 对象
 
-由 `setupVlc` 创建的播放器对象，基于 mixin 模式组合了播放控制、UI 模板和事件系统。
+由 `new VlcPlayer()` 直接创建的播放器对象，基于 mixin 模式组合了播放控制、UI 模板和事件系统，并额外提供 `destroy()`。
 
 #### 状态属性
 

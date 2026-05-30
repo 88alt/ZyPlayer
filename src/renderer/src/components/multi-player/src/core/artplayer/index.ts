@@ -270,7 +270,7 @@ class ArtPlayerAdapter {
       }
     } // 下集
 
-    Artplayer.PLAYBACK_RATE = [0.5, 0.75, 1, 1.25, 1.5, 2]; // 倍速
+    Artplayer.PLAYBACK_RATE = [0.75, 1, 1.25, 1.5, 2, 3]; // 倍速
 
     // 初始化
     const player: PlayerAdapter = new Artplayer(merge(this.options, options), function onReady() {

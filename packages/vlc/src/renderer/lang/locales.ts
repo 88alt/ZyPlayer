@@ -5,7 +5,7 @@ const DEFAULT_DEMO_LOCALE: IVlcLocale = 'zh-CN';
 const DEMO_I18N_MAP: Record<IVlcLocale, Record<IVlcI18nKey, string>> = {
   'zh-CN': {
     playerTitle: 'VLC Player Demo',
-    placeholderLoading: '正在加载默认地址...',
+    placeholderLoading: '加载中',
     placeholderStopped: '点击播放继续',
     placeholderError: '播放出错',
     placeholderInitError: 'VLC 初始化异常',
@@ -37,7 +37,7 @@ const DEMO_I18N_MAP: Record<IVlcLocale, Record<IVlcI18nKey, string>> = {
   },
   'zh-TW': {
     playerTitle: 'VLC Player Demo',
-    placeholderLoading: '正在載入預設位址...',
+    placeholderLoading: '載入中',
     placeholderStopped: '點擊播放繼續',
     placeholderError: '播放出錯',
     placeholderInitError: 'VLC 初始化異常',
@@ -69,7 +69,7 @@ const DEMO_I18N_MAP: Record<IVlcLocale, Record<IVlcI18nKey, string>> = {
   },
   'en-US': {
     playerTitle: 'VLC Player Demo',
-    placeholderLoading: 'Loading default URL...',
+    placeholderLoading: 'Loading',
     placeholderStopped: 'Click play to continue',
     placeholderError: 'Playback error',
     placeholderInitError: 'VLC initialization error',

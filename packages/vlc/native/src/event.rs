@@ -70,15 +70,15 @@ pub unsafe extern "C" fn on_vlc_event(
 
   if let Ok(mut instances) = crate::state::lock_instances() {
     if let Some(state) = instances.values_mut().find(|s| s.index == instance_index) {
-      if state.log_enabled {
-        eprintln!(
-          "[vlc-native] event: {} (value={})",
-          payload.event_type, payload.value
-        );
-      }
+      crate::log::print(
+        state.debug_enabled,
+        format_args!("event: {} (value={})", payload.event_type, payload.value),
+      );
+
       if payload.event_type == "buffering" {
         state.latest_buffering_percent = payload.value.clamp(0.0, 100.0);
       }
+
       if let Some(callback) = state.event_callbacks.get(&payload.event_type) {
         let _ = callback.call(Ok(payload.clone()), ThreadsafeFunctionCallMode::NonBlocking);
       }

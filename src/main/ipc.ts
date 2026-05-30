@@ -15,6 +15,7 @@ import { pluginService } from '@main/services/PluginService';
 import { proxyManager } from '@main/services/ProxyManager';
 import { shortcutService } from '@main/services/ShortcutService';
 import { trayService } from '@main/services/TrayService';
+import { registerVlcIpc } from '@main/services/VlcService';
 import { windowService } from '@main/services/WindowService';
 import { createDir, fileDelete, pathExist, readDirFaster, readFile, saveFile } from '@main/utils/file';
 import type { IHomePath, ISystemPath, IUserPath } from '@main/utils/path';
@@ -37,45 +38,11 @@ import {
   isPositiveFiniteNumber,
   isSecurityScheme,
 } from '@shared/modules/validate';
-import { instances as vlcInstances, ipc as vlcIpcListen, VlcApi } from '@zy/vlc/control';
 import type { ProxyConfig } from 'electron';
 import { BrowserWindow, ipcMain, shell, webContents } from 'electron';
 import { getDomain } from 'tldts';
 
 const logger = loggerService.withContext(LOG_MODULE.APP_IPC);
-const VLC_CREATE_CHANNEL = 'vlc:create';
-const VLC_ON_EVENT_CHANNEL = 'vlc:onEvent';
-const VLC_FORWARD_EVENTS = [
-  'playing',
-  'paused',
-  'stopped',
-  'ended',
-  'error',
-  'time-changed',
-  'position-changed',
-] as const;
-
-function registerVlcIpc() {
-  vlcIpcListen();
-
-  ipcMain.removeHandler(VLC_CREATE_CHANNEL);
-  ipcMain.handle(VLC_CREATE_CHANNEL, (event, path, options, instanceId?) => {
-    const id = instanceId ?? `player_${Date.now()}`;
-    const api = new VlcApi(id);
-    const resultId = api.create(path, options);
-    vlcInstances.set(resultId, api);
-
-    for (const eventName of VLC_FORWARD_EVENTS) {
-      api.onEvent(eventName, (payload) => {
-        if (!event.sender.isDestroyed()) {
-          event.sender.send(VLC_ON_EVENT_CHANNEL, payload);
-        }
-      });
-    }
-
-    return resultId;
-  });
-}
 
 export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
   const appUpdater = new AppUpdater(mainWindow);

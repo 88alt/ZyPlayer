@@ -33,7 +33,7 @@ export interface IVlcInitOptions {
   el: string;
   url: string;
   headers?: Record<string, string>;
-  log?: boolean;
+  debug?: boolean;
   seekStep?: number;
   volumeStep?: number;
   autoplay?: boolean;

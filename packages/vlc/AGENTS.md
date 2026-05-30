@@ -121,10 +121,10 @@ npm run dev           # 启动 Electron 示例应用
 
 快速概览：
 
-| 层级     | 入口                                            | 核心                                                    |
-| -------- | ----------------------------------------------- | ------------------------------------------------------- |
-| 主进程   | `import { VlcApi, ipc } from '@zy/vlc/control'` | `VlcApi` 类（30+ 方法）+ `ipc()` 注册处理器             |
-| 渲染进程 | `import { setupVlc } from '@zy/vlc/renderer'`   | `setupVlc()` → `VlcPlayer` + `VlcAdapter` + Canvas 渲染 |
+| 层级     | 入口                                            | 核心                                            |
+| -------- | ----------------------------------------------- | ----------------------------------------------- |
+| 主进程   | `import { VlcApi, ipc } from '@zy/vlc/control'` | `VlcApi` 类（30+ 方法）+ `ipc()` 注册处理器     |
+| 渲染进程 | `import { VlcPlayer } from '@zy/vlc/renderer'`  | `new VlcPlayer()` → `IVlcRuntime` + Canvas 渲染 |
 
 ## 关键实现细节
 
@@ -181,10 +181,10 @@ app.whenReady().then(() => {
 **渲染进程** (`renderer.ts`):
 
 ```typescript
-import { setupVlc } from '@zy/vlc/renderer';
+import { VlcPlayer } from '@zy/vlc/renderer';
 import '@zy/vlc/renderer.css';
 
-const runtime = setupVlc(
+const runtime = new VlcPlayer(
   {
     libPath: '/Applications/VLC.app/Contents/MacOS/lib/libvlc.dylib',
     pluginPath: '/Applications/VLC.app/Contents/MacOS/plugins',

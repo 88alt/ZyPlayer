@@ -40,7 +40,7 @@ class XgPlayerAdapter {
     startTime: 0,
     volume: { index: 3, default: 1, showValueLabel: true },
     playbackRate: {
-      list: [2, 1.5, 1.25, { rate: 1, iconText: { 'zh-cn': '倍速', en: 'Speed' } }, 0.75, 0.5],
+      list: [3, 2, 1.5, 1.25, { rate: 1, iconText: { 'zh-cn': '倍速', en: 'Speed' } }, 0.75],
       index: 4,
     },
     time: { index: 2 },

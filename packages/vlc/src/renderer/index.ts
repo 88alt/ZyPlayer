@@ -1,2 +1,3 @@
-export { type IVlcRuntime, setupVlc } from './plugins/runtime';
-export type { VlcPlayer } from './vlc-player';
+export type { IVlcInitOptions, IVlcInitPath } from '../types';
+export { type IVlcRuntime, VlcPlayer } from './plugins/runtime';
+export type { IVlcPlayer } from './vlc-player';

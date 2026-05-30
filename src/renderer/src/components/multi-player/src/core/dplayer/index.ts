@@ -26,6 +26,7 @@ class DPlayerAdapter {
     theme: color.theme,
     live: false,
     lang: 'zh-cn',
+    playbackSpeed: [0.75, 1, 1.25, 1.5, 2, 3],
     video: {
       url: '',
       type: '',

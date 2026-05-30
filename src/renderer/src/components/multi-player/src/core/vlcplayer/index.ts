@@ -1,7 +1,8 @@
 import '@zy/vlc/renderer.css';
 
-import type { IVlcRuntime, VlcPlayer } from '@zy/vlc/renderer';
-import { setupVlc } from '@zy/vlc/renderer';
+import type { IVlcInitOptions, IVlcRuntime } from '@zy/vlc/renderer';
+import { VlcPlayer } from '@zy/vlc/renderer';
+import { merge } from 'es-toolkit';
 
 import { emitterChannel } from '@/config/emitterChannel';
 import { getPlayStore } from '@/store';
@@ -9,7 +10,7 @@ import emitter from '@/utils/emitter';
 
 import type { IBarrage, IMultiPlayerOptions } from '../../types';
 import { language, libvlcPath } from '../../utils/static';
-import { storage } from '../../utils/storage';
+import { storage, storageUtil } from '../../utils/storage';
 
 const getVlcPath = () => {
   const external = getPlayStore().player.external.trim();
@@ -22,66 +23,68 @@ const getVlcPath = () => {
   };
 };
 
-const getVlcLocale = () => {
-  const locale = language();
-  if (locale === 'zh-CN' || locale === 'zh-TW') return locale;
-  return 'en-US';
-};
-
-const normalizeHeaders = (headers: Record<string, any>) => {
-  return Object.fromEntries(Object.entries(headers).map(([key, value]) => [key, String(value)]));
-};
-
-const toSeconds = (time: number) => {
-  if (!Number.isFinite(time)) return Number.NaN;
-  return time / 1000;
-};
-
 class VlcPlayerAdapter {
   player: IVlcRuntime | null = null;
-  options: Required<IMultiPlayerOptions> | null = null;
+  options: IVlcInitOptions = {
+    el: '#vlcplayer',
+    url: '',
+    playbackRates: [0.75, 1, 1.25, 1.5, 2, 3],
+    locale: 'zh-CN',
+  };
 
   barrage(_barrage: IBarrage[], _id: string) {}
 
-  async create(rawOptions: Required<IMultiPlayerOptions>): Promise<IVlcRuntime> {
-    this.options = rawOptions;
+  async create(rawOptions: Required<IMultiPlayerOptions>) {
+    storageUtil.delStartWith('vlcplayer_settings');
 
-    const playNext = rawOptions.next
-      ? () => {
-          emitter.emit(emitterChannel.COMP_MULTI_PLAYER_PLAYNEXT, {});
-        }
-      : undefined;
-
-    this.player = setupVlc(getVlcPath(), {
-      el: `#${rawOptions.container}`,
-      url: rawOptions.url,
-      headers: normalizeHeaders(rawOptions.headers),
-      autoplay: rawOptions.autoplay,
+    const options: IVlcInitOptions = {
+      el: `#${rawOptions.container}`, // 容器
+      url: rawOptions.url, // 地址
+      // autoplay: rawOptions.autoplay,
+      // isLive: rawOptions.isLive,
       startTime: !rawOptions.isLive && rawOptions.startTime > 0 ? rawOptions.startTime : 0,
-      volume: ((v) => (Number.isNaN(v) ? 1 : v))(Number(storage?.get('volume'))),
-      playbackRate: !rawOptions.isLive ? ((v) => (Number.isNaN(v) ? 1 : v))(Number(storage?.get('playrate'))) : 1,
-      locale: getVlcLocale(),
-      playNext,
-    });
+      volume: ((v) => (Number.isNaN(v) ? 1 : v))(Number(storage?.get('volume'))), // 音量
+      muted: !!storage?.get('muted'),
+      locale: (() => {
+        const locale = language();
+        switch (locale) {
+          case 'zh-CN':
+            return 'zh-CN';
+          case 'zh-TW':
+            return 'zh-TW';
+          default:
+            return 'en-US';
+        }
+      })(), // 语言
+      // quality: rawOptions.quality.map((q, i) => ({ html: q.name, url: q.url, default: i === 0 })), // 画质
+      headers: rawOptions.headers, // 请求头
+    };
 
-    if (storage?.get('muted')) this.player.player.muted = true;
+    if (rawOptions.next) {
+      options.playNext = () => emitter.emit(emitterChannel.COMP_MULTI_PLAYER_PLAYNEXT, {});
+    }
+
+    // 初始化
+    const player = new VlcPlayer(getVlcPath(), merge(this.options, options));
+
+    player.storage = storage as unknown as IVlcRuntime['storage']; // 挂载存储
+    this.player = player; // 赋值实例
 
     return this.player;
   }
 
-  async destroy() {
+  destroy() {
     if (!this.player) return;
 
     this.player.destroy();
     this.player = null;
-    this.options = null;
   }
 
   onTimeUpdate(callback: (args: { currentTime: number; duration: number }) => void) {
     this.player?.adapter.onTimeUpdate(({ currentTime, duration }) => {
       callback({
-        currentTime: toSeconds(currentTime),
-        duration: toSeconds(duration),
+        currentTime: currentTime ?? Number.NaN,
+        duration: duration ?? Number.NaN,
       });
     });
   }
@@ -90,16 +93,16 @@ class VlcPlayerAdapter {
     this.player?.adapter.offTimeUpdate();
   }
 
-  async play() {
-    this.player?.player.play();
+  play() {
+    this.player?.play();
   }
 
-  async pause() {
-    this.player?.player.pause();
+  pause() {
+    this.player?.pause();
   }
 
   togglePlay() {
-    this.player?.player.toggle();
+    this.player?.toggle();
   }
 
   toggleMuted() {
@@ -107,66 +110,69 @@ class VlcPlayerAdapter {
   }
 
   seek(time: number) {
-    if (this.player) this.player.player.seek = time;
+    if (this.player) this.player.seek = time;
   }
 
-  async switchUrl(rawOptions: Required<IMultiPlayerOptions>) {
-    await this.destroy();
-    await this.create(rawOptions);
+  switchUrl(rawOptions: Required<IMultiPlayerOptions>) {
+    this.destroy();
+    this.create(rawOptions);
   }
 
   get currentTime() {
-    return toSeconds(this.player?.player.currentTime ?? Number.NaN);
+    return this.player?.currentTime ?? Number.NaN;
   }
 
   get duration() {
-    return toSeconds(this.player?.player.duration ?? Number.NaN);
+    return this.player?.duration ?? Number.NaN;
   }
 
   get time() {
     return {
-      currentTime: this.currentTime,
-      duration: this.duration,
+      currentTime: this.player?.currentTime ?? Number.NaN,
+      duration: this.player?.duration ?? Number.NaN,
     };
   }
 
   get playbackRate() {
-    return this.player?.player.playbackRate ?? 1;
+    return this.player?.playbackRate ?? 1;
   }
 
   set playbackRate(rate: number) {
-    if (!this.player) return;
+    if (this.player) {
+      this.player.playbackRate = rate;
 
-    this.player.player.playbackRate = rate;
-    storage?.set('playrate', rate);
+      storage?.set('playrate', rate);
+    }
   }
 
   get muted() {
-    return !!this.player?.player.muted;
+    return !!this.player?.muted;
   }
 
   set muted(state: boolean) {
-    if (!this.player) return;
+    if (this.player) {
+      this.player.muted = state;
 
-    this.player.player.muted = state;
-    storage?.set('muted', state);
+      storage?.set('muted', state);
+    }
   }
 
   get volume() {
-    return this.player?.player.volume ?? 0;
+    return this.player?.volume ?? 0;
   }
 
   set volume(volume: number) {
-    if (!this.player) return;
+    if (this.player) {
+      if (volume > 0) this.player.muted = false;
+      this.player.volume = volume;
 
-    if (volume > 0) this.player.player.muted = false;
-    this.player.player.volume = volume;
-    storage?.set('muted', this.player.player.muted);
-    storage?.set('volume', volume);
+      storage?.set('muted', this.player.muted);
+      storage?.set('volume', volume);
+    }
   }
 
-  get instance(): VlcPlayer | null {
-    return this.player?.player ?? null;
+  get instance() {
+    return this.player;
   }
 }
 

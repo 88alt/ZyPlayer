@@ -19,7 +19,7 @@ import Storage from './storage';
 import { Template } from './template';
 import Emitter from './utils/emitter';
 
-export interface VlcPlayer {
+export interface IVlcPlayer {
   // Services
   template: Template;
   notice: { show: string | Error; silent: boolean };
@@ -69,7 +69,7 @@ export interface VlcPlayer {
   canvasRenderer: IVlcCanvasRenderer | null;
 }
 
-export function createVlcPlayer(options: IVlcInitOptions): VlcPlayer {
+export function createVlcPlayer(options: IVlcInitOptions): IVlcPlayer {
   const adapter = new VlcAdapter();
   const storage = new Storage();
   const emitter = new Emitter();

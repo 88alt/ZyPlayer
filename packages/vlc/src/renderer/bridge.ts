@@ -50,8 +50,9 @@ export function createBridge(path: IVlcInitPath, options: IVlcInitOptions, insta
     return ipcRenderer.invoke(channel, ...args);
   }
 
-  function toFiniteNumber(value: unknown): number | null {
+  function toMetricNumber(value: unknown, allowNaN = false): number | null {
     if (typeof value === 'number') {
+      if (allowNaN && Number.isNaN(value)) return value;
       return Number.isFinite(value) ? value : null;
     }
     if (typeof value === 'bigint') {
@@ -60,15 +61,16 @@ export function createBridge(path: IVlcInitPath, options: IVlcInitOptions, insta
     }
     if (typeof value === 'string' && value.trim()) {
       const numberValue = Number(value);
+      if (allowNaN && Number.isNaN(numberValue)) return numberValue;
       return Number.isFinite(numberValue) ? numberValue : null;
     }
     return null;
   }
 
-  function updateNumberMetric(key: keyof typeof metrics, promise: Promise<unknown>): void {
+  function updateNumberMetric(key: keyof typeof metrics, promise: Promise<unknown>, allowNaN = false): void {
     void promise
       .then((value) => {
-        const numberValue = toFiniteNumber(value);
+        const numberValue = toMetricNumber(value, allowNaN);
         if (numberValue !== null) (metrics as Record<string, unknown>)[key] = numberValue;
       })
       .catch(() => {});
@@ -78,12 +80,12 @@ export function createBridge(path: IVlcInitPath, options: IVlcInitOptions, insta
     if (metricsTimer) return;
     metricsTimer = setInterval(() => {
       if (!created) return;
-      updateNumberMetric('volume', invoke(VLC_IPC_CHANNEL.VLC_GET_VOLUME, instance_id));
-      updateNumberMetric('progress', invoke(VLC_IPC_CHANNEL.VLC_GET_PROGRESS, instance_id));
-      updateNumberMetric('duration', invoke(VLC_IPC_CHANNEL.VLC_GET_DURATION, instance_id));
-      updateNumberMetric('played', invoke(VLC_IPC_CHANNEL.VLC_GET_PLAYED, instance_id));
-      updateNumberMetric('buffered', invoke(VLC_IPC_CHANNEL.VLC_GET_BUFFERED, instance_id));
-      updateNumberMetric('playbackRate', invoke(VLC_IPC_CHANNEL.VLC_GET_PLAYBACK_RATE, instance_id));
+      updateNumberMetric('volume', invoke(VLC_IPC_CHANNEL.VLC_GET_VOLUME, instance_id), true);
+      updateNumberMetric('progress', invoke(VLC_IPC_CHANNEL.VLC_GET_PROGRESS, instance_id), true);
+      updateNumberMetric('duration', invoke(VLC_IPC_CHANNEL.VLC_GET_DURATION, instance_id), true);
+      updateNumberMetric('played', invoke(VLC_IPC_CHANNEL.VLC_GET_PLAYED, instance_id), true);
+      updateNumberMetric('buffered', invoke(VLC_IPC_CHANNEL.VLC_GET_BUFFERED, instance_id), true);
+      updateNumberMetric('playbackRate', invoke(VLC_IPC_CHANNEL.VLC_GET_PLAYBACK_RATE, instance_id), true);
       void invoke(VLC_IPC_CHANNEL.VLC_GET_MUTED, instance_id)
         .then((value) => {
           if (typeof value === 'boolean') metrics.muted = value;
@@ -126,7 +128,7 @@ export function createBridge(path: IVlcInitPath, options: IVlcInitOptions, insta
         {
           el: mountSelector,
           url: defaultUrl,
-          log: options.log,
+          debug: options.debug,
           autoplay: false,
           volume: defaultVolume,
           playbackRate: defaultRate,

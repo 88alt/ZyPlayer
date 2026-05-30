@@ -158,12 +158,12 @@ class NPlayerAdapter {
     // 倍速
     // @ts-expect-error ts-migate(2341) 属性“settingNamedMap”为私有属性，只能在类“Player”中访问。
     player.settingNamedMap.speed.options = [
-      { value: 0.5, html: '0.5' },
       { value: 0.75, html: '0.75' },
       { value: 1, html: I18n.t('Normal') },
       { value: 1.25, html: '1.25' },
       { value: 1.5, html: '1.5' },
       { value: 2, html: '2' },
+      { value: 3, html: '3' },
     ];
 
     const steamOptions = {

@@ -161,7 +161,7 @@ export class VlcAdapter {
       el: options.el,
       url: options.url,
       headers: options.headers,
-      log: options.log,
+      debug: options.debug,
       autoplay: options.autoplay ?? true,
       volume: options.volume ?? this.storage.get('volume') ?? 0.7,
       muted: options.muted ?? !!this.storage.get('muted'),

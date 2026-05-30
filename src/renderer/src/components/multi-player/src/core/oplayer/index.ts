@@ -47,7 +47,7 @@ class OPlayerAdapter {
           coverButton: false,
         },
       },
-      speeds: ['2.0', '1.5', '1.25', '1.0', '0.75', '0.5'],
+      speeds: ['3.0', '2.0', '1.5', '1.25', '1.0', '0.75'],
       keyboard: { global: true },
       pictureInPicture: true,
       fullscreen: true,
