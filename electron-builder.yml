@@ -86,6 +86,8 @@ files:
 asarUnpack:
   - out/proxy/**
   - resources/**
+  - node_modules/7zip-bin-full/**
+  - node_modules/@zy/vlc/**
 win:
   artifactName: ${productName}-${os}-${version}-${arch}-setup.${ext}
   executableName: zyfun
