@@ -6,8 +6,6 @@ use crate::api::LibVlcApi;
 use crate::ffi::LibvlcTrackDescriptionT;
 use crate::types::{Track, VlcPlayerState};
 
-pub const DEFAULT_NETWORK_CACHE_MS: i32 = 5000;
-
 pub fn to_napi_error(message: impl Into<String>) -> Error {
   Error::new(Status::GenericFailure, message.into())
 }

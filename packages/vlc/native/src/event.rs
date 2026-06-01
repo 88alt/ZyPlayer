@@ -1,6 +1,6 @@
+use napi::Status;
 use napi::threadsafe_function::ThreadsafeFunction;
 use napi::threadsafe_function::ThreadsafeFunctionCallMode;
-use napi::Status;
 
 use crate::ffi::{
   LibvlcEventT, LibvlcEventType, LIBVLC_EVENT_MEDIA_PLAYER_BUFFERING,
@@ -80,7 +80,8 @@ pub unsafe extern "C" fn on_vlc_event(
       }
 
       if let Some(callback) = state.event_callbacks.get(&payload.event_type) {
-        let _ = callback.call(Ok(payload.clone()), ThreadsafeFunctionCallMode::NonBlocking);
+        let _: Status =
+          callback.call(Ok(payload.clone()), ThreadsafeFunctionCallMode::NonBlocking);
       }
     }
   }

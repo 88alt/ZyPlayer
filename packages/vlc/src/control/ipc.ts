@@ -1,21 +1,63 @@
+import type { WebContents } from 'electron';
 import { ipcMain } from 'electron';
 
 import { VLC_IPC_CHANNEL } from '../constants/ipc';
 import { VlcApi } from './api';
 
 const instances = new Map<string, VlcApi>();
+const wcInstanceIds = new Map<number, Set<string>>();
 
 const getInstance = (id: string): VlcApi | undefined => {
   return instances.get(id);
 };
 
-export const ipc = (): void => {
-  ipcMain.handle(VLC_IPC_CHANNEL.VLC_CREATE, (_event, path, options, instanceId?) => {
-    const id = instanceId ?? `player_${Date.now()}`;
+function destroyInstances(ids: Iterable<string>): void {
+  for (const id of ids) {
+    instances.get(id)?.destroy();
+  }
+}
+
+function trackWebContentsLifecycle(wc: WebContents, wcId: number): void {
+  if (wcInstanceIds.has(wcId)) return;
+
+  wcInstanceIds.set(wcId, new Set());
+
+  // Page refresh: destroy all old instances before new page loads
+  wc.on('did-start-navigation' as any, (_event: any, _url: string, _isInPlace: boolean, isMainFrame: boolean) => {
+    if (!isMainFrame) return;
+    const ids = wcInstanceIds.get(wcId);
+    if (ids && ids.size > 0) {
+      destroyInstances(ids);
+      ids.clear();
+    }
+  });
+
+  // Window / tab close
+  wc.on('destroyed', () => {
+    const ids = wcInstanceIds.get(wcId);
+    if (ids) {
+      destroyInstances(ids);
+      ids.clear();
+    }
+    wcInstanceIds.delete(wcId);
+  });
+}
+
+export type OnVlcCreated = (wc: WebContents, instanceId: string, api: VlcApi) => void;
+
+export const ipc = (onCreated?: OnVlcCreated): void => {
+  ipcMain.handle(VLC_IPC_CHANNEL.VLC_CREATE, (event, path, options, instanceId?) => {
+    const id = instanceId ?? `vlc_player_${Date.now().toString(36)}`;
     const api = new VlcApi(id);
-    const resultId = api.create(path, options);
-    instances.set(resultId, api);
-    return resultId;
+    const ins = api.create(path, options);
+
+    instances.set(ins, api);
+    trackWebContentsLifecycle(event.sender, event.sender.id);
+    wcInstanceIds.get(event.sender.id)!.add(ins);
+
+    onCreated?.(event.sender, ins, api);
+
+    return ins;
   });
 
   ipcMain.handle(VLC_IPC_CHANNEL.VLC_ATTACH, (_event, handle, instanceId?) => {
@@ -131,6 +173,10 @@ export const ipc = (): void => {
     const api = instances.get(id);
     api?.destroy();
     instances.delete(id);
+
+    for (const ids of wcInstanceIds.values()) {
+      ids.delete(id);
+    }
   });
 };
 

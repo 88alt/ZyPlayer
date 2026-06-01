@@ -7,6 +7,12 @@
   "module": "lib/types.mjs",
   "types": "lib/types.d.mts",
   "exports": {
+    ".": {
+      "types": "./lib/types.d.mts",
+      "import": "./lib/types.mjs",
+      "require": "./lib/types.cjs",
+      "default": "./lib/types.mjs"
+    },
     "./control": {
       "types": "./lib/control.d.mts",
       "import": "./lib/control.mjs",
@@ -19,7 +25,14 @@
       "require": "./lib/renderer.cjs",
       "default": "./lib/renderer.mjs"
     },
-    "./renderer.css": "./lib/renderer.css"
+    "./constants": {
+      "types": "./lib/constants.d.mts",
+      "import": "./lib/constants.mjs",
+      "require": "./lib/constants.cjs",
+      "default": "./lib/constants.mjs"
+    },
+    "./renderer.css": "./lib/renderer.css",
+    "./package.json": "./package.json"
   },
   "files": [
     "lib",
@@ -32,10 +45,11 @@
     "build": "npm run clean && npm run build:native && npm run build:ts && npm run build:css ",
     "build:css": "lessc src/renderer/style/index.less lib/renderer.css",
     "build:ts": "tsdown",
-    "build:native": "napi build --manifest-path native/Cargo.toml --release --output-dir build",
+    "build:native": "napi build --manifest-path native/Cargo.toml --release --output-dir build/Release",
     "clean": "rimraf build lib",
     "dev": "electron example/electron.cjs",
     "install": "npm run build",
+    "postinstall": "node -e \"try { require('./build/Release/vlc_native.node'); } catch(e) { require('child_process').execSync('npm run build:native', {stdio: 'inherit'}); }\"",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit"
   },

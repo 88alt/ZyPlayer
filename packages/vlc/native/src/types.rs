@@ -27,6 +27,8 @@ pub struct CreateOptions {
   pub r#loop: Option<bool>,
   pub start_time: Option<i64>,
   pub playback_rate: Option<f64>,
+  pub buffer_cache: Option<i64>,
+  pub muted: Option<bool>,
 }
 
 #[napi(string_enum)]

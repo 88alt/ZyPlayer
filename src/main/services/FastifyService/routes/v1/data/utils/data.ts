@@ -433,6 +433,7 @@ const contentToStandard = (config: IDbStore): Partial<IDbStore> => {
               name: item.name ?? '',
               api: item.api,
               logo: item.logo ?? '',
+              headers: isObject(item.headers) ? { ...item.headers } : {},
               group: item.group ?? '',
               playback: item.playback ?? '',
               createdAt: isTimestamp(item.createdAt) ? item.createdAt : Date.now(),
