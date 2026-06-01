@@ -26,6 +26,7 @@ const migrate = async (orm: IOrm, schemas: ISchemas): Promise<void> => {
       api       TEXT NOT NULL,
       logo      TEXT,
       playback  TEXT,
+      headers   TEXT DEFAULT '{}',           -- JSON
       "group"   TEXT,
       createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000),
       updatedAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)

@@ -2,6 +2,7 @@ import { pathExist, readFile } from '@main/utils/file';
 import { request } from '@main/utils/request';
 import type { IIptvType } from '@shared/config/live';
 import { IPTV_TYPE } from '@shared/config/live';
+import { pascalCase } from '@shared/modules/camelcase';
 import { isHttp, isNil, isStrEmpty } from '@shared/modules/validate';
 
 interface IChannelItem {
@@ -10,6 +11,7 @@ interface IChannelItem {
   logo?: string;
   group?: string;
   playback?: string;
+  headers?: Record<string, any>;
 }
 
 type ICatchupMode = 'append' | 'shift' | 'default' | '';
@@ -59,8 +61,10 @@ const m3uToStandard = (text: string): IChannelItem[] => {
   const NAME = /.*,\s*(.+)/;
   const CATCHUP = /.*catchup="(.+?)"/i;
   const CATCHUP_SOURCE = /.*catchup-source="(.+?)"/i;
+  const VLC_OPT_HEADER = /^#EXTVLCOPT:\s*([^\s=]+)=(.+)$/i;
 
   const docs: IChannelItem[] = [];
+
   let current: Partial<IChannelItem> = {};
   let currentCatchup: Partial<ICatchupConfig> = {};
   let globalCatchup: Partial<ICatchupConfig> = {};
@@ -82,7 +86,15 @@ const m3uToStandard = (text: string): IChannelItem[] => {
     const line = rawLine.trim();
     if (!line) continue;
 
-    if (line.startsWith('#EXTINF:-1')) {
+    if (line.startsWith('#EXTM3U')) {
+      globalCatchup = {
+        mode: (line.match(CATCHUP)?.[1]?.trim() as ICatchupMode) ?? '',
+        source: line.match(CATCHUP_SOURCE)?.[1]?.trim() ?? '',
+      };
+      continue;
+    }
+
+    if (line.startsWith('#EXTINF:')) {
       current = {
         name: line.match(NAME)?.[1]?.trim() ?? '',
         logo: line.match(LOGO)?.[1]?.trim(),
@@ -93,20 +105,35 @@ const m3uToStandard = (text: string): IChannelItem[] => {
         mode: (line.match(CATCHUP)?.[1]?.trim() as ICatchupMode) ?? '',
         source: line.match(CATCHUP_SOURCE)?.[1]?.trim() ?? '',
       };
-    } else if (isHttp(line)) {
+
+      continue;
+    }
+
+    if (line.startsWith('#EXTVLCOPT:')) {
+      let [, key, value] = line.match(VLC_OPT_HEADER) || [];
+      if (!key || !key.includes('http') || !value) continue;
+
+      // http-referrer -> Referrer
+      // http-user-agent -> User-Agent
+      key = pascalCase(key.replace('http-', ' '), '-', '-');
+
+      if (!current.headers) current.headers = {};
+      current.headers[key] = value;
+
+      continue;
+    }
+
+    if (isHttp(line)) {
       current.api = line;
       current.playback = resolveCatchup(line);
 
-      docs.push(current as IChannelItem);
+      docs.push({
+        ...current,
+        headers: current.headers ? { ...current.headers } : {},
+      } as IChannelItem);
 
-      // reset
       current = {};
       currentCatchup = {};
-    } else if (line.startsWith('#EXTM3U')) {
-      globalCatchup = {
-        mode: (line.match(CATCHUP)?.[1]?.trim() as ICatchupMode) ?? '',
-        source: line.match(CATCHUP_SOURCE)?.[1]?.trim() ?? '',
-      };
     }
   }
 
@@ -150,8 +177,11 @@ const txtToStandard = (text: string): IChannelItem[] => {
 
     if (second === '#genre#') {
       currentGroup = first;
-    } else if (isHttp(second)) {
-      docs.push({ name: first, api: second, group: currentGroup });
+      continue;
+    }
+
+    if (isHttp(second)) {
+      docs.push({ name: first, api: second, headers: {}, group: currentGroup });
     }
   }
 

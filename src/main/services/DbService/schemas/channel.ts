@@ -12,6 +12,7 @@ export const channel = sqliteTable('tbl_channel', {
   api: text('api').notNull(),
   logo: text('logo'),
   playback: text('playback'),
+  headers: text('headers', { mode: 'json' }).$type<Record<string, any>>().default({}),
   group: text('group'),
   createdAt: integer('createdAt', { mode: 'number' })
     .default(sql`(strftime('%s', 'now') * 1000)`)

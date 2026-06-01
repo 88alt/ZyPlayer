@@ -11,6 +11,7 @@ const ChannelSchema = Type.Object({
   api: Type.String({ description: 'api' }),
   logo: Type.Union([Type.String(), Type.Null()], { description: 'logo' }),
   playback: Type.Union([Type.String(), Type.Null()], { description: 'playback' }),
+  headers: Type.Union([Type.Record(Type.String(), Type.Any()), Type.Null()], { description: 'headers' }),
   group: Type.Union([Type.String(), Type.Null()], { description: 'group' }),
   createdAt: Type.Integer({ format: 'int64', description: 'created timestamp' }),
   updatedAt: Type.Integer({ format: 'int64', description: 'updated timestamp' }),

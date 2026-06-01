@@ -120,7 +120,7 @@
 import 'v3-infinite-loading/lib/style.css';
 
 import { isBetween, toYMD } from '@shared/modules/date';
-import { isArray, isArrayEmpty, isNil, isPositiveFiniteNumber } from '@shared/modules/validate';
+import { isArray, isArrayEmpty, isNil, isObject, isPositiveFiniteNumber } from '@shared/modules/validate';
 import type { ICmsInfo } from '@shared/types/cms';
 import type { IModels } from '@shared/types/db';
 import { throttle } from 'es-toolkit';
@@ -479,6 +479,7 @@ const callPlay = async (item) => {
     isLive: true,
     startTime: videoData.value.watchTime,
     skipAd: playerConf.value.skipAd,
+    headers: isObject(item.headers) ? { ...item.headers } : {},
   });
 };
 
@@ -516,7 +517,7 @@ const setup = async () => {
 
   await getHistoryData();
 
-  await callPlay({ url: infoConf.value.api });
+  await callPlay({ url: infoConf.value.api, headers: infoConf.value.headers });
 
   getStarData();
   getChannelEpg(infoConf.value.name, toYMD());
