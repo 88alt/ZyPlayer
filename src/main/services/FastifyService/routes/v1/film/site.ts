@@ -173,7 +173,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
       try {
         const { key } = req.params;
         const dbRes = await dbService.site.getByField({ key });
-        const res = dbRes?.[0];
+        const res = dbRes?.[0] ?? {};
         return reply.code(200).send({ code: 0, msg: 'ok', data: res });
       } catch (error) {
         fastify.log.error(error);
