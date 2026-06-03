@@ -86,6 +86,10 @@
 }
 
 /* 画质面板 */
+.art-control-quality {
+  margin-right: 0 !important;
+}
+
 .art-control-quality .art-selector-list {
   border-radius: 8px !important;
   padding-bottom: 25px;

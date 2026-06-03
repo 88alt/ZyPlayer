@@ -15,7 +15,6 @@ import { pluginService } from '@main/services/PluginService';
 import { proxyManager } from '@main/services/ProxyManager';
 import { shortcutService } from '@main/services/ShortcutService';
 import { trayService } from '@main/services/TrayService';
-import { registerVlcIpc } from '@main/services/VlcService';
 import { windowService } from '@main/services/WindowService';
 import { createDir, fileDelete, pathExist, readDirFaster, readFile, saveFile } from '@main/utils/file';
 import type { IHomePath, ISystemPath, IUserPath } from '@main/utils/path';
@@ -46,7 +45,6 @@ const logger = loggerService.withContext(LOG_MODULE.APP_IPC);
 
 export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
   const appUpdater = new AppUpdater(mainWindow);
-  registerVlcIpc();
 
   // api
   ipcMain.handle(IPC_CHANNEL.API_SERVER_START, async () => {

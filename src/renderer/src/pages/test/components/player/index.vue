@@ -31,11 +31,11 @@
             </t-select>
             <t-select v-model="form.player" label="播放器" auto-width>
               <t-option value="artplayer" label="artplayer"></t-option>
-              <t-option value="dplayer" label="dplayer"></t-option>
+              <!-- <t-option value="dplayer" label="dplayer"></t-option>
               <t-option value="nplayer" label="nplayer"></t-option>
-              <t-option value="oplayer" label="oplayer"></t-option>
+              <t-option value="oplayer" label="oplayer"></t-option> -->
               <t-option value="xgplayer" label="xgplayer"></t-option>
-              <t-option value="vlcplayer" label="vlcplayer"></t-option>
+              <!-- <t-option value="vlcplayer" label="vlcplayer"></t-option> -->
             </t-select>
             <t-button theme="default" @click="createEvent">创建</t-button>
             <t-button theme="default" @click="destroyEvent">摧毁</t-button>
@@ -133,7 +133,7 @@ const tool = async () => {
   );
   console.log('checkTypeSuffix', checkTypeSuffix);
   const checkTypeContentType = await mediaUtils.checkMediaType(
-    'https://voddemo-play.volcvod.com/453b1f794dfa49f4819b5d923658411a?auth_key=1776913683-830c08a311bb49fab40dbaa90ebd4db3-0-1b61cbd491235c69d89a694bd51a1027',
+    'https://voddemo-play.volcvod.com/oQ8YhILEoRRtzAJuQfdsDZQ75RZkLxAv9wX0Zr?auth_key=1871887663-4aa8f75738e64f95a56aface7fe12364-0-9ff7de60c93cfd3fc0e08aa9b28733e2',
   );
   console.log('checkTypeContentType', checkTypeContentType);
   const headers = { 'multi-part': 'zyfun', 'user-agent': 'zy', host: 'zy.fun' };
@@ -243,7 +243,7 @@ const create = async () => {
     options.quality = [
       {
         name: '标清',
-        url: 'https://voddemo-play.volcvod.com/10501b001bdd43ae89d7c0fc3d6792b5/main.m3u8?a=0&auth_key=1773925042-f0489f7ac9a14d92b96bbfb7b39a7a0d-0-4e57d65b22e9aefe63ba1c519218e9fe&br=966&bt=966&cd=0%7C0%7C0&ch=0&cr=0&cs=0&cv=1&dr=0&ds=4&er=0&l=2023032020544973DCCFE21CF4C02E38B1&lr=&mime_type=video_mp4&net=0&pl=0&qs=0&rc=amg6c2o0aTg6ZTQzNGRnM0ApOmZkZzg1PGVoNzhkOzxlZ2dfZy9gMHFrYTBgLS1kYy9zcy00L2JfL19eYF42Ly0vYi06Yw%3D%3D&vl=&vr=',
+        url: 'https://voddemo-play.volcvod.com/oQ8YhILEoRRtzAJuQfdsDZQ75RZkLxAv9wX0Zr?auth_key=1871887663-4aa8f75738e64f95a56aface7fe12364-0-9ff7de60c93cfd3fc0e08aa9b28733e2',
       },
       {
         name: '高清',

@@ -215,7 +215,7 @@ class XgPlayerAdapter {
 
     if (rawOptions.quality.length) {
       const quality = rawOptions.quality.map((item) => {
-        return { name: item.name, definition: item.name, url: item.url };
+        return { name: item.name, url: item.url, selected: item.select };
       });
       player.emit('resourceReady', quality);
     } // 画质

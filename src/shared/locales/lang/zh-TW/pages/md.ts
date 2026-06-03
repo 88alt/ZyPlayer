@@ -6,25 +6,16 @@ const binaryHelpMD = `- 點擊安裝會添加到任務隊列, 無需多次點擊
 
 const customPlayerMD = `> 該功能依賴於系統命令, 可調用\`環境變量\`或\`指定路徑\`
 
-- 播放器類型: Vlc播放器
-  - 該模式做了專門輸配
-  - 如何設置: \`libvlc so/lib/dylib路径\`;\`libvlc plugin路径\`
-  - 常見
-    - Windows: \`C:\\Program Files (x86)\\VideoLAN\\VLC\\libvlc.dll;C:\\Program Files (x86)\\VideoLAN\\VLC\\plugins\`
-    - Mac: \`/Applications/VLC.app/Contents/MacOS/lib/libvlc.dylib;/Applications/VLC.app/Contents/MacOS/plugins\`
-    - Linux: \`/usr/lib/x86_64-linux-gnu/libvlc.so;/usr/lib/vlc/plugins\`
-
-- 播放器類型: 自定義播放器
-  - 如何設置:
-    - Windows: \`[右鍵圖標->右鍵屬性->目標]\`查看路徑
-    - Mac: \`/Applications/軟件名.app\`
-    - Linux: \`[whereis 軟件名]\`查看路徑
-  - 常見播放器\`[根據實際修改路徑]\`
-    - PotPlayer(Window): \`C:\\Program Files (x86)\\PotPlayer\\PotPlayerMini64.exe\`
-    - VLC(Window): \`C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe\`
-    - IINA(Mac): \`/Applications/IINA.app\`
-    - VLC(Mac): \`/Applications/VLC.app\`
-    - VLC(Linux): \`/usr/bin/vlc\``;
+- 如何設置:
+  - Windows: \`[右鍵圖標->右鍵屬性->目標]\`查看路徑
+  - Mac: \`/Applications/軟件名.app\`
+  - Linux: \`[whereis 軟件名]\`查看路徑
+- 常見播放器\`[根據實際修改路徑]\`
+  - PotPlayer(Window): \`C:\\Program Files (x86)\\PotPlayer\\PotPlayerMini64.exe\`
+  - VLC(Window): \`C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe\`
+  - IINA(Mac): \`/Applications/IINA.app\`
+  - VLC(Mac): \`/Applications/VLC.app\`
+  - VLC(Linux): \`/usr/bin/vlc\``;
 
 const disclaimerMD = `> 發布日期: 2026年4月30日
 

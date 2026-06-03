@@ -6,25 +6,16 @@ const binaryHelpMD = `- Click to install and it will be added to the task queue,
 
 const customPlayerMD = `> Dependent software path or env
 
-- Player type: Vlc player
-  - This mode has been specially configured
-  - How to set: \`libvlc so/lib/dylib path\`;\`libvlc plugin path\`
-  - Common
-    - Windows: \`C:\\Program Files (x86)\\VideoLAN\\VLC\\libvlc.dll;C:\\Program Files (x86)\\VideoLAN\\VLC\\plugins\`
-    - Mac: \`/Applications/VLC.app/Contents/MacOS/lib/libvlc.dylib;/Applications/VLC.app/Contents/MacOS/plugins\`
-    - Linux: \`/usr/lib/x86_64-linux-gnu/libvlc.so;/usr/lib/vlc/plugins\`
-
-- Player type: Custom player
-  - How to set:
-    - Windows: \`software -> right-click -> properties -> target\`
-    - Mac: \`/Applications/SoftwareName.app\`
-    - Linux: \`whereis SoftwareName\`
-  - Common player \`[modify path to suit]\`
-    - PotPlayer(Window): \`C:\\Program Files (x86)\\PotPlayer\\PotPlayerMini64.exe\`
-    - VLC(Window): \`C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe\`
-    - IINA(Mac): \`/Applications/IINA.app\`
-    - VLC(Mac): \`/Applications/VLC.app\`
-    - VLC(Linux): \`/usr/bin/vlc\``;
+- How to set:
+  - Windows: \`software -> right-click -> properties -> target\`
+  - Mac: \`/Applications/SoftwareName.app\`
+  - Linux: \`whereis SoftwareName\`
+- Common player \`[modify path to suit]\`
+  - PotPlayer(Window): \`C:\\Program Files (x86)\\PotPlayer\\PotPlayerMini64.exe\`
+  - VLC(Window): \`C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe\`
+  - IINA(Mac): \`/Applications/IINA.app\`
+  - VLC(Mac): \`/Applications/VLC.app\`
+  - VLC(Linux): \`/usr/bin/vlc\``;
 
 const disclaimerMD = `> Release date: April 30, 2026
 

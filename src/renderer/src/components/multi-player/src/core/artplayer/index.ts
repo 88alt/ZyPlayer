@@ -248,7 +248,7 @@ class ArtPlayerAdapter {
             return 'en';
         }
       })(), // 语言
-      quality: rawOptions.quality.map((q, i) => ({ html: q.name, url: q.url, default: i === 0 })), // 画质
+      quality: rawOptions.quality.map((item) => ({ html: item.name, url: item.url, default: item.select })), // 画质
       headers: rawOptions.headers, // 请求头
     };
 

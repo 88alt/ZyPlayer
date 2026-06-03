@@ -27,13 +27,13 @@ export type IRecAssociationType = `${REC_ASSOCIATION_TYPE}`;
 
 export enum PLAYER_TYPE {
   XGPLAYER = 'xgplayer',
-  DPLAYER = 'dplayer',
+  // DPLAYER = 'dplayer',
   ARTPLAYER = 'artplayer',
-  NPLAYER = 'nplayer',
-  OPLAYER = 'oplayer',
+  // NPLAYER = 'nplayer',
+  // OPLAYER = 'oplayer',
   // ALIPLAYER = 'aliplayer',
   // VEPLAYER = 'veplayer',
-  VLCPLAYER = 'vlcplayer',
+  // VLCPLAYER = 'vlcplayer',
   CUSTOM = 'custom',
 }
 export type IPlayerType = `${PLAYER_TYPE}`;
