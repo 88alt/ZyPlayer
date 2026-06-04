@@ -20,7 +20,7 @@ import type { IBarrage, IBarrageSendOptions, IMultiPlayerOptions } from '../../t
 import { color, icons, language } from '../../utils/static';
 import { storage } from '../../utils/storage';
 import { publicBarrageSend } from '../../utils/tool';
-import { danmuSendPlugin as _danmuSendPlugin, playNextPlugin } from './plugins';
+import { danmuSendPlugin as _danmuSendPlugin, danmuSettingsPlugin, playNextPlugin } from './plugins';
 import type { PlayerAdapter } from './types';
 import { uiIconHandle } from './utils';
 
@@ -40,7 +40,7 @@ class XgPlayerAdapter {
     startTime: 0,
     volume: { index: 3, default: 1, showValueLabel: true },
     playbackRate: {
-      list: [3, 2, 1.5, 1.25, { rate: 1, iconText: { 'zh-cn': '倍速', en: 'Speed' } }, 0.75],
+      list: [3, 2, 1.5, 1.25, { rate: 1, iconText: { 'zh-cn': '倍速', 'zh-hk': '倍速', en: 'Speed' } }, 0.75],
       index: 4,
     },
     time: { index: 2 },
@@ -57,6 +57,7 @@ class XgPlayerAdapter {
       pipIconExit: icons.pipExit,
       openDanmu: icons.danmuOpen,
       closeDanmu: icons.danmuClose,
+      panelDanmu: icons.danmu,
     },
     commonStyle: {
       playedColor: color.theme, // 播放完成部分进度条底色
@@ -65,12 +66,12 @@ class XgPlayerAdapter {
     lang: 'zh-cn',
     enableContextmenu: true,
     danmu: {
-      opacity: 1, // 弹幕透明度
-      fontSize: 24, // 弹幕字体大小
+      opacity: 1, // 弹幕透明度 0-1
+      fontSize: 25, // 弹幕字体大小20/25/30
       channelSize: 24, // 弹幕轨道高度
-      panel: true,
+      panel: false, // 禁用内置面板，使用自定义 danmuSettings
       comments: [],
-      area: { start: 0, end: 0.85 }, // 弹幕显示区域
+      area: { start: 0, end: 0.75 }, // 弹幕显示区域 end 0.25/0.5/0.75/1
       defaultOpen: true, // 是否默认开启弹幕
       closeDefaultBtn: false, // 是否隐藏弹幕开关按钮
     },
@@ -207,7 +208,7 @@ class XgPlayerAdapter {
     } else {
       options.plugins = [
         ...options.plugins!,
-        ...(type !== 'audio' ? [Danmu] : []),
+        ...(type !== 'audio' ? [Danmu, danmuSettingsPlugin] : []),
         ...(rawOptions.next ? [playNextPlugin] : []),
       ];
       player = new XgPlayer(merge(this.options, options));
@@ -306,11 +307,20 @@ class XgPlayerAdapter {
     const options: Partial<IPlayerOptions> = {};
 
     if (rawOptions.isLive) {
-      const plugin = this.player?.getPlugin('danmu');
-      if (plugin) this.player!.unRegisterPlugin('danmu');
+      ['danmu', 'danmuSettings'].forEach((name) => {
+        const plugin = this.player?.getPlugin(name);
+        if (plugin) this.player!.unRegisterPlugin(name);
+      });
     } else {
-      const plugin = this.player?.getPlugin('danmu');
-      if (!plugin) this.player!.registerPlugin(Danmu);
+      const plugins = {
+        danmu: Danmu,
+        danmuSettings: danmuSettingsPlugin,
+      };
+
+      Object.keys(plugins).forEach((name) => {
+        const plugin = this.player?.getPlugin(name);
+        if (!plugin) this.player!.registerPlugin(plugins[name]);
+      });
     }
 
     ['mp4plugin', 'hls', 'flv', 'shakaplugin'].forEach((key) => {

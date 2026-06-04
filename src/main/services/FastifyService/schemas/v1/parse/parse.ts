@@ -23,7 +23,7 @@ export const mediaDirectSchema = {
   summary: 'Get media direct',
   description: 'Get media direct url',
   querystring: Type.Object({
-    id: Type.String({ description: 'Specified analyze id' }),
+    id: Type.String({ description: 'analyze id' }),
     url: Type.String({ description: 'parse url' }),
   }),
   response: {

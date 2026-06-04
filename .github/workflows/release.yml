@@ -93,9 +93,6 @@ jobs:
         run: |
           npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:

@@ -1,3 +1,5 @@
+> 忽略dplayer/nplayer/oplayer说明 (已移除)
+
 - 差异说明
   - 解码器
     - dash
@@ -28,7 +30,6 @@
     - dplayer: 弹幕使用 url+blob / apiBackend
     - dplayer: 弹幕发布无法控制底部距离
     - oplayer: 渲染有问题获取不到图层真实尺寸
-    - xgplayer: 不支持弹幕配置项
   - 国际化
     - artplayer/dplayer/nplayer/xgplayer: 支持 简体/繁体/英语
     - oplayer: 不支持繁体
