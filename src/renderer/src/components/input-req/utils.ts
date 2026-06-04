@@ -1,6 +1,6 @@
 import type { IReqContentType, IReqOptions, IReqResponse } from '@shared/config/req';
 import { REQ_CONTENT_TYPE, REQ_METHOD } from '@shared/config/req';
-import { headerKeysPascalCase } from '@shared/modules/headers';
+import { getHeaderKeys } from '@shared/modules/headers';
 import { isHttp, isJsonStr, isObject, isObjectEmpty } from '@shared/modules/validate';
 import JSON5 from 'json5';
 
@@ -18,7 +18,7 @@ export const parseReqOptions = (
     contentType = REQ_CONTENT_TYPE.JSON,
   } = options;
   const headers = isObject(headersRaw) ? headersRaw : isJsonStr(headersRaw) ? JSON5.parse(headersRaw) : {};
-  const headerKeys = headerKeysPascalCase(headers);
+  const headerKeys = getHeaderKeys(headers);
   const body: Record<string, any> = isObject(dataRaw) ? dataRaw : isJsonStr(dataRaw) ? JSON5.parse(dataRaw) : {};
 
   const upperMethod = method.toUpperCase();

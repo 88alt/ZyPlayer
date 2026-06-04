@@ -20,7 +20,15 @@ import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { LOG_MODULE } from '@shared/config/logger';
 import type { ISize } from '@shared/config/window';
 import { WINDOW_NAME, WINDOW_SIZE } from '@shared/config/window';
-import { convertUriToStandard, ELECTRON_TAG, isLocalhostURI, UNSAFE_HEADERS } from '@shared/modules/headers';
+import {
+  convertHeaders,
+  convertUriToStandard,
+  ELECTRON_TAG,
+  isLocalhostURI,
+  REMOVE_TAG,
+  removePrefixHeaders,
+  UNSAFE_HEADERS,
+} from '@shared/modules/headers';
 import {
   isHttp,
   isPositiveFiniteNumber,
@@ -515,10 +523,12 @@ export class WindowService {
     });
 
     mainWindow.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
-      const { id, requestHeaders, url } = details;
+      const { id, requestHeaders: rawRequestHeaders, url } = details;
+      let requestHeaders = convertHeaders(rawRequestHeaders);
       const customHeaders = reqMap.has(id) ? reqMap.get(id)!.headers : {};
       if (reqMap.has(id)) reqMap.delete(id);
 
+      // Handle Unsafe Headers
       UNSAFE_HEADERS.forEach((key) => {
         requestHeaders[key] = !isUndefined(customHeaders[key])
           ? customHeaders[key]
@@ -547,6 +557,9 @@ export class WindowService {
 
       // Handle redirect mode
       if (requestHeaders.Redirect === 'manual') reqMap.set(id, { redirect: url, headers: requestHeaders });
+
+      // Handle remove header
+      requestHeaders = removePrefixHeaders(requestHeaders, REMOVE_TAG, true);
 
       callback({ requestHeaders });
     });

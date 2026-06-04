@@ -4,7 +4,7 @@ import { dbService } from '@main/services/DbService';
 import { request } from '@main/utils/request';
 import { getTimeout } from '@main/utils/tool';
 import { SNIFFER_TYPE } from '@shared/config/setting';
-import { headersPascalCase } from '@shared/modules/headers';
+import { convertHeaders } from '@shared/modules/headers';
 import { isObject, isObjectEmpty, isStrEmpty, isString } from '@shared/modules/validate';
 import { base64 } from '@zy/crypto';
 
@@ -16,7 +16,7 @@ export interface ISnifferMediaResult {
 const cdpSnifferMediaToStandard = async (url: string, options: ISnifferOptions = {}): Promise<ISnifferMediaResult> => {
   const cdp = new CdpElectron();
   const resp = await cdp.snifferMedia(url, options);
-  return { url: resp.url, headers: headersPascalCase(resp?.headers || {}) };
+  return { url: resp.url, headers: convertHeaders(resp?.headers || {}) };
 };
 
 const customSnifferMediaToStandard = async (
@@ -47,7 +47,7 @@ const customSnifferMediaToStandard = async (
         : {}),
     },
   });
-  return { url: resp?.data?.url || '', headers: headersPascalCase(resp?.data?.headers || {}) };
+  return { url: resp?.data?.url || '', headers: convertHeaders(resp?.data?.headers || {}) };
 };
 
 export const snifferMediaToStandard = async (

@@ -2,7 +2,7 @@ import { loggerService } from '@logger';
 import { windowService } from '@main/services/WindowService';
 import { getTimeout, getUserAgent } from '@main/utils/tool';
 import { LOG_MODULE } from '@shared/config/logger';
-import { headersPascalCase } from '@shared/modules/headers';
+import { convertHeaders } from '@shared/modules/headers';
 import { toString } from '@shared/modules/toString';
 import { isHttp, isNil, isObjectEmpty, isPositiveFiniteNumber, isStrEmpty, isString } from '@shared/modules/validate';
 import { randomUUID } from '@zy/crypto';
@@ -101,7 +101,7 @@ export class CdpElectron {
   }
 
   private async configurePage(page: CdpPage, headers: Record<string, any> = {}): Promise<void> {
-    const h = headersPascalCase(headers);
+    const h = convertHeaders(headers);
     if (isObjectEmpty(h)) return;
 
     const userAgent = getUserAgent(h['User-Agent'], this.options.userAgent);
@@ -188,7 +188,7 @@ export class CdpElectron {
 
       const timeout = getTimeout(rawTimeout, this.options.timeout);
       const headers = Object.fromEntries(
-        Object.entries(headersPascalCase(rawHeaders))
+        Object.entries(convertHeaders(rawHeaders))
           .map(([key, value]) => {
             if (key === 'User-Agent') {
               return [key, getUserAgent(value, this.options.userAgent)];
@@ -267,7 +267,7 @@ export class CdpElectron {
           if (req.isInterceptResolutionHandled()) return;
 
           const reqUrl = req.url();
-          const reqHeaders = headersPascalCase(req.headers());
+          const reqHeaders = convertHeaders(req.headers());
           const reqMethod = req.method();
           const reqResourceType = req.resourceType();
 

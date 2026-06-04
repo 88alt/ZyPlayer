@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
-import { headersPascalCase } from '@shared/modules/headers';
+import { convertHeaders } from '@shared/modules/headers';
 import { isHttp, isObject, isObjectEmpty } from '@shared/modules/validate';
 import type { IAuthRelayPayload } from '@shared/types/auth';
 import { base64 } from '@zy/crypto';
@@ -193,7 +193,7 @@ const handleAuthSubmit = (payload: IAuthRelayPayload) => {
 
   if (!scheme || !['basic'].includes(scheme.toLowerCase())) return;
 
-  const headers = headersPascalCase(props.headers);
+  const headers = convertHeaders(props.headers);
   if (!headers.Authorization) return;
   headers.Authorization = `Basic ${base64.encode({ src: `${username}:${password}` })}`;
 

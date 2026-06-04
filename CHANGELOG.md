@@ -7,10 +7,12 @@
 - 特性: 实验室-编码工具 支持rsa长文本计算(worker不阻塞主线程), 并增加@zy/crypto-playground, 修复传参默认参数错误
 - 特性: 直播频道支持单独请求头(取#EXTVLCOPT) [issue #533]
 - 优化: 快捷配置和数据导入接口解耦; ui侧合并
+- 优化: 统一请求头处理工具，格式化为Chromium标准; 增加sec-ch/sec-fetch头处理
 <!-- - 优化: hls去广(SSAI动态帧率指纹识别) [pr #533] -->
 - 修复: site接口一处缺失默认值导致自动化初始debug数据失败
 - 修复: 自动提升机器安装的静默更新
 - 修复: win11全屏下左右存在白边 [issue #529 #532]
+- 修复: ai-sdk对系统提示词告警
 - 修复: T3Py代理路径参数缺失
 - 修复: multi-player组件 已知问题(详见该组件CHANGELOG)
 - 修复: @zy/crypto打包配置参数错误

@@ -3,7 +3,7 @@ import '@main/services/ProxyManager/bootstrap';
 import { Buffer } from 'node:buffer';
 import path from 'node:path';
 
-import { headersPascalCase } from '@shared/modules/headers';
+import { convertHeaders } from '@shared/modules/headers';
 import { toString } from '@shared/modules/toString';
 import { isJsonStr } from '@shared/modules/validate';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
@@ -73,7 +73,7 @@ const serialize2dict = (headers: { [key: string]: any } = {}) => {
 
 const fetch = async (url: string, options: RequestOptions = {}) => {
   const method = (options.method || 'GET').toUpperCase() as HttpMethod;
-  const headers = headersPascalCase(options.headers || {});
+  const headers = convertHeaders(options.headers || {});
 
   const config: AxiosRequestConfig = {
     url,
@@ -207,7 +207,7 @@ const post = async (url: string, options: RequestOptions = {}) => {
 
 const fetchPC = async (url: string, options: RequestOptions = {}) => {
   options.headers = options?.headers || {};
-  const headers = headersPascalCase(options.headers);
+  const headers = convertHeaders(options.headers);
   if (!headers['User-Agent']) {
     options.headers['User-Agent'] = PC_UA;
   }
@@ -216,7 +216,7 @@ const fetchPC = async (url: string, options: RequestOptions = {}) => {
 
 const postPC = async (url: string, options: RequestOptions = {}) => {
   options.headers = options?.headers || {};
-  const headers = headersPascalCase(options.headers);
+  const headers = convertHeaders(options.headers);
   if (!headers['User-Agent']) {
     options.headers['User-Agent'] = PC_UA;
   }

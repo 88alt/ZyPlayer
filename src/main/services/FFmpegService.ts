@@ -10,7 +10,7 @@ import { getBinaryName } from '@main/utils/process';
 import { isWindows } from '@main/utils/systeminfo';
 import { getTimeout, getUserAgent } from '@main/utils/tool';
 import { LOG_MODULE } from '@shared/config/logger';
-import { headersPascalCase } from '@shared/modules/headers';
+import { convertHeaders } from '@shared/modules/headers';
 import { isHttp, isNil, isPositiveFiniteNumber, isStrEmpty } from '@shared/modules/validate';
 import type { FfprobeData } from 'fluent-ffmpeg';
 import ffmpegFluent from 'fluent-ffmpeg';
@@ -135,7 +135,7 @@ export class FFmpegService {
     }
 
     if (isHttp(path)) {
-      const headers = headersPascalCase(rawHeaders);
+      const headers = convertHeaders(rawHeaders);
       headers['User-Agent'] = getUserAgent(headers['User-Agent'], this.options.userAgent);
 
       const headersArg = Object.entries(headers)

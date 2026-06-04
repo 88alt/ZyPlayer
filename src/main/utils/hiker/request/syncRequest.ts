@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer';
 import path from 'node:path';
 import process from 'node:process';
 
-import { headersPascalCase } from '@shared/modules/headers';
+import { convertHeaders } from '@shared/modules/headers';
 import { toString } from '@shared/modules/toString';
 import { isJsonStr } from '@shared/modules/validate';
 import fs from 'fs-extra';
@@ -73,7 +73,7 @@ interface RequestOptions {
 
 const fetch = (url: string, options: RequestOptions = {}) => {
   const method: HttpMethod = (options.method || 'GET').toUpperCase() as HttpMethod;
-  const headers = headersPascalCase(options?.headers || {});
+  const headers = convertHeaders(options?.headers || {});
 
   const config: Options = {
     headers,
@@ -205,7 +205,7 @@ const post = (url: string, options: RequestOptions = {}) => {
 
 const fetchPC = (url: string, options: RequestOptions = {}) => {
   options.headers = options?.headers || {};
-  const headers = headersPascalCase(options.headers);
+  const headers = convertHeaders(options.headers);
   if (!headers['User-Agent']) {
     options.headers['User-Agent'] = PC_UA;
   }
@@ -214,7 +214,7 @@ const fetchPC = (url: string, options: RequestOptions = {}) => {
 
 const postPC = (url: string, options: RequestOptions = {}) => {
   options.headers = options?.headers || {};
-  const headers = headersPascalCase(options.headers);
+  const headers = convertHeaders(options.headers);
   if (!headers['User-Agent']) {
     options.headers['User-Agent'] = PC_UA;
   }

@@ -17,51 +17,74 @@ export const UNSAFE_HEADERS: Array<string> = [
   'Cookie',
   // 'Authorization',
   // 'X-CSRF-Token',
-  // 'X-XSRF-Token'
+  // 'X-XSRF-Token',
+
+  // Client Hints
+  'Sec-Ch-Ua',
+  'Sec-Ch-Ua-Mobile',
+  'Sec-Ch-Ua-Platform',
+
+  // Fetch Policy
+  'Sec-Fetch-Dest',
+  'Sec-Fetch-Mode',
+  'Sec-Fetch-Site',
+  'Sec-Fetch-User',
+  'Upgrade-Insecure-Requests',
 ];
 export const UNSAFE_HEADERS_LOWER = UNSAFE_HEADERS.map((item: string) => item.toLowerCase());
 export const UNSAFE_HEADERS_UPPER = UNSAFE_HEADERS.map((item: string) => item.toUpperCase());
 
 export const ELECTRON_TAG: string = 'Electron';
+export const REMOVE_TAG: string = 'Remove';
 
 /**
- * Converting HTTP headers keys to PascalCase format
+ * Converting HTTP header key
+ * standard headers: Electron/Chromium
+ *
+ * @param keyRaw Original header name
+ * @returns Normalized header name
+ */
+export const convertHeaderKey = (keyRaw: string): string => {
+  return pascalCase(keyRaw, '-', '-');
+};
+
+/**
+ * Converting HTTP headers
  * @param headersRaw - HTTP headers object
  * @returns PascalCase HTTP headers object
  */
-export const headersPascalCase = (headersRaw: IHeaders = {}): IHeaders => {
+export const convertHeaders = (headersRaw: IHeaders = {}): IHeaders => {
   if (isObjectEmpty(headersRaw)) return {};
 
   return Object.entries(headersRaw).reduce((acc, [key, val]) => {
-    const newKey = pascalCase(key, '-', '-');
+    const newKey = convertHeaderKey(key);
     acc[newKey] = val;
     return acc;
   }, {});
 };
 
 /**
- * Get all HTTP header keys in PascalCase format
+ * Get all HTTP header keys
  * @param headersRaw - HTTP headers object
  * @returns Array of PascalCase HTTP header keys
  */
-export const headerKeysPascalCase = (headersRaw: IHeaders = {}): string[] => {
+export const getHeaderKeys = (headersRaw: IHeaders = {}): string[] => {
   if (isObjectEmpty(headersRaw)) return [];
 
-  const headers = headersPascalCase(headersRaw);
+  const headers = convertHeaders(headersRaw);
   return Object.keys(headers);
 };
 
 /**
  * Checks whether a given document header is secure
- *
  * @param doc - The document header to check
  * @returns Returns true if all headers are safe, otherwise false
  */
 export const isSafeHeader = (doc: string | Array<string> | IHeaders): boolean => {
   const check = (key: string): boolean => {
-    const standardKey = pascalCase(key, '-', '-');
+    const standardKey = convertHeaderKey(key);
 
-    if (UNSAFE_HEADERS.includes(standardKey) || standardKey.startsWith('Sec-')) {
+    if (UNSAFE_HEADERS.includes(standardKey)) {
       return false;
     } else {
       return true;
@@ -89,7 +112,7 @@ export const isSafeHeader = (doc: string | Array<string> | IHeaders): boolean =>
 export const removeUnSafeHeaders = (headersRaw: IHeaders = {}): IHeaders => {
   if (isObjectEmpty(headersRaw)) return {};
 
-  const headers = headersPascalCase(headersRaw);
+  const headers = convertHeaders(headersRaw);
   const standardHeaders = {};
 
   for (const [key, value] of Object.entries(headers)) {
@@ -105,25 +128,28 @@ export const removeUnSafeHeaders = (headersRaw: IHeaders = {}): IHeaders => {
 /**
  * Remove "Remove-" prefix from headers
  * @param headersRaw - Raw HTTP headers object
- * @param prefixRaw - The prefix to remove (default: "Remove")
+ * @param prefix - The prefix to remove (default: "Remove")
  * @param strict - Whether to strictly check for "Remove-" prefix (default: true)
  * @returns Standard HTTP headers object
  */
 export const removePrefixHeaders = (
   headersRaw: IHeaders = {},
-  prefixRaw: string = 'Remove',
+  prefix: string = REMOVE_TAG,
   strict: boolean = true,
 ): IHeaders => {
   if (isObjectEmpty(headersRaw)) return {};
 
-  const headers = headersPascalCase(headersRaw);
-  const prefix = pascalCase(prefixRaw, '-', '-');
+  const headers = convertHeaders(headersRaw);
   const standardHeaders = {};
 
   for (const [key, value] of Object.entries(headers)) {
     if (isUndefined(value)) continue;
-    const newKey = strict ? `${prefix}-${key}` : prefix;
-    if (!value.startsWith(newKey)) {
+
+    const key1 = pascalCase(`${prefix}-${key}`, '-', '-');
+    const key2 = pascalCase(`${prefix}-${key}`, '-', '');
+
+    const shouldRemove = strict ? value === key1 || value === key2 : value.startsWith(prefix);
+    if (!shouldRemove) {
       standardHeaders[key] = value;
     }
   }
@@ -139,7 +165,7 @@ export const removePrefixHeaders = (
 export const convertWebToElectron = (headersRaw: IHeaders = {}): IHeaders => {
   if (isObjectEmpty(headersRaw)) return {};
 
-  const headers = headersPascalCase(headersRaw);
+  const headers = convertHeaders(headersRaw);
   const standardHeaders = {};
 
   for (const [key, value] of Object.entries(headers)) {
@@ -159,7 +185,7 @@ export const convertWebToElectron = (headersRaw: IHeaders = {}): IHeaders => {
 export const convertElectronToWeb = (headersRaw: IHeaders = {}): IHeaders => {
   if (isObjectEmpty(headersRaw)) return {};
 
-  const headers = headersPascalCase(headersRaw);
+  const headers = convertHeaders(headersRaw);
   const standardHeaders = {};
 
   for (const [key, value] of Object.entries(headers)) {
@@ -206,7 +232,7 @@ export const convertUriToStandard = (url: string): { redirect: string; headers: 
       url = url.replace(headerMatch[0], '');
     }
 
-    return { redirect: url, headers: headersPascalCase(headers) };
+    return { redirect: url, headers: convertHeaders(headers) };
   } catch {
     return { redirect: url, headers: {} };
   }
@@ -226,7 +252,7 @@ export const convertStandardToUri = (redirect: string, headersRaw: IHeaders = {}
   try {
     if (isObjectEmpty(headersRaw)) return redirect;
 
-    const headers = headersPascalCase(headersRaw);
+    const headers = convertHeaders(headersRaw);
     const unsafeHeaders = {};
 
     // Handle keys from UNSAFE_HEADERS.
@@ -266,7 +292,7 @@ export const convertStandardHeaders = (
 ): IHeaders => {
   if (isObjectEmpty(headersRaw)) return {};
 
-  const headers = headersPascalCase(headersRaw);
+  const headers = convertHeaders(headersRaw);
   let standardHeaders = {};
 
   for (const [key, value] of Object.entries(headers)) {
@@ -283,7 +309,7 @@ export const convertStandardHeaders = (
     standardHeaders[newKey] = value;
   }
 
-  standardHeaders = removePrefixHeaders(standardHeaders, 'Remove', strict);
+  standardHeaders = removePrefixHeaders(standardHeaders, REMOVE_TAG, strict);
 
   return standardHeaders;
 };
