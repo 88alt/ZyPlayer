@@ -46,15 +46,16 @@ export enum LOG_MODULE {
   APP_SHORTCUT = 'AppShortcut',
   APP_LOCALE = 'AppLocale',
 
+  BINARY = 'Binary',
   CDP = 'Cdp',
-  SEARCH = 'Search',
   DATABASE = 'Database',
   FASTIFY = 'Fastify',
   FFMPEG = 'FFmpeg',
   FILE_STORAGE = 'FileStorage',
+  PLUGIN = 'Plugin',
   PYTHON = 'Python',
+  SEARCH = 'Search',
   SYNC_STORAGE = 'SyncStorage',
-  BINARY = 'Binary',
 
   FILM_REC_DOUBAN = 'FilmRecDouban',
   FILM_REC_HOT = 'FilmRecHot',
@@ -67,9 +68,8 @@ export enum LOG_MODULE {
   SYSTEM_HELPER = 'SystemHelper',
 
   UTIL_PROCESS = 'UtilProcess',
-  UTIL_ZIP = 'UtilsZip',
+  UTIL_ZIP = 'UtilZip',
 
-  PLUGIN = 'Plugin',
   VLC = 'Vlc',
 
   I18N = 'I18n',

@@ -24,7 +24,7 @@ import type { AxiosRequestConfig } from 'axios';
 import type { FastifyPluginAsync } from 'fastify';
 import iconv from 'iconv-lite';
 
-import { fixAdM3u8Ai } from './utils/m3u8';
+import { checkM3u8, fixAdM3u8Ai } from './utils/m3u8';
 
 const API_PREFIX = 'system';
 
@@ -105,32 +105,18 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
           return reply.code(400).send({ code: -1, msg: 'Invalid m3u8 URL', data: null });
         }
 
-        const M3U8_CONTENT_TYPES = [
-          'application/vnd.apple.mpegurl',
-          'application/x-mpegURL',
-          'application/octet-stream',
-        ];
-
         try {
-          const ext = new URL(url).pathname.split('.').pop();
-          if (ext !== 'm3u8') {
-            const { data: resp } = await request.request({ url, method: 'HEAD', headers });
-
-            const contentType = resp?.headers?.['content-type'];
-            if (!contentType || !M3U8_CONTENT_TYPES.includes(contentType)) {
-              return reply.code(400).send({ code: -1, msg: 'Invalid m3u8 URL', data: null });
-            }
+          if (!(await checkM3u8(url, headers))) {
+            return reply.code(302).redirect(url);
           }
 
           const content = await fixAdM3u8Ai(url, headers);
           if (content && content.includes('.ts')) {
             return reply.code(200).header('Content-Type', 'application/vnd.apple.mpegurl').send(content);
           }
+        } catch {}
 
-          return reply.code(302).redirect(url);
-        } catch {
-          return reply.code(302).redirect(url);
-        }
+        return reply.code(302).redirect(url);
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ code: -1, msg: (error as Error).message, data: null });

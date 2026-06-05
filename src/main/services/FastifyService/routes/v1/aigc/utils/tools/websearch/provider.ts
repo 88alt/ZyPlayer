@@ -26,7 +26,7 @@ export interface WebSearchProviderResponse {
   results: WebSearchProviderResult[];
 }
 
-const logger = loggerService.withContext(LOG_MODULE.AIGC_HELPER);
+const logger = loggerService.withContext(`${LOG_MODULE.AIGC_HELPER}<tool_websearch>`);
 
 class ToolSearchProvider {
   private static instance: ToolSearchProvider;

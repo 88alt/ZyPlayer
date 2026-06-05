@@ -8,7 +8,8 @@
 - 特性: 直播频道支持单独请求头(取#EXTVLCOPT) [issue #533]
 - 优化: 快捷配置和数据导入接口解耦; ui侧合并
 - 优化: 统一请求头处理工具，格式化为Chromium标准; 增加sec-ch/sec-fetch头处理
-<!-- - 优化: hls去广(SSAI动态帧率指纹识别) [pr #533] -->
+- 优化: hls去广(SSAI动态帧率指纹识别) [pr #533]
+- 优化: 媒体文件类型识别
 - 修复: site接口一处缺失默认值导致自动化初始debug数据失败
 - 修复: 自动提升机器安装的静默更新
 - 修复: win11全屏下左右存在白边 [issue #529 #532]
@@ -17,8 +18,9 @@
 - 修复: multi-player组件 已知问题(详见该组件CHANGELOG)
 - 修复: @zy/crypto打包配置参数错误
 - 变动: 数据库字段(注意备份)
-- 变动: share模块packages/shared -> src/shared
-- 变动: 后端接口部分路径和参数(及时调整)
+- 变动: shared模块 packages/shared -> src/shared
+- 变动: 日志模块名(注意查看日志变动)
+- 变动: 后端接口部分路径和参数(注意及时调整)
 - 变动: 依赖库升级
 
 [View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.7)
@@ -55,7 +57,7 @@
 - 修复: 开发环境下vue文件无法跳转(关闭ts-go配置项)
 - 修复: vscode部分插件加载解析数据错误(i18n-ally|vitest)
 - 变动: 插件/环境 请求通道 ipc(无超时) -> http(无超时)
-- 变动: 后端接口部分路径和参数(及时调整)
+- 变动: 后端接口部分路径和参数(注意及时调整)
 - 变动: 添加agent提示词(适用于部分开发工具)
 - 变动: 依赖库升级
 

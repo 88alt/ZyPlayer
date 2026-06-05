@@ -28,11 +28,11 @@ const publicBarrageSend = (options: any) => {
 const mediaUtils = (() => {
   /**
    * 获取文件扩展名（支持URL、路径和特殊协议识别）
-   * @param {string} input - 输入字符串（URL、文件路径或特殊协议）
-   * @returns {string} 文件扩展名（小写），无扩展名返回空字符串
+   * @param input - 输入字符串（URL、文件路径或特殊协议）
+   * @returns 文件扩展名
    */
   const getFileExtension = (input: string): string => {
-    if (!input?.trim()) return '';
+    if (!input?.trim()) return 'unknown';
 
     // 特殊协议处理
     const protocolPatterns = [
@@ -45,15 +45,15 @@ const mediaUtils = (() => {
       if (pattern.test(input)) return ext;
     }
 
-    // 处理URL查询参数和哈希
-    const cleanInput = input.split(/[?#]/)[0];
+    try {
+      const filename = new URL(input.trim(), 'http://placeholder.local').pathname.split('/').pop() || '';
+      const index = filename.lastIndexOf('.');
+      if (index <= 0) return 'unknown'; // 没有扩展名或隐藏文件（如 .gitignore）
+      const ext = filename.slice(index + 1).toLowerCase();
+      return /^[a-z0-9]+$/i.test(ext) ? ext : 'unknown';
+    } catch {}
 
-    // 获取最后一个点号后的内容
-    const lastDotIndex = cleanInput.lastIndexOf('.');
-    if (lastDotIndex === -1) return '';
-
-    const extension = cleanInput.slice(lastDotIndex + 1).toLowerCase();
-    return /^[a-z0-9]+$/i.test(extension) ? extension : '';
+    return 'unknown';
   };
 
   /**
@@ -64,6 +64,8 @@ const mediaUtils = (() => {
     // HLS
     'application/vnd.apple.mpegurl': 'm3u8',
     'application/x-mpegURL': 'm3u8',
+    'application/mpegurl': 'm3u8',
+    'application/m3u8': 'm3u8',
     'audio/mpegurl': 'm3u8',
     'audio/x-mpegurl': 'm3u8',
     // 'application/octet-stream': 'm3u8', // 常见于HLS流
@@ -116,21 +118,21 @@ const mediaUtils = (() => {
   /**
    * 根据内容类型获取文件扩展名
    */
-  const getExtensionFromMime = (mime: string): string | undefined => {
-    return MIME_TO_EXTENSION[mime?.toLowerCase()];
+  const getExtensionFromMime = (mime: string): string => {
+    return MIME_TO_EXTENSION[mime?.toLowerCase()] || 'unknown';
   };
 
   /**
    * 根据文件扩展名获取内容类型
    */
-  const getMimeFromExtension = (extension: string): string | undefined => {
-    return EXTENSION_TO_MIME[extension?.toLowerCase()];
+  const getMimeFromExtension = (extension: string): string => {
+    return EXTENSION_TO_MIME[extension?.toLowerCase()] || 'unknown';
   };
 
   /**
    * 视频类型与播放器映射
    */
-  const extensionMapDecoder = (type?: string): IDecoderType | undefined => {
+  const extensionMapDecoder = (type?: string): IDecoderType | 'unknown' => {
     switch (type) {
       case 'hls':
       case 'm3u8':
@@ -159,24 +161,24 @@ const mediaUtils = (() => {
       case 'webm':
         return 'audio';
       default:
-        return undefined;
+        return 'unknown';
     }
   };
 
   const getDecoderFromExtension = (type: string): IDecoderWithAutoType => {
-    return extensionMapDecoder(type) || 'auto';
+    const decoder = extensionMapDecoder(type);
+    return decoder !== 'unknown' ? decoder : 'auto';
   };
 
   /**
    * 获取媒体流的内容类型并转换为文件扩展名
-   * @param {string} url - 媒体资源URL
-   * @param {Record<string, any>} headers - 请求头
-   * @returns {Promise<string | undefined>} 文件扩展名或undefined
+   * @param url - 媒体资源URL
+   * @param headers - 请求头
+   * @returns 文件扩展名
    */
-  const getStreamContentTypeToExtension = async (
-    url: string,
-    headers: Record<string, any> = {},
-  ): Promise<string | undefined> => {
+  const getStreamContentTypeToExtension = async (url: string, headers: Record<string, any> = {}): Promise<string> => {
+    if (!url?.trim()) return 'unknown';
+
     const REQUEST_METHODS = ['HEAD', 'GET'];
 
     for (const method of REQUEST_METHODS) {
@@ -199,30 +201,29 @@ const mediaUtils = (() => {
         const contentType = resp.headers['content-type']?.split(';')[0]?.trim()?.toLowerCase();
         if (contentType) {
           const mimeExtension = getExtensionFromMime(contentType);
-          if (mimeExtension) return mimeExtension;
+          if (mimeExtension !== 'unknown') return mimeExtension;
         }
 
         if (method === 'HEAD') continue;
 
         if (resp.data && resp.data.byteLength > 0) {
           const detected = await fileTypeFromBuffer(resp.data);
-          if (detected?.mime) {
-            const mimeExtension = getExtensionFromMime(detected.mime);
-            if (mimeExtension) return mimeExtension;
+          const mime = detected?.mime?.toLowerCase();
+          if (mime) {
+            const mimeExtension = getExtensionFromMime(mime);
+            if (mimeExtension !== 'unknown') return mimeExtension;
           }
         }
-      } catch (error) {
-        console.error(`[mediaUtils][getMediaType][${method}][error]:`, error);
-      }
+      } catch {}
     }
 
-    return undefined;
+    return 'unknown';
   };
 
   /**
    * 检测链接协议
-   * @param {string} url - 媒体资源URL
-   * @returns {boolean} 是否有效协议
+   * @param url - 媒体资源URL
+   * @returns 是否有效协议
    */
   const isValidMediaUrl = (url: string): boolean => {
     if (!url) return false;
@@ -240,22 +241,22 @@ const mediaUtils = (() => {
    * 检测媒体资源的类型，优先使用URL扩展名，其次使用Content-Type头
    * @param url 媒体资源URL
    * @param headers 请求头
-   * @returns 媒体类型标识符或undefined
+   * @returns 媒体类型标识符
    */
-  const checkMediaType = async (url: string, headers: Record<string, any> = {}): Promise<string | undefined> => {
-    if (!isValidMediaUrl(url)) return undefined;
+  const checkMediaType = async (url: string, headers: Record<string, any> = {}): Promise<string> => {
+    if (!isValidMediaUrl(url)) return 'unknown';
 
     // 优先从 URL 扩展名判断
     const extension1 = getFileExtension(url);
     console.debug('[mediaUtils][checkMediaType] extension1:', extension1);
-    if (extensionMapDecoder(extension1)) return extension1;
+    if (extension1 !== 'unknown' && extensionMapDecoder(extension1) !== 'unknown') return extension1;
 
     // 其次从流内容类型判断
     const extension2 = await getStreamContentTypeToExtension(url, headers);
     console.debug('[mediaUtils][checkMediaType] extension2:', extension2);
-    if (extensionMapDecoder(extension2)) return extension2;
+    if (extension2 !== 'unknown' && extensionMapDecoder(extension2) !== 'unknown') return extension2;
 
-    return undefined;
+    return 'unknown';
   };
 
   /**

@@ -13,9 +13,8 @@ overrides:
   minimatch@>=9.0.0 <9.0.6: 9.0.6
   minimatch@>=10.0.0 <10.2.1: 10.2.1
   node-abi: 4.28.0
+  protobufjs: '>=7.5.5'
   proxy-agent: ^6.5.0
-  semver: ^7.8.1
-  tar: ^7.5.16
   tar-fs: ^2.1.4
   undici: 6.23.0
   vite: npm:rolldown-vite@7.3.0
@@ -256,8 +255,8 @@ importers:
         specifier: workspace:*
         version: link:packages/crypto
       ai:
-        specifier: ^6.0.196
-        version: 6.0.196(zod@4.3.6)
+        specifier: ^6.0.197
+        version: 6.0.197(zod@4.3.6)
       artplayer:
         specifier: ^5.4.0
         version: 5.4.0(patch_hash=5a7c54b7af666229837fbd1cc051fc72656c86c0a0434294fe6d84af4351dd4b)
@@ -452,7 +451,7 @@ importers:
         version: 22.2.2
       ollama-ai-provider-v2:
         specifier: 3.5.1
-        version: 3.5.1(ai@6.0.196(zod@4.3.6))(zod@4.3.6)
+        version: 3.5.1(ai@6.0.197(zod@4.3.6))(zod@4.3.6)
       p-queue:
         specifier: ^9.3.0
         version: 9.3.0
@@ -478,8 +477,8 @@ importers:
         specifier: 4.2.0
         version: 4.2.0(prettier@3.8.3)
       protobufjs:
-        specifier: ^8.5.0
-        version: 8.5.0
+        specifier: '>=7.5.5'
+        version: 8.6.0
       proxy-agent:
         specifier: ^6.5.0
         version: 6.5.0
@@ -487,8 +486,8 @@ importers:
         specifier: ^6.15.2
         version: 6.15.2
       semver:
-        specifier: ^7.8.1
-        version: 7.8.1
+        specifier: ^7.8.2
+        version: 7.8.2
       spdx-satisfies:
         specifier: ^6.0.0
         version: 6.0.0
@@ -680,8 +679,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/gateway@3.0.124':
-    resolution: {integrity: sha512-h8CrmbSG+8X0C+M/E1M4oiDHYevqwbzAPN+uLRHS0eJaatF2MZ+juNtOHXNOjk7Bsk9mD2RjYMjJO9dFkb9I7Q==}
+  '@ai-sdk/gateway@3.0.125':
+    resolution: {integrity: sha512-tocl7cUDoTpmhZqeW8XVKMMznZQwwQAEunF0VyNKmf64qt8NbMIAEiet/vRMzh7Jr9WcFeb6EZjmhLTP4Qx2Og==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -2089,36 +2088,6 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  '@protobufjs/aspromise@1.1.2':
-    resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
-
-  '@protobufjs/base64@1.1.2':
-    resolution: {integrity: sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg==}
-
-  '@protobufjs/codegen@2.0.5':
-    resolution: {integrity: sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g==}
-
-  '@protobufjs/eventemitter@1.1.0':
-    resolution: {integrity: sha512-j9ednRT81vYJ9OfVuXG6ERSTdEL1xVsNgqpkxMsbIabzSo3goCjDIveeGv5d03om39ML71RdmrGNjG5SReBP/Q==}
-
-  '@protobufjs/fetch@1.1.0':
-    resolution: {integrity: sha512-lljVXpqXebpsijW71PZaCYeIcE5on1w5DlQy5WH6GLbFryLUrBD4932W/E2BSpfRJWseIL4v/KPgBFxDOIdKpQ==}
-
-  '@protobufjs/float@1.0.2':
-    resolution: {integrity: sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==}
-
-  '@protobufjs/inquire@1.1.1':
-    resolution: {integrity: sha512-mnzgDV26ueAvk7rsbt9L7bE0SuAoqyuys/sMMrmVcN5x9VsxpcG3rqAUSgDyLp0UZlmNfIbQ4fHfCtreVBk8Ew==}
-
-  '@protobufjs/path@1.1.2':
-    resolution: {integrity: sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==}
-
-  '@protobufjs/pool@1.1.0':
-    resolution: {integrity: sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw==}
-
-  '@protobufjs/utf8@1.1.1':
-    resolution: {integrity: sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg==}
-
   '@puppeteer/browsers@3.0.4':
     resolution: {integrity: sha512-HGM8iAmGTf+Y7t0373szVbTmt3d7vPkYL/1bpOkOFO0YUYLgSeuYBCzESklogNPvOBnZ/MRD5f07OkpqH1trtA==}
     engines: {node: '>=22.12.0'}
@@ -3401,8 +3370,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@6.0.196:
-    resolution: {integrity: sha512-2T45UeqKL4a11KQ14I5i1YYHOvCFrMF478E1k6PVjlQSGUvXSv4xrxIaQbUL4qgv91DADSbddwv3oR49pPAK3g==}
+  ai@6.0.197:
+    resolution: {integrity: sha512-U3KsjkqwQXGHC0u0VeUDqUaNaBS/uQc7v4Vj92Cjv5lPx5DIyRBQYk4Hipy5vwD9AQKIG8uRvdaN9R+pAvrtcQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -5632,6 +5601,9 @@ packages:
     resolution: {integrity: sha512-hcg3ZmepS30/7BSFqRvoo3DOMQu7IjqxO5nCDt+zM9XWjb33Wg7ziNT+Qvqbuc3+gWpzO02JubVyk2G4Zvo1OQ==}
     engines: {node: '>=10'}
 
+  fs-minipass@1.2.7:
+    resolution: {integrity: sha512-GWSSJGFy4e9GUeCcbIkED+bgAoFyj7XF1mV8rma3QW4NIqX9Kyx79N/PF61H5udOV3aY1IaMLs6pGbH71nlCTA==}
+
   fs-minipass@2.1.0:
     resolution: {integrity: sha512-V/JgOLFCS+R6Vcq0slCuaeWEdNC3ouDlJMNIsacH2VtALiu9mV4LPrHc5cDl8k5aw6J8jwgWWpiTo5RYhmIzvg==}
     engines: {node: '>= 8'}
@@ -7100,13 +7072,23 @@ packages:
     resolution: {integrity: sha512-MbkQQ2CTiBMlA2Dm/5cY+9SWFEN8pzzOXi6rlM5Xxq0Yqbda5ZQy9sU75a673FE9ZK0Zsbr6Y5iP6u9nktfg2g==}
     engines: {node: '>=8'}
 
+  minipass@2.9.0:
+    resolution: {integrity: sha512-wxfUjg9WebH+CUDX/CdbRlh5SmfZiy/hpkxaRI16Y9W56Pa75sWgd/rvFilSgrauD9NyFymP/+JFV3KwzIsJeg==}
+
   minipass@3.3.6:
     resolution: {integrity: sha512-DxiNidxSEK+tHG6zOIklvNOwm3hvCrbUrdtzY74U6HKTJxvIDfOUL5W5P2Ghd3DTkhhKPYGqeNUIh5qcM4YBfw==}
+    engines: {node: '>=8'}
+
+  minipass@5.0.0:
+    resolution: {integrity: sha512-3FnjYuehv9k6ovOEbyOswadCDPX1piCfhV8ncmYtHOjuPwylVWsghTLo7rabjC3Rx5xD4HDx8Wm1xnMF7S5qFQ==}
     engines: {node: '>=8'}
 
   minipass@7.1.3:
     resolution: {integrity: sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A==}
     engines: {node: '>=16 || 14 >=14.17'}
+
+  minizlib@1.3.3:
+    resolution: {integrity: sha512-6ZYMOEnmVsdCeTJVE0W9ZD+pVnE8h9Hma/iOwwRDsdQoePpoX56/8B6z3P9VNwppJuBKNRuFDRNRqRWexT9G9Q==}
 
   minizlib@2.1.2:
     resolution: {integrity: sha512-bAxsR8BVfj60DWXHE3u30oHzfl4G7khkSuPW+qvpd7jFRHm7dLxOjUk1EHACJ/hxLY8phGJ0YhYHZo7jil7Qdg==}
@@ -8016,12 +7998,8 @@ packages:
   proper-lockfile@4.1.2:
     resolution: {integrity: sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA==}
 
-  protobufjs@7.5.6:
-    resolution: {integrity: sha512-M71sTMB146U3u0di3yup8iM+zv8yPRNQVr1KK4tyBitl3qFvEGucq/rGDRShD2rsJhtN02RJaJ7j5X5hmy8SJg==}
-    engines: {node: '>=12.0.0'}
-
-  protobufjs@8.5.0:
-    resolution: {integrity: sha512-df1jWDPA5VIBNRtuAHjqr09f2qN5D4Vke1wYqOQg1XJ7ZDpA7BD6L7E4tyChgGRLB5hqk2m79Zsy0WHwV9a84A==}
+  protobufjs@8.6.0:
+    resolution: {integrity: sha512-PIOO89BMGMXGz2333TVv/OqPNVWm7w30ll/4FtLbtLBaonzJMYwTbAZSSlobjIy9MoUgIAxSVUpK7aP7EpTtkg==}
     engines: {node: '>=12.0.0'}
 
   proxy-agent@6.5.0:
@@ -8464,8 +8442,30 @@ packages:
   semver-compare@1.0.0:
     resolution: {integrity: sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==}
 
-  semver@7.8.1:
-    resolution: {integrity: sha512-rkVq3IXh+4FDGch+KwzX3aV9W3kO54GyEgpvBzSyctDA6Xtd7RJQV1xmXbeQp5v7+VzLOfVqiutSE6GICgPFvg==}
+  semver@5.3.0:
+    resolution: {integrity: sha512-mfmm3/H9+67MCVix1h+IXTpDwL6710LyHuk7+cWC9T1mE0qz4iHhh6r4hU2wrIT9iTsAAC2XQRvfblL028cpLw==}
+    hasBin: true
+
+  semver@5.7.2:
+    resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
+    hasBin: true
+
+  semver@6.3.1:
+    resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
+    hasBin: true
+
+  semver@7.7.2:
+    resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
+    engines: {node: '>=10'}
+    hasBin: true
+
+  semver@7.7.4:
+    resolution: {integrity: sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==}
+    engines: {node: '>=10'}
+    hasBin: true
+
+  semver@7.8.2:
+    resolution: {integrity: sha512-c8jsqUZm3omBOI66G90z1Dyw5z622G8oLG+omfsHBJf3CWQTlOcwOjvOG6wtiNfW6anKm/eA39LMwMtMez2TiQ==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -8898,6 +8898,14 @@ packages:
   tar-stream@2.2.0:
     resolution: {integrity: sha512-ujeqbceABgwMZxEJnk2HDY2DlnUZ+9oEcb1KzTVfYHio0UE6dG71n60d8D2I4qNvleWrrXpmjpt7vZeF1LnMZQ==}
     engines: {node: '>=6'}
+
+  tar@4.4.18:
+    resolution: {integrity: sha512-ZuOtqqmkV9RE1+4odd+MhBpibmCxNP6PJhH/h2OqNuotTX7/XHPZQJv2pKvWMplFH9SIZZhitehh6vBH6LO8Pg==}
+    engines: {node: '>=4.5'}
+
+  tar@6.2.1:
+    resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
+    engines: {node: '>=10'}
 
   tar@7.5.16:
     resolution: {integrity: sha512-56adEpPMouktRlBLXiaYFFzZ/3+JXa8P9n7WbR+ibIjtviN55mEaOkiysCnPnWm+7kkui1Dn8J9l+g6zV8731w==}
@@ -9957,7 +9965,7 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.27(zod@4.3.6)
       zod: 4.3.6
 
-  '@ai-sdk/gateway@3.0.124(zod@4.3.6)':
+  '@ai-sdk/gateway@3.0.125(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
       '@ai-sdk/provider-utils': 4.0.27(zod@4.3.6)
@@ -10088,7 +10096,7 @@ snapshots:
       debug: 4.4.3
       gensync: 1.0.0-beta.2
       json5: 2.2.3
-      semver: 7.8.1
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
 
@@ -10108,7 +10116,7 @@ snapshots:
       debug: 4.4.3
       gensync: 1.0.0-beta.2
       json5: 2.2.3
-      semver: 7.8.1
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
 
@@ -10148,7 +10156,7 @@ snapshots:
       '@babel/helper-validator-option': 7.27.1
       browserslist: 4.28.1
       lru-cache: 5.1.1
-      semver: 7.8.1
+      semver: 6.3.1
 
   '@babel/helper-compilation-targets@7.28.6':
     dependencies:
@@ -10156,7 +10164,7 @@ snapshots:
       '@babel/helper-validator-option': 7.27.1
       browserslist: 4.28.1
       lru-cache: 5.1.1
-      semver: 7.8.1
+      semver: 6.3.1
 
   '@babel/helper-create-class-features-plugin@7.28.6(@babel/core@7.29.0)':
     dependencies:
@@ -10167,7 +10175,7 @@ snapshots:
       '@babel/helper-replace-supers': 7.28.6(@babel/core@7.29.0)
       '@babel/helper-skip-transparent-expression-wrappers': 7.27.1
       '@babel/traverse': 7.29.0
-      semver: 7.8.1
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
 
@@ -10460,7 +10468,7 @@ snapshots:
   '@commitlint/is-ignored@21.0.2':
     dependencies:
       '@commitlint/types': 21.0.1
-      semver: 7.8.1
+      semver: 7.8.2
 
   '@commitlint/lint@21.0.2':
     dependencies:
@@ -10565,7 +10573,7 @@ snapshots:
     dependencies:
       '@simple-libs/child-process-utils': 1.0.2
       '@simple-libs/stream-utils': 1.2.0
-      semver: 7.8.1
+      semver: 7.8.2
     optionalDependencies:
       conventional-commits-parser: 6.3.0
 
@@ -10632,7 +10640,7 @@ snapshots:
     dependencies:
       empathic: 2.0.0
       module-replacements: 3.0.0-beta.7
-      semver: 7.8.1
+      semver: 7.8.2
     optionalDependencies:
       eslint: 10.4.1(jiti@2.6.1)
 
@@ -10686,7 +10694,7 @@ snapshots:
       fs-extra: 8.1.0
       got: 11.8.6
       progress: 2.0.3
-      semver: 7.8.1
+      semver: 6.3.1
       sumchecker: 3.0.1
     optionalDependencies:
       global-agent: 3.0.0
@@ -10700,7 +10708,7 @@ snapshots:
       fs-extra: 8.1.0
       got: 11.8.6
       progress: 2.0.3
-      semver: 7.8.1
+      semver: 6.3.1
       sumchecker: 3.0.1
     optionalDependencies:
       global-agent: 3.0.0
@@ -10738,7 +10746,7 @@ snapshots:
       node-gyp: 11.5.0
       ora: 5.4.1
       read-binary-file-arch: 1.0.6
-      semver: 7.8.1
+      semver: 7.8.2
       tar: 7.5.16
       yargs: 17.7.2
     transitivePeerDependencies:
@@ -11057,7 +11065,7 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.3.2
-      protobufjs: 7.5.6
+      protobufjs: 8.6.0
       yargs: 17.7.2
 
   '@humanfs/core@0.19.1': {}
@@ -11558,11 +11566,11 @@ snapshots:
   '@npmcli/fs@1.1.1':
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.8.1
+      semver: 7.8.2
 
   '@npmcli/fs@4.0.0':
     dependencies:
-      semver: 7.8.1
+      semver: 7.8.2
 
   '@npmcli/git@2.1.0':
     dependencies:
@@ -11572,7 +11580,7 @@ snapshots:
       npm-pick-manifest: 6.1.1
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.8.1
+      semver: 7.8.2
       which: 2.0.2
     transitivePeerDependencies:
       - bluebird
@@ -11624,29 +11632,6 @@ snapshots:
   '@polka/url@1.0.0-next.29': {}
 
   '@popperjs/core@2.11.8': {}
-
-  '@protobufjs/aspromise@1.1.2': {}
-
-  '@protobufjs/base64@1.1.2': {}
-
-  '@protobufjs/codegen@2.0.5': {}
-
-  '@protobufjs/eventemitter@1.1.0': {}
-
-  '@protobufjs/fetch@1.1.0':
-    dependencies:
-      '@protobufjs/aspromise': 1.1.2
-      '@protobufjs/inquire': 1.1.1
-
-  '@protobufjs/float@1.0.2': {}
-
-  '@protobufjs/inquire@1.1.1': {}
-
-  '@protobufjs/path@1.1.2': {}
-
-  '@protobufjs/pool@1.1.0': {}
-
-  '@protobufjs/utf8@1.1.1': {}
 
   '@puppeteer/browsers@3.0.4(proxy-agent@6.5.0)':
     dependencies:
@@ -12335,7 +12320,7 @@ snapshots:
       eslint: 10.4.1(jiti@2.6.1)
       json-stable-stringify-without-jsonify: 1.0.1
       lodash.merge: 4.6.2
-      semver: 7.8.1
+      semver: 7.8.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -12411,7 +12396,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.56.1
       debug: 4.4.3
       minimatch: 10.2.5
-      semver: 7.8.1
+      semver: 7.8.2
       tinyglobby: 0.2.16
       ts-api-utils: 2.5.0(typescript@5.8.3)
       typescript: 5.8.3
@@ -12426,7 +12411,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.59.2
       debug: 4.4.3
       minimatch: 10.2.5
-      semver: 7.8.1
+      semver: 7.8.2
       tinyglobby: 0.2.16
       ts-api-utils: 2.5.0(typescript@5.8.3)
       typescript: 5.8.3
@@ -12441,7 +12426,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.60.1
       debug: 4.4.3
       minimatch: 10.2.5
-      semver: 7.8.1
+      semver: 7.8.2
       tinyglobby: 0.2.16
       ts-api-utils: 2.5.0(typescript@5.8.3)
       typescript: 5.8.3
@@ -12951,9 +12936,9 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@6.0.196(zod@4.3.6):
+  ai@6.0.197(zod@4.3.6):
     dependencies:
-      '@ai-sdk/gateway': 3.0.124(zod@4.3.6)
+      '@ai-sdk/gateway': 3.0.125(zod@4.3.6)
       '@ai-sdk/provider': 3.0.10
       '@ai-sdk/provider-utils': 4.0.27(zod@4.3.6)
       '@opentelemetry/api': 1.9.0
@@ -13061,7 +13046,7 @@ snapshots:
       plist: 3.1.0
       proper-lockfile: 4.1.2
       resedit: 1.7.2
-      semver: 7.8.1
+      semver: 7.7.4
       tar: 7.5.16
       temp-file: 3.4.0
       tiny-async-pool: 1.3.0
@@ -13368,7 +13353,7 @@ snapshots:
       promise-inflight: 1.0.1
       rimraf: 3.0.2
       ssri: 8.0.1
-      tar: 7.5.16
+      tar: 6.2.1
       unique-filename: 1.1.1
     transitivePeerDependencies:
       - bluebird
@@ -13738,7 +13723,7 @@ snapshots:
       json-schema-typed: 7.0.3
       onetime: 5.1.2
       pkg-up: 3.1.0
-      semver: 7.8.1
+      semver: 7.8.2
 
   confbox@0.1.8: {}
 
@@ -14336,7 +14321,7 @@ snapshots:
       require-package-name: 2.0.1
       resolve: 1.22.11
       resolve-from: 5.0.0
-      semver: 7.8.1
+      semver: 7.8.2
       yargs: 16.2.0
     transitivePeerDependencies:
       - supports-color
@@ -14574,7 +14559,7 @@ snapshots:
       lazy-val: 1.0.5
       lodash.escaperegexp: 4.1.2
       lodash.isequal: 4.5.0
-      semver: 7.8.1
+      semver: 7.7.2
       tiny-typed-emitter: 2.1.0
     transitivePeerDependencies:
       - supports-color
@@ -14771,7 +14756,7 @@ snapshots:
   eslint-compat-utils@0.5.1(eslint@10.4.1(jiti@2.6.1)):
     dependencies:
       eslint: 10.4.1(jiti@2.6.1)
-      semver: 7.8.1
+      semver: 7.8.2
 
   eslint-config-flat-gitignore@2.3.0(eslint@10.4.1(jiti@2.6.1)):
     dependencies:
@@ -14834,7 +14819,7 @@ snapshots:
       html-entities: 2.6.0
       object-deep-merge: 2.0.0
       parse-imports-exports: 0.2.4
-      semver: 7.8.1
+      semver: 7.8.2
       spdx-expression-parse: 4.0.0
       to-valid-identifier: 1.0.0
     transitivePeerDependencies:
@@ -14865,7 +14850,7 @@ snapshots:
       globals: 15.15.0
       globrex: 0.1.2
       ignore: 5.3.2
-      semver: 7.8.1
+      semver: 7.8.2
     optionalDependencies:
       ts-declaration-location: 1.0.7(typescript@5.8.3)
       typescript: 5.8.3
@@ -14944,7 +14929,7 @@ snapshots:
       pluralize: 8.0.0
       regexp-tree: 0.1.27
       regjsparser: 0.13.0
-      semver: 7.8.1
+      semver: 7.8.2
       strip-indent: 4.1.1
 
   eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.59.2(@typescript-eslint/parser@8.59.2(eslint@10.4.1(jiti@2.6.1))(typescript@5.8.3))(eslint@10.4.1(jiti@2.6.1))(typescript@5.8.3))(eslint@10.4.1(jiti@2.6.1)):
@@ -14973,7 +14958,7 @@ snapshots:
       natural-compare: 1.4.0
       nth-check: 2.1.1
       postcss-selector-parser: 7.1.1
-      semver: 7.8.1
+      semver: 7.8.2
       vue-eslint-parser: 10.4.0(eslint@10.4.1(jiti@2.6.1))
       xml-name-validator: 4.0.0
     optionalDependencies:
@@ -15237,7 +15222,7 @@ snapshots:
       process-warning: 5.0.0
       rfdc: 1.4.1
       secure-json-parse: 4.1.0
-      semver: 7.8.1
+      semver: 7.8.2
       toad-cache: 3.7.0
 
   fastq@1.20.1:
@@ -15474,6 +15459,10 @@ snapshots:
       jsonfile: 6.2.0
       universalify: 2.0.1
 
+  fs-minipass@1.2.7:
+    dependencies:
+      minipass: 2.9.0
+
   fs-minipass@2.1.0:
     dependencies:
       minipass: 3.3.6
@@ -15615,7 +15604,7 @@ snapshots:
       es6-error: 4.1.1
       matcher: 3.0.0
       roarr: 2.15.4
-      semver: 7.8.1
+      semver: 7.8.2
       serialize-error: 7.0.1
     optional: true
 
@@ -16285,7 +16274,7 @@ snapshots:
     dependencies:
       acorn: 8.16.0
       eslint-visitor-keys: 5.0.1
-      semver: 7.8.1
+      semver: 7.8.2
 
   jsonc-parser@3.3.1: {}
 
@@ -16414,7 +16403,7 @@ snapshots:
       mkdirp: 0.5.6
       nopt: 4.0.3
       read-installed: 4.0.3
-      semver: 7.8.1
+      semver: 5.7.2
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
       spdx-satisfies: 4.0.1
@@ -16667,12 +16656,12 @@ snapshots:
   make-dir@2.1.0:
     dependencies:
       pify: 4.0.1
-      semver: 7.8.1
+      semver: 5.7.2
     optional: true
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.8.1
+      semver: 7.8.2
 
   make-fetch-happen@14.0.3:
     dependencies:
@@ -17222,11 +17211,22 @@ snapshots:
     dependencies:
       minipass: 3.3.6
 
+  minipass@2.9.0:
+    dependencies:
+      safe-buffer: 5.2.1
+      yallist: 3.1.1
+
   minipass@3.3.6:
     dependencies:
       yallist: 4.0.0
 
+  minipass@5.0.0: {}
+
   minipass@7.1.3: {}
+
+  minizlib@1.3.3:
+    dependencies:
+      minipass: 2.9.0
 
   minizlib@2.1.2:
     dependencies:
@@ -17391,7 +17391,7 @@ snapshots:
 
   node-abi@4.28.0:
     dependencies:
-      semver: 7.8.1
+      semver: 7.8.2
 
   node-addon-api@1.7.2:
     optional: true
@@ -17400,7 +17400,7 @@ snapshots:
 
   node-api-version@0.2.1:
     dependencies:
-      semver: 7.8.1
+      semver: 7.8.2
 
   node-domexception@1.0.0: {}
 
@@ -17423,7 +17423,7 @@ snapshots:
       make-fetch-happen: 14.0.3
       nopt: 8.1.0
       proc-log: 5.0.0
-      semver: 7.8.1
+      semver: 7.8.2
       tar: 7.5.16
       tinyglobby: 0.2.16
       which: 5.0.0
@@ -17440,8 +17440,8 @@ snapshots:
       osenv: 0.1.5
       request: 2.88.2
       rimraf: 2.7.1
-      semver: 7.8.1
-      tar: 7.5.16
+      semver: 5.3.0
+      tar: 4.4.18
       which: 1.3.1
 
   node-gyp@7.1.2:
@@ -17453,8 +17453,8 @@ snapshots:
       npmlog: 4.1.2
       request: 2.88.2
       rimraf: 3.0.2
-      semver: 7.8.1
-      tar: 7.5.16
+      semver: 7.8.2
+      tar: 6.2.1
       which: 2.0.2
 
   node-hex@1.0.1: {}
@@ -17491,7 +17491,7 @@ snapshots:
     dependencies:
       hosted-git-info: 2.8.9
       resolve: 1.22.11
-      semver: 7.8.1
+      semver: 5.7.2
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
@@ -17506,14 +17506,14 @@ snapshots:
 
   npm-install-checks@4.0.0:
     dependencies:
-      semver: 7.8.1
+      semver: 7.8.2
 
   npm-normalize-package-bin@1.0.1: {}
 
   npm-package-arg@8.1.5:
     dependencies:
       hosted-git-info: 4.1.0
-      semver: 7.8.1
+      semver: 7.8.2
       validate-npm-package-name: 3.0.0
 
   npm-packlist@2.2.2:
@@ -17528,7 +17528,7 @@ snapshots:
       npm-install-checks: 4.0.0
       npm-normalize-package-bin: 1.0.1
       npm-package-arg: 8.1.5
-      semver: 7.8.1
+      semver: 7.8.2
 
   npm-registry-fetch@11.0.0:
     dependencies:
@@ -17574,8 +17574,8 @@ snapshots:
       p-map: 2.1.0
       pacote: 11.3.5
       runscript: 1.6.0
-      semver: 7.8.1
-      tar: 7.5.16
+      semver: 6.3.1
+      tar: 4.4.18
       urllib: 2.44.0(proxy-agent@6.5.0)
       utility: 1.18.0
       uuid: 3.4.0
@@ -17618,11 +17618,11 @@ snapshots:
 
   ohash@2.0.11: {}
 
-  ollama-ai-provider-v2@3.5.1(ai@6.0.196(zod@4.3.6))(zod@4.3.6):
+  ollama-ai-provider-v2@3.5.1(ai@6.0.197(zod@4.3.6))(zod@4.3.6):
     dependencies:
       '@ai-sdk/provider': 3.0.10
       '@ai-sdk/provider-utils': 4.0.27(zod@4.3.6)
-      ai: 6.0.196(zod@4.3.6)
+      ai: 6.0.197(zod@4.3.6)
       zod: 4.3.6
 
   omggif@1.0.10: {}
@@ -17820,7 +17820,7 @@ snapshots:
       read-package-json-fast: 2.0.3
       rimraf: 3.0.2
       ssri: 8.0.1
-      tar: 7.5.16
+      tar: 6.2.1
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -18222,22 +18222,7 @@ snapshots:
       retry: 0.12.0
       signal-exit: 3.0.7
 
-  protobufjs@7.5.6:
-    dependencies:
-      '@protobufjs/aspromise': 1.1.2
-      '@protobufjs/base64': 1.1.2
-      '@protobufjs/codegen': 2.0.5
-      '@protobufjs/eventemitter': 1.1.0
-      '@protobufjs/fetch': 1.1.0
-      '@protobufjs/float': 1.0.2
-      '@protobufjs/inquire': 1.1.1
-      '@protobufjs/path': 1.1.2
-      '@protobufjs/pool': 1.1.0
-      '@protobufjs/utf8': 1.1.1
-      '@types/node': 25.9.1
-      long: 5.3.2
-
-  protobufjs@8.5.0:
+  protobufjs@8.6.0:
     dependencies:
       long: 5.3.2
 
@@ -18348,7 +18333,7 @@ snapshots:
       debuglog: 1.0.1
       read-package-json: 2.1.2
       readdir-scoped-modules: 1.1.0
-      semver: 7.8.1
+      semver: 5.7.2
       slide: 1.1.6
       util-extend: 1.0.3
     optionalDependencies:
@@ -18754,7 +18739,17 @@ snapshots:
 
   semver-compare@1.0.0: {}
 
-  semver@7.8.1: {}
+  semver@5.3.0: {}
+
+  semver@5.7.2: {}
+
+  semver@6.3.1: {}
+
+  semver@7.7.2: {}
+
+  semver@7.7.4: {}
+
+  semver@7.8.2: {}
 
   serialize-error@7.0.1:
     dependencies:
@@ -18835,7 +18830,7 @@ snapshots:
 
   simple-update-notifier@2.0.0:
     dependencies:
-      semver: 7.8.1
+      semver: 7.8.2
 
   sirv@3.0.2:
     dependencies:
@@ -19276,6 +19271,25 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
 
+  tar@4.4.18:
+    dependencies:
+      chownr: 1.1.4
+      fs-minipass: 1.2.7
+      minipass: 2.9.0
+      minizlib: 1.3.3
+      mkdirp: 0.5.6
+      safe-buffer: 5.2.1
+      yallist: 3.1.1
+
+  tar@6.2.1:
+    dependencies:
+      chownr: 2.0.0
+      fs-minipass: 2.1.0
+      minipass: 5.0.0
+      minizlib: 2.1.2
+      mkdirp: 1.0.4
+      yallist: 4.0.0
+
   tar@7.5.16:
     dependencies:
       '@isaacs/fs-minipass': 4.0.1
@@ -19401,7 +19415,7 @@ snapshots:
 
   tiny-async-pool@1.3.0:
     dependencies:
-      semver: 7.8.1
+      semver: 5.7.2
 
   tiny-emitter@2.1.0: {}
 
@@ -19548,7 +19562,7 @@ snapshots:
       picomatch: 4.0.4
       rolldown: 1.0.0-rc.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
       rolldown-plugin-dts: 0.22.5(@typescript/native-preview@7.0.0-dev.20260604.1)(rolldown@1.0.0-rc.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@5.8.3)(vue-tsc@3.2.9(typescript@5.8.3))
-      semver: 7.8.1
+      semver: 7.8.2
       tinyexec: 1.1.2
       tinyglobby: 0.2.16
       tree-kill: 1.2.2
@@ -20032,7 +20046,7 @@ snapshots:
       eslint-visitor-keys: 5.0.1
       espree: 11.2.0
       esquery: 1.7.0
-      semver: 7.8.1
+      semver: 7.8.2
     transitivePeerDependencies:
       - supports-color
 
@@ -20196,7 +20210,7 @@ snapshots:
 
   win-release@1.1.1:
     dependencies:
-      semver: 7.8.1
+      semver: 5.7.2
 
   windows-system-proxy@1.0.1:
     dependencies:

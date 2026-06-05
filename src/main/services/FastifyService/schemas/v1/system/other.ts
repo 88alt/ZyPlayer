@@ -118,7 +118,10 @@ export const m3u8AdRemoveSchema = {
       content: {
         'application/vnd.apple.mpegurl': { schema: Type.String() },
         'application/x-mpegURL': { schema: Type.String() },
-        'application/octet-stream': { schema: Type.String() },
+        'application/mpegurl': { schema: Type.String() },
+        'application/m3u8': { schema: Type.String() },
+        'audio/mpegurl': { schema: Type.String() },
+        'audio/x-mpegurl': { schema: Type.String() },
       },
       description: 'Successful Operation',
     },

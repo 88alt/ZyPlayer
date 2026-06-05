@@ -745,7 +745,7 @@ const getDirectPlayUrl = async (
     mediaType: string;
   } | null> => {
     const mediaType = await mediaUtils.checkMediaType(url, headers);
-    if (isNil(mediaType)) return null;
+    if (mediaType === 'unknown') return null;
     return { url, headers, mediaType, quality: [] };
   };
 

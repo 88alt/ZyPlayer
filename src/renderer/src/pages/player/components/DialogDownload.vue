@@ -56,7 +56,7 @@
   </t-dialog>
 </template>
 <script setup lang="ts">
-import { isArray, isArrayEmpty, isHttp, isNil, isObject, isObjectEmpty } from '@shared/modules/validate';
+import { isArray, isArrayEmpty, isHttp, isObject, isObjectEmpty } from '@shared/modules/validate';
 import type { ICmsInfo } from '@shared/types/cms';
 import { useClipboard } from '@vueuse/core';
 import type { FormInstanceFunctions, SubmitContext } from 'tdesign-vue-next';
@@ -145,7 +145,7 @@ const handleCopyCurrentURL = async () => {
     isSupported && copy(formCurrent.value);
 
     const mediaType = await mediaUtils.checkMediaType(formCurrent.value as string);
-    if (isNil(mediaType)) {
+    if (mediaType === 'unknown') {
       MessagePlugin.warning(t('pages.player.download.copyCheck'));
     } else {
       MessagePlugin.success(t('common.copySuccess'));
@@ -163,7 +163,7 @@ const copyEpisode = async () => {
     isSupported && copy(episode.join('\n'));
 
     const mediaType = await mediaUtils.checkMediaType(episode[0] as string);
-    if (isNil(mediaType)) {
+    if (mediaType === 'unknown') {
       MessagePlugin.warning(t('pages.player.download.copyCheck'));
     } else {
       MessagePlugin.success(t('common.copySuccess'));
