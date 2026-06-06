@@ -91,10 +91,40 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
     },
   );
 
+  fastify.head<{ Querystring: SystemM3u8AdRemoveQuery }>(
+    `/${API_PREFIX}/m3u8/adremove`,
+    {
+      schema: m3u8AdRemoveSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { url, headers: rawHeaders = '{}' } = req.query;
+        const headers = isJsonStr(rawHeaders) ? JSON.parse(rawHeaders) : {};
+
+        if (!isHttp(url)) {
+          return reply.code(400).send();
+        }
+
+        try {
+          if (!(await checkM3u8(url, headers))) {
+            return reply.code(302).header('Location', url).send();
+          }
+          return reply.code(200).header('Content-Type', 'application/vnd.apple.mpegurl').send();
+        } catch {}
+
+        return reply.code(302).header('Location', url).send();
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send();
+      }
+    },
+  );
+
   fastify.get<{ Querystring: SystemM3u8AdRemoveQuery }>(
     `/${API_PREFIX}/m3u8/adremove`,
     {
       schema: m3u8AdRemoveSchema,
+      exposeHeadRoute: false,
     },
     async (req, reply) => {
       try {

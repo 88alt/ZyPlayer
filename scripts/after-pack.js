@@ -55,19 +55,19 @@ function dealNodeModules7ZipBin(context) {
   }
 }
 
-function dealNodeModulesVlc(context) {
-  console.log('  • after packaging clean @zy/vlc...');
+// function dealNodeModulesVlc(context) {
+//   console.log('  • after packaging clean @zy/vlc...');
 
-  const targetDir = path.join(getUnpackedNodeModulesDir(context), '@zy/vlc');
-  if (!fs.existsSync(targetDir)) return;
+//   const targetDir = path.join(getUnpackedNodeModulesDir(context), '@zy/vlc');
+//   if (!fs.existsSync(targetDir)) return;
 
-  const keepEntries = new Set(['lib', 'build', 'package.json']);
+//   const keepEntries = new Set(['lib', 'build', 'package.json']);
 
-  for (const entry of fs.readdirSync(targetDir, { withFileTypes: true })) {
-    if (keepEntries.has(entry.name)) continue;
-    fs.rmSync(path.join(targetDir, entry.name), { recursive: true, force: true });
-  }
-}
+//   for (const entry of fs.readdirSync(targetDir, { withFileTypes: true })) {
+//     if (keepEntries.has(entry.name)) continue;
+//     fs.rmSync(path.join(targetDir, entry.name), { recursive: true, force: true });
+//   }
+// }
 
 exports.default = async function (context) {
   const arch = context.arch === Arch.arm64 ? 'arm64' : 'x64';
@@ -81,5 +81,5 @@ exports.default = async function (context) {
   }
 
   dealNodeModules7ZipBin(context);
-  dealNodeModulesVlc(context);
+  // dealNodeModulesVlc(context);
 };

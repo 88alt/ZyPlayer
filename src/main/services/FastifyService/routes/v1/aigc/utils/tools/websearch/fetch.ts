@@ -2,6 +2,7 @@ import { searchService } from '@main/services/SearchService';
 import { request } from '@main/utils/request';
 import { getTimeout } from '@main/utils/tool';
 import { Readability } from '@mozilla/readability';
+import { USER_AGENT } from '@shared/config/userAgent';
 import { isHttp } from '@shared/modules/validate';
 import { randomUUID } from '@zy/crypto';
 import { JSDOM } from 'jsdom';
@@ -68,8 +69,7 @@ export const fetchWebContent = async (
         url,
         method: 'GET',
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'User-Agent': USER_AGENT.PC_DARWIN_CHROME,
         },
         signal: httpOptions?.signal
           ? AbortSignal.any([httpOptions.signal, AbortSignal.timeout(getTimeout())])

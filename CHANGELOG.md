@@ -2,14 +2,15 @@
 
 > All notable changes to this project will be documented in this file.
 
-## 3.4.7
+## v3.4.7 (2026-06-06)
 
 - 特性: 实验室-编码工具 支持rsa长文本计算(worker不阻塞主线程), 并增加@zy/crypto-playground, 修复传参默认参数错误
 - 特性: 直播频道支持单独请求头(取#EXTVLCOPT) [issue #533]
 - 优化: 快捷配置和数据导入接口解耦; ui侧合并
 - 优化: 统一请求头处理工具，格式化为Chromium标准; 增加sec-ch/sec-fetch头处理
-- 优化: hls去广(SSAI动态帧率指纹识别) [pr #533]
+- 优化: hls去广优化匹配算法; 新增SSAI动态帧率指纹算法 [pr #533]
 - 优化: 媒体文件类型识别
+- 优化: proxy和adremove接口对head方法的处理
 - 修复: site接口一处缺失默认值导致自动化初始debug数据失败
 - 修复: 自动提升机器安装的静默更新
 - 修复: win11全屏下左右存在白边 [issue #529 #532]
@@ -23,14 +24,14 @@
 - 变动: 后端接口部分路径和参数(注意及时调整)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.7)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.7)
 
-## 3.4.6 (2026-05-11)
+## v3.4.6 (2026-05-11)
 
 - 优化: 默认ui参数调整
 - 优化: 独立crypto模块: rsa支持非标模式(私加公解), 优化分块计算; sm4参数名同步
 - 优化: 视频类型识别加入数据头识别
-- 修复: 影视类只有一个时整体隐藏(导致筛选隐藏); 数据冲突(旧数据没加载完触发新数据); 启动应用时初始化环境; T3Catopen适配器兼容性; T3Py重构(zeromq -> grpc) [issue #462]
+- 修复: 影视类只有一个时整体隐藏(导致筛选隐藏); 数据冲突(旧数据没加载完触发新数据); 启动应用时初始化环境; T3Catopen适配器兼容性; T3Py重构(zeromq -> grpc)
 - 修复: python项目重复检测uv环境和pip依赖问题
 - 修复: terminal组件触发applyTheme但搜索框dom未创建时报错; 未调用onLinkClickCallback
 - 修复: 实验室ui插件预览按钮不生效
@@ -38,9 +39,9 @@
 - 修复: 导入数据格式化后为空数据提示导入成功
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.6)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.6)
 
-## 3.4.5 (2026-04-30)
+## v3.4.5 (2026-04-30)
 
 - 特性: 热搜支持欢网
 - 优化: 重构后端schema和传参类型
@@ -61,9 +62,9 @@
 - 变动: 添加agent提示词(适用于部分开发工具)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.5)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.5)
 
-## 3.4.4 (2026-04-11)
+## v3.4.4 (2026-04-11)
 
 - 特性: 支持搜索联想(豆瓣/海信/喜粤TV)
 - 特性: 热搜支持海信, 修复云合, 修复id字段重复, 剔除百度/夸克
@@ -84,9 +85,11 @@
 - 变动: 用户协议(及时查看, 强制弹出)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.4)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.4)
 
-## 3.4.3 (2026-03-14)
+## v3.4.3 (2026-03-14)
+
+> windows arm 打包不出来
 
 - 特性: vscode增加mcp工具
 - 特性: 支持影视action动作操作(action组件)
@@ -116,9 +119,9 @@
 - 变动: 参数歧义 isChinaMainland(中国大陆) -> isCHS(简体中文)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.3)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.3)
 
-## 3.4.2 (2026-02-15)
+## v3.4.2 (2026-02-15)
 
 - 特性: 支持配置缩放
 - 修复: 设置-基础配置 无效超时参数检测不符合逻辑(改为失焦校验)
@@ -137,9 +140,9 @@
 - 变动: 影视适配器hiker公共库路径变动
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.2)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.2)
 
-## 3.4.1 (2026-02-08)
+## v3.4.1 (2026-02-07)
 
 > 破坏性更新
 
@@ -219,7 +222,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.1)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.1)
 
 ## v3.4.0 (2025-04-30)
 
@@ -256,7 +259,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.4.0)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.0)
 
 ## v3.3.10 (2025-02-06)
 
@@ -295,7 +298,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.10)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.10)
 
 ## v3.3.9 (2024-12-01)
 
@@ -327,7 +330,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.9)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.9)
 
 ## v3.3.8 (2024-11-15)
 
@@ -401,7 +404,7 @@
 - 变动: 修改-debug涉及PageSpy服务域名变更
 - 变动: 数据库字段(注意备份)
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.8)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.8)
 
 ## v3.3.7 (2024-07-30)
 
@@ -433,14 +436,14 @@
 - 变动: 播放器背景图
 - 变动: 数据库字段(注意备份)
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.7)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.7)
 
 ## v3.3.6 (2024-05-20)
 
 - 修复: 播放页倒序后逻辑混乱
 - 修复: 解析切换type前播放器未摧毁
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.6)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.6)
 
 ## v3.3.5 (2024-05-19)
 
@@ -462,7 +465,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.5)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.5)
 
 ## v3.3.4 (2024-04-27)
 
@@ -491,7 +494,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.4)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.4)
 
 ## v3.3.3 (2024-03-25)
 
@@ -511,7 +514,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.3)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.3)
 
 ## v3.3.2 (2024-02-29)
 
@@ -536,7 +539,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.2)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.2)
 
 ## v3.3.1 (2023-12-17)
 
@@ -553,7 +556,7 @@
 - 变动: 免责申明协议调整至基础设置
 - 变动: 数据库字段(注意备份)
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.1)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.1)
 
 ## v3.3.0 (2023-12-03)
 
@@ -567,7 +570,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.3.0)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.3.0)
 
 ## v3.2.10 (2023-09-30)
 
@@ -579,7 +582,7 @@
 - 修复: 修复一键配置单词拼写错误导致的问题7.变动：修改系统默认菜单栏(mac 生效)
 - 变动: 数据库字段(注意备份)
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.10)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.10)
 
 ## v3.2.9 (2023-09-14)
 
@@ -587,7 +590,7 @@
 - 修复: 已知 bugs
 - 变动: 数据库字段(注意备份)
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.9)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.9)
 
 ## v3.2.8 (2023-09-03)
 
@@ -598,7 +601,7 @@
 - 变动: 增加drpy推荐位
 - 变动: 数据库字段(注意备份)
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.8)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.8)
 
 ## v3.2.7 (2023-08-20)
 
@@ -612,7 +615,7 @@
 - 修复: api兼容性问题
 - 变动: 直播有效性改成延迟时间
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.7)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.7)
 
 ## v3.2.6 (2023-08-03)
 
@@ -625,7 +628,7 @@
 - 变动: 设置源分类代替全局过滤
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.6)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.6)
 
 ## v3.2.5 (2023-07-09)
 
@@ -638,7 +641,7 @@
 - 修复: 源解析和'哎呦疼'冲突的问题
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.5)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.5)
 
 ## v3.2.4 (2023-07-01)
 
@@ -651,7 +654,7 @@
 - 变动: 下架社区功能[issue #40]
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.4)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.4)
 
 ## v3.2.3 (2023-06-04)
 
@@ -666,7 +669,7 @@
 - 修复: 酷云热搜请求 3 次实际只请求 2 次的问题
 - 变动: 站点源检测有效性添加请求超时时间为 3 秒
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.3)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.3)
 
 ## v3.2.2 (2023-05-28)
 
@@ -681,7 +684,7 @@
 - 变动: 部分 svg 图标更换
 - 变动: 数据库字段(注意备份)
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.2)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.2)
 
 ## v3.2.1 (2023-05-21)
 
@@ -699,7 +702,7 @@
 - 变动: 数据库字段(注意备份)
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.1)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.1)
 
 ## v3.2.0 (2023-05-13)
 
@@ -711,7 +714,7 @@
 - 修复: main 程序关闭时点击回到主页无法打开的问题
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.2.0)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.2.0)
 
 ## v3.1.10 (2023-05-07)
 
@@ -728,7 +731,7 @@
 - 变动: 视频流特征采集改为 5s 同步一次数据
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.10)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.10)
 
 ## v3.1.9 (2023-04-22)
 
@@ -739,7 +742,7 @@
 - 变动: 删除最小化自动暂停/恢复播放
 - 变动: 西瓜播放器beta到release
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.9)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.9)
 
 ## v3.1.8 (2023-04-16)
 
@@ -751,7 +754,7 @@
 - 修复: 部分视频无法加载问题(xgplayer 3.0.0-next.55-2 fix)
 - 变动: 免责声明协议(语句不通顺、错别字)
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.8)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.8)
 
 ## v3.1.7 (2023-04-09)
 
@@ -764,7 +767,7 @@
 - 修复: 基础配置导致影视直接加载完成问题
 - 修复: 打开app首屏加载慢问题
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.7)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.7)
 
 ## v3.1.6 (2023-04-05)
 
@@ -786,7 +789,7 @@
 - 变动: 代理使用系统配置
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.6)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.6)
 
 ## v3.1.5 (2023-03-25)
 
@@ -798,7 +801,7 @@
 - 修复: 系统媒体正在播放显示名称错误
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.5)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.5)
 
 ## v3.1.4 (2023-03-19)
 
@@ -812,7 +815,7 @@
 - 变动: 基础配置重置拆分还原出厂(重置数据、清理缓存)+清理缓存
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.4)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.4)
 
 ## v3.1.3 (2023-03-12)
 
@@ -829,13 +832,13 @@
 - 修复: 源配置通过网络源增加失败的错误
 - 变动: 依赖库升级
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.3)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.3)
 
 ## v3.1.2 (2023-03-06)
 
 - 修复: 表格排序问题
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.2)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.2)
 
 ## v3.1.1 (2023-03-05)
 
@@ -847,7 +850,7 @@
 - 修复: 设置中源index错误导致的编辑和默认错乱
 - 修复: onMounted没加载完就触发load
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/v3.1.1)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.1.1)
 
 ## 3.1.0 (2023-02-28)
 
@@ -861,7 +864,7 @@
 - 变动: 修改解析支持平台(减少风险，彩蛋在TODO)
 - 变动: 去除waterwall第三方组件导致的切换页面变成一列
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/3.1.0)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/3.1.0)
 
 ## 3.0.0 (2023-02-06)
 
@@ -872,4 +875,4 @@
 - 优化:适配windwos无标题框模式
 - 修复: 修复缺少单个iptv的epg
 
-[View on GitHub](https://github.com/Hiram-Wong/ZyPlayer/releases/tag/3.0.0)
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/3.0.0)

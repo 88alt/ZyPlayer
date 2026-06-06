@@ -4,20 +4,72 @@ import { request } from '@main/utils/request';
 import type { GetProxyCacheRequest, SetProxyCacheRequest } from '@server/schemas/v0/proxy';
 import { getSchema, setSchema } from '@server/schemas/v0/proxy';
 import { PROXY_API } from '@shared/config/env';
-import { base64, hash } from '@zy/crypto';
+import { USER_AGENT } from '@shared/config/userAgent';
+import { convertHeaders } from '@shared/modules/headers';
+import { isObject, isObjectEmpty, isString } from '@shared/modules/validate';
+import { base64 } from '@zy/crypto';
 import type { FastifyPluginAsync } from 'fastify';
+
+import { generateCacheKey } from './utils/cache';
 
 const API_PREFIX = 'proxy';
 
-const generateCacheKey = (url: string): string => {
-  return `proxy-${hash['md5-16']({ src: url })}`;
-};
-
 const api: FastifyPluginAsync = async (fastify): Promise<void> => {
+  fastify.head<{ Querystring: GetProxyCacheRequest }>(
+    `/${API_PREFIX}`,
+    {
+      schema: getSchema,
+    },
+    async (req, reply) => {
+      try {
+        const { url } = req.query;
+
+        if (!url) return reply.code(400).send();
+
+        const cacheKey = generateCacheKey(url);
+        const cacheData: Array<string> | null = await fastify.cache.get(cacheKey);
+        if (cacheData && cacheData.length > 0) {
+          const [status, contentType, _content, rawHeaders, _isBase64] = cacheData;
+          const headers = isObject(rawHeaders) && !isObjectEmpty(rawHeaders) ? convertHeaders(rawHeaders!) : {};
+
+          Object.entries(headers).forEach(([key, value]) => {
+            reply.header(key, value);
+          });
+          reply.header('Content-Type', contentType);
+
+          return reply.code(Number.parseInt(status)).header('Content-Type', contentType).send();
+        }
+
+        if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'].some((ext) => url.toLowerCase().includes(ext))) {
+          const { data: resp } = await request.request({
+            url,
+            method: 'GET',
+            headers: {
+              'User-Agent': USER_AGENT.PC_DARWIN_CHROME,
+            },
+          });
+          if (isString(resp) && resp.includes('base64,')) {
+            const parts = resp.split(';base64,');
+            if (parts.length === 2) {
+              const imageType = parts[0].split(':')[1];
+              return reply.type(imageType).send();
+            }
+          }
+        }
+
+        return reply.code(302).header('Location', url).send();
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send();
+      }
+    },
+  );
+
   fastify.get<{ Querystring: GetProxyCacheRequest }>(
     `/${API_PREFIX}`,
     {
       schema: getSchema,
+      exposeHeadRoute: false,
     },
     async (req, reply) => {
       try {
@@ -28,18 +80,15 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
         }
 
         const cacheKey = generateCacheKey(url);
-
         const cacheData: Array<string> | null = await fastify.cache.get(cacheKey);
         if (cacheData && cacheData.length > 0) {
-          const [status, contentType, content, ...rest] = cacheData;
-          const headers = rest.length > 0 ? rest[0] : null;
-          const isBase64 = rest.length > 1 ? rest[1] : null;
+          const [status, contentType, content, rawHeaders, isBase64] = cacheData;
+          const headers = isObject(rawHeaders) && !isObjectEmpty(rawHeaders) ? convertHeaders(rawHeaders!) : {};
 
-          if (headers) {
-            Object.entries(headers).forEach(([key, value]) => {
-              reply.header(key, value);
-            });
-          }
+          Object.entries(headers).forEach(([key, value]) => {
+            reply.header(key, value);
+          });
+          reply.header('Content-Type', contentType);
 
           let responseContent = content;
           if (isBase64) {
@@ -49,10 +98,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
             responseContent = base64.decode({ src: responseContent });
           }
 
-          return reply
-            .code(typeof status === 'number' ? status : Number.parseInt(status))
-            .header('Content-Type', contentType)
-            .send(responseContent);
+          return reply.code(Number.parseInt(status)).send(responseContent);
         }
 
         if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'].some((ext) => url.toLowerCase().includes(ext))) {
@@ -60,11 +106,10 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
             url,
             method: 'GET',
             headers: {
-              'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.82',
+              'User-Agent': USER_AGENT.PC_DARWIN_CHROME,
             },
           });
-          if (typeof resp === 'string' && resp.includes('base64,')) {
+          if (isString(resp) && resp.includes('base64,')) {
             const parts = resp.split(';base64,');
             if (parts.length === 2) {
               const imageType = parts[0].split(':')[1];
