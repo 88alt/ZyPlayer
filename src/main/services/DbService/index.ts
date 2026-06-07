@@ -15,6 +15,7 @@ import type { FSWatcher } from 'chokidar';
 import chokidar from 'chokidar';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/libsql';
+import JSON5 from 'json5';
 import semver from 'semver';
 
 import operater from './crud';
@@ -95,12 +96,12 @@ export class DbService {
         const webdav = new WebdavStorage();
         await webdav.initClient({ url, username, password });
         const text = await webdav.getFileContents('config.json');
-        const content = JSON.parse(text as string);
+        const content = JSON5.parse(text as string);
         await this.db.init(content);
       } else if (type === 'icloud') {
         const icloud = new ICloudStorage();
         const text = await icloud.getFileContents('config.json');
-        const content = JSON.parse(text as string);
+        const content = JSON5.parse(text as string);
         await this.db.init(content);
       }
       return true;

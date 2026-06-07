@@ -56,7 +56,6 @@
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import {
   isHttp,
-  isNil,
   isObject,
   isObjectEmpty,
   isPositiveFiniteNumber,
@@ -69,13 +68,13 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { getDomain } from 'tldts';
 import { computed, nextTick, onActivated, onMounted, ref } from 'vue';
 
-import { addHistory, findHistory, putHistory } from '@/api/moment';
 import { fetchAnalyzeActive, fetchParse } from '@/api/parse';
 import CommonNav from '@/components/common-nav/index.vue';
 import WebviewView from '@/components/webview/index.vue';
 import { emitterChannel, emitterSource } from '@/config/emitterChannel';
 import { attachContent } from '@/config/global';
 import { china as CN_PLATFORM, other as OTHER_PLATFORM } from '@/config/parse';
+import { useHistory } from '@/hooks/useHistory';
 import { t } from '@/locales';
 import { usePlayerStore, useSettingStore } from '@/store';
 import emitter from '@/utils/emitter';
@@ -99,10 +98,38 @@ const config = ref({
   extra: {},
 });
 
+const infoConf = ref({} as Record<string, any>);
+
 const active = ref({
   class: '',
   nav: '',
   loading: false,
+});
+
+const { historyData, getHistoryData, saveHistoryData, resetHistoryData } = useHistory({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: config.value.default.key,
+    videoId: info.id,
+    type: 3,
+  }),
+  createDoc: (info) => {
+    const h = historyData.value;
+    return {
+      type: 3,
+      relateId: config.value.default.key,
+      siteSource: '',
+      playEnd: h?.playEnd ?? false,
+      videoId: info.id,
+      videoImage: '',
+      videoName: info.name,
+      videoIndex: `${info.name}$${info.api}`,
+      watchTime: isPositiveFiniteNumber(h.watchTime) ? h.watchTime : 0,
+      duration: isPositiveFiniteNumber(h.duration) ? h.duration : 0,
+      skipTimeInStart: isPositiveFiniteNumber(h.skipTimeInStart) ? h.skipTimeInStart : 0,
+      skipTimeInEnd: isPositiveFiniteNumber(h.skipTimeInEnd) ? h.skipTimeInEnd : 0,
+    };
+  },
 });
 
 const navList = computed(() => config.value.list.map((t) => ({ id: t.id, name: t.name })));
@@ -140,13 +167,13 @@ const handlePlatformChange = (id: string) => {
 const getSetting = async () => {
   try {
     const resp = await fetchAnalyzeActive();
+
     if (resp?.default?.id) {
       config.value.default = resp.default;
       active.value.nav = resp.default.id;
     }
-    if (resp?.list) {
-      config.value.list = resp.list;
-    }
+
+    if (resp?.list) config.value.list = resp.list;
     if (resp?.extra) config.value.extra = resp.extra;
   } catch (error) {
     console.error(`Failed to get analyze config:`, error);
@@ -162,31 +189,41 @@ const handleParse = async () => {
   await playEvent(url);
 };
 
-const createHistoryDoc = (item: IParse, siteKey: string) => ({
-  type: 3,
-  relateId: siteKey,
-  siteSource: '',
-  playEnd: false,
-  videoId: item.id,
-  videoImage: '',
-  videoName: item.name,
-  videoIndex: `${item.name}$${item.api}`,
-  watchTime: 0,
-  duration: 0,
-  skipTimeInStart: 0,
-  skipTimeInEnd: 0,
-});
+const playWithExternalPlayer = async (item: IParse, active: IModels['analyze']) => {
+  const resp = await fetchParse({ id: active.id, url: item.api });
 
-const saveHistoryData = async (doc: ReturnType<typeof createHistoryDoc>, relateId: string, videoId: string) => {
-  const resp = await findHistory({ relateId, videoId, type: 3 });
+  if (!isHttp(resp?.url)) {
+    MessagePlugin.error(t('pages.parse.message.error'));
+    return;
+  }
 
-  const id = resp?.id;
-  if (!isNil(id) && isPositiveFiniteNumber(resp.watchTime)) doc.watchTime = resp.watchTime;
-  if (!isNil(id) && isPositiveFiniteNumber(resp.duration)) doc.duration = resp.duration;
-  if (!isNil(id) && isPositiveFiniteNumber(resp.skipTimeInStart)) doc.skipTimeInStart = resp.skipTimeInStart;
-  if (!isNil(id) && isPositiveFiniteNumber(resp.skipTimeInEnd)) doc.skipTimeInEnd = resp.skipTimeInEnd;
+  const player = storePlayer.player;
+  window.electron.ipcRenderer.invoke(IPC_CHANNEL.CALL_PLAYER, player.external, resp.url);
 
-  isNil(id) ? await addHistory(doc) : await putHistory({ id: [id], doc });
+  infoConf.value = item;
+  try {
+    await getHistoryData();
+    await saveHistoryData();
+  } finally {
+    infoConf.value = {} as Record<string, any>;
+    resetHistoryData();
+  }
+};
+
+const playWithInternalPlayer = async (item: IParse, active: IModels['analyze']) => {
+  storePlayer.updateConfig({
+    type: 'parse',
+    status: true,
+    data: {
+      info: item,
+      extra: {
+        active,
+        site: config.value.list,
+      },
+    },
+  });
+
+  window.electron.ipcRenderer.invoke(IPC_CHANNEL.WINDOW_PLAYER);
 };
 
 const playEvent = async (url: string) => {
@@ -235,9 +272,9 @@ const playEvent = async (url: string) => {
 
     const player = storePlayer.player;
     if (player.type === 'custom') {
-      playWithExternalPlayer(item, site);
+      await playWithExternalPlayer(item, site);
     } else {
-      playWithInternalPlayer(item, site);
+      await playWithInternalPlayer(item, site);
     }
   } catch (error) {
     console.error('Failed to play:', error);
@@ -245,32 +282,6 @@ const playEvent = async (url: string) => {
   } finally {
     active.value.loading = false;
   }
-};
-
-const playWithExternalPlayer = async (item: IParse, active: IModels['analyze']) => {
-  const resp = await fetchParse({ id: active.id, url: item.api });
-
-  if (!isHttp(resp?.url)) {
-    MessagePlugin.error(t('pages.parse.message.error'));
-    return;
-  }
-
-  const player = storePlayer.player;
-
-  window.electron.ipcRenderer.invoke(IPC_CHANNEL.CALL_PLAYER, player.external, resp.url);
-
-  const historyDoc = createHistoryDoc(item, active.key);
-  await saveHistoryData(historyDoc, active.key, item.id);
-};
-
-const playWithInternalPlayer = (item: IParse, active: IModels['analyze']) => {
-  storePlayer.updateConfig({
-    type: 'parse',
-    status: true,
-    data: { info: item, extra: { active, site: config.value.list } },
-  });
-
-  window.electron.ipcRenderer.invoke(IPC_CHANNEL.WINDOW_PLAYER);
 };
 
 const defaultConfig = () => {

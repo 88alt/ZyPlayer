@@ -120,15 +120,28 @@
 import 'v3-infinite-loading/lib/style.css';
 
 import { isBetween, toYMD } from '@shared/modules/date';
-import { isArray, isArrayEmpty, isNil, isObject, isPositiveFiniteNumber } from '@shared/modules/validate';
+import { isArray, isArrayEmpty, isPositiveFiniteNumber } from '@shared/modules/validate';
 import type { ICmsInfo } from '@shared/types/cms';
 import type { IModels } from '@shared/types/db';
-import { throttle } from 'es-toolkit';
 import { DownloadIcon, HeartFilledIcon, HeartIcon, Share1Icon } from 'tdesign-icons-vue-next';
+import type { ListInstanceFunctions } from 'tdesign-vue-next';
 import InfiniteLoading from 'v3-infinite-loading';
 import type { StateHandler as ILoadStateHdandler } from 'v3-infinite-loading/lib/types';
 import type { PropType } from 'vue';
 import { computed, onMounted, ref, toRaw, useTemplateRef, watch } from 'vue';
+
+import { fetchChannelEpg, fetchChannelPage } from '@/api/live';
+import LazyBg from '@/components/lazy-bg/index.vue';
+import sharePopup from '@/components/share/index.vue';
+import TagNav from '@/components/tag-nav/index.vue';
+import TitleMenu from '@/components/title-menu/index.vue';
+import type { IStorePlayer } from '@/config/player';
+import { useHistory } from '@/hooks/useHistory';
+import { useStar } from '@/hooks/useStar';
+import { t } from '@/locales';
+import type { IVideoOptions, IVideoProcess } from '@/types/player';
+
+import DialogDownloadView from './DialogDownload.vue';
 
 const props = defineProps({
   store: {
@@ -143,25 +156,11 @@ const props = defineProps({
 
 const emits = defineEmits(['update', 'barrage', 'create', 'pause', 'seek']);
 
-import type { ListInstanceFunctions } from 'tdesign-vue-next';
-
-import { fetchChannelEpg, fetchChannelPage } from '@/api/live';
-import { addHistory, addStar, delStar, findHistory, findStar, putHistory, putStar } from '@/api/moment';
-import LazyBg from '@/components/lazy-bg/index.vue';
-import sharePopup from '@/components/share/index.vue';
-import TagNav from '@/components/tag-nav/index.vue';
-import TitleMenu from '@/components/title-menu/index.vue';
-import type { IStorePlayer } from '@/config/player';
-import { t } from '@/locales';
-import type { IVideoOptions, IVideoProcess } from '@/types/player';
-
-import DialogDownloadView from './DialogDownload.vue';
-
 const renderDefaultLazy = () => <LazyBg class="render-icon" />;
 
-// @ts-expect-error 已声明“channelListRef”，但从未读取其值。
+// @ts-expect-error ts-plugin(6133)
 const epgListRef = useTemplateRef<ListInstanceFunctions>('epgListRef');
-// @ts-expect-error 已声明“channelListRef”，但从未读取其值。
+// @ts-expect-error ts-plugin(6133)
 const channelListRef = useTemplateRef<ListInstanceFunctions>('channelListRef');
 
 const infoConf = ref(props.store.data.info);
@@ -173,12 +172,20 @@ const channelList = ref<IModels['channel'][]>([]);
 const classList = ref<Array<{ type_id: string; type_name: string }>>([]);
 const epgList = ref<Array<{ title: string; start: string; end: string }>>([]);
 
-const active = ref({
-  watch: true,
-  nav: 'epg',
-  class: '',
-  share: false,
-  download: false,
+const infiniteId = ref(Date.now());
+const pagination = ref({
+  pageIndex: 1,
+  pageSize: 32,
+  total: 0,
+});
+
+const videoData = ref<IVideoOptions>({
+  url: '',
+  playEnd: false,
+  watchTime: 0,
+  duration: 0,
+  skipTimeInStart: 0,
+  skipTimeInEnd: 0,
 });
 
 const downloadFormData = ref({
@@ -191,23 +198,69 @@ const shareFormData = ref({
   enablePrefix: true,
 });
 
-const infiniteId = ref(Date.now());
-const pagination = ref({
-  pageIndex: 1,
-  pageSize: 32,
-  total: 0,
+const active = ref({
+  watch: true,
+  nav: 'epg',
+  class: '',
+  share: false,
+  download: false,
 });
 
-const starData = ref({} as IModels['star']);
-const historyData = ref({} as IModels['history']);
+const { starData, getStarData, handleSwitchStar, resetStarData } = useStar({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: extraConf.value.active.key,
+    videoId: info.id,
+    type: 2,
+  }),
+  createDoc: (info) => ({
+    type: 2,
+    relateId: extraConf.value.active.key,
+    videoId: info.id,
+    videoImage: info.logo,
+    videoName: info.name,
+    videoType: info.group,
+    videoRemarks: '',
+  }),
+});
 
-const videoData = ref<IVideoOptions>({
-  url: '',
-  playEnd: false,
-  watchTime: 0,
-  duration: 0,
-  skipTimeInStart: 0,
-  skipTimeInEnd: 0,
+const { getHistoryData, throttleSaveHistory, resetHistoryData } = useHistory({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: extraConf.value.active.key,
+    videoId: info.id,
+    type: 2,
+  }),
+  createDoc: (info) => ({
+    type: 2,
+    relateId: extraConf.value.active.key,
+    siteSource: info.group,
+    playEnd: videoData.value.playEnd,
+    videoId: info.id,
+    videoImage: info.logo,
+    videoName: info.name,
+    videoIndex: `${info.name}$${info.api}`,
+    watchTime: isPositiveFiniteNumber(videoData.value.watchTime) ? videoData.value.watchTime : 0,
+    duration: isPositiveFiniteNumber(videoData.value.duration) ? videoData.value.duration : 0,
+    skipTimeInStart: videoData.value.skipTimeInStart,
+    skipTimeInEnd: videoData.value.skipTimeInEnd,
+  }),
+  onLoaded: (history) => {
+    const { skipHeadAndEnd } = playerConf.value;
+    const skipTimeInStart = history.skipTimeInStart ?? 0;
+    const skipTimeInEnd = history.skipTimeInEnd ?? 0;
+    const duration = history.duration ?? 0;
+    const rawWatchTime = history.watchTime ?? 0;
+    const playEnd = history.playEnd ?? false;
+    videoData.value = {
+      ...videoData.value,
+      skipTimeInStart,
+      skipTimeInEnd,
+      duration,
+      watchTime: skipHeadAndEnd ? Math.max(rawWatchTime, skipTimeInStart) : rawWatchTime,
+      playEnd,
+    };
+  },
 });
 
 const navOptions = computed(() => [
@@ -230,7 +283,9 @@ watch(
 );
 watch(
   () => processConf.value,
-  (val) => active.value.watch && timerUpdatePlayProcess(val.currentTime, val.duration),
+  (val) => {
+    if (active.value.watch) timerUpdatePlayProcess(val.currentTime, val.duration);
+  },
 );
 // watch(
 //   () => active.value.nav,
@@ -238,124 +293,6 @@ watch(
 // );
 
 onMounted(() => setup());
-
-const createStarDoc = (item: IModels['channel'], siteKey: string) => ({
-  type: 2,
-  relateId: siteKey,
-  videoId: item.id,
-  videoImage: item.logo,
-  videoName: item.name,
-  videoType: item.group,
-  videoRemarks: '',
-});
-
-const getStarData = async () => {
-  try {
-    const resp = await findStar({ relateId: extraConf.value.active.key, videoId: infoConf.value.id, type: 2 });
-    starData.value = isNil(resp?.id) ? {} : resp;
-  } catch (error) {
-    console.error('Get Star Data Error:', error);
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const saveStarData = async () => {
-  const id = starData.value?.id;
-  const doc = createStarDoc(infoConf.value as IModels['channel'], extraConf.value.active.key);
-
-  try {
-    const resp = isNil(id) ? await addStar(doc) : await putStar({ id: [id], doc });
-    if (isArray(resp) && !isArrayEmpty(resp) && !isNil(resp[0]?.id)) {
-      starData.value = resp[0];
-    } else {
-      starData.value = {} as IModels['star'];
-    }
-  } catch (error) {
-    console.error('Save Star Data Error:', error);
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const delStarDate = async () => {
-  const id = starData.value?.id;
-
-  try {
-    await delStar({ id: [id] });
-  } catch (error) {
-    console.error('Delete Star Data Error:', error);
-  } finally {
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const handleSwitchStar = async () => {
-  const id = starData.value?.id;
-
-  isNil(id) ? await saveStarData() : await delStarDate();
-};
-
-const createHistoryDoc = (item: IModels['channel'], siteKey: string, videoData: IVideoOptions) => ({
-  type: 2,
-  relateId: siteKey,
-  siteSource: item.group,
-  playEnd: videoData.playEnd,
-  videoId: item.id,
-  videoImage: item.logo,
-  videoName: item.name,
-  videoIndex: `${item.name}$${item.api}`,
-  watchTime: isPositiveFiniteNumber(videoData.watchTime) ? videoData.watchTime : 0,
-  duration: isPositiveFiniteNumber(videoData.duration) ? videoData.duration : 0,
-  skipTimeInStart: videoData.skipTimeInStart,
-  skipTimeInEnd: videoData.skipTimeInEnd,
-});
-
-const getHistoryData = async () => {
-  try {
-    const resp = await findHistory({ relateId: extraConf.value.active.key, videoId: infoConf.value.id, type: 2 });
-
-    const history = isNil(resp?.id) ? {} : resp;
-    historyData.value = history;
-
-    const { skipHeadAndEnd } = playerConf.value;
-
-    const skipTimeInStart = history.skipTimeInStart ?? 0;
-    const skipTimeInEnd = history.skipTimeInEnd ?? 0;
-    const duration = history.duration ?? 0;
-    const rawWatchTime = history.watchTime ?? 0;
-    const playEnd = history.playEnd ?? false;
-
-    videoData.value = {
-      ...videoData.value,
-      skipTimeInStart,
-      skipTimeInEnd,
-      duration,
-      watchTime: skipHeadAndEnd ? Math.max(rawWatchTime, skipTimeInStart) : rawWatchTime,
-      playEnd,
-    };
-  } catch (error) {
-    console.error('Get History Data Error:', error);
-    historyData.value = {} as IModels['history'];
-  }
-};
-
-const saveHistoryData = async () => {
-  const id = historyData.value?.id;
-  const doc = createHistoryDoc(infoConf.value as IModels['channel'], extraConf.value.active.key, videoData.value);
-
-  try {
-    const resp = isNil(id) ? await addHistory(doc) : await putHistory({ id: [id], doc });
-    if (isArray(resp) && !isArrayEmpty(resp) && !isNil(resp[0]?.id)) {
-      historyData.value = resp[0];
-    } else {
-      historyData.value = {} as IModels['history'];
-    }
-  } catch (error) {
-    console.error('Save History Data Error:', error);
-    historyData.value = {} as IModels['history'];
-  }
-};
-
-const throttleSaveHistory = throttle(saveHistoryData, 3000, { edges: ['leading', 'trailing'] });
 
 const formatEpgStatus = (start: string, end: string): boolean => {
   const standardStart = `${toYMD()} ${start}`;
@@ -380,6 +317,7 @@ const getChannel = async () => {
         type_name: item.label,
       })),
     ];
+
     active.value.class = classList.value.map((item) => item.type_id).includes(active.value.class)
       ? active.value.class
       : classList.value[0].type_id;
@@ -442,13 +380,16 @@ const handleSwitchChannelClass = (id: string) => {
 const handleSwitchChannelItem = async (item: IModels['channel']) => {
   epgList.value = [];
 
-  historyData.value = {} as IModels['history'];
-  starData.value = {} as IModels['star'];
+  resetStarData();
+  resetHistoryData();
 
   videoData.value = { url: '', playEnd: false, watchTime: 0, duration: 0, skipTimeInStart: 0, skipTimeInEnd: 0 };
 
   await emits('update', {
-    data: toRaw({ info: item, extra: extraConf.value }),
+    data: toRaw({
+      info: item,
+      extra: extraConf.value,
+    }),
   });
   setup();
 };
@@ -460,6 +401,7 @@ const handleDownloadDialog = () => {
     },
     current: videoData.value.url,
   };
+
   active.value.download = true;
 };
 
@@ -471,15 +413,13 @@ const handleSharePopup = () => {
   active.value.share = true;
 };
 
-const callPlay = async (item) => {
+const callPlay = async (item: { url: string; headers?: Record<string, any> }) => {
   videoData.value.url = item.url;
 
   await emits('create', {
     url: item.url,
     isLive: true,
-    startTime: videoData.value.watchTime,
-    skipAd: playerConf.value.skipAd,
-    headers: isObject(item.headers) ? { ...item.headers } : {},
+    headers: item.headers,
   });
 };
 

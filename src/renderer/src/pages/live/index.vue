@@ -82,7 +82,7 @@ import 'v3-infinite-loading/lib/style.css';
 
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { checkIpVersion } from '@shared/modules/ip';
-import { isArray, isArrayEmpty, isNil, isPositiveFiniteNumber } from '@shared/modules/validate';
+import { isArray, isArrayEmpty, isPositiveFiniteNumber } from '@shared/modules/validate';
 import type { IModels } from '@shared/types/db';
 import PQueue from 'p-queue';
 import { MessagePlugin } from 'tdesign-vue-next';
@@ -91,13 +91,13 @@ import type { StateHandler as ILoadStateHdandler } from 'v3-infinite-loading/lib
 import { computed, onActivated, onMounted, onUnmounted, ref } from 'vue';
 
 import { fetchChannelPage, fetchIptvActive, putIptvDefault } from '@/api/live';
-import { addHistory, findHistory, putHistory } from '@/api/moment';
 import { generateFfmpegScreenshot } from '@/api/system';
 import CommonNav from '@/components/common-nav/index.vue';
 import LazyBg from '@/components/lazy-bg/index.vue';
 import TitleMenu from '@/components/title-menu/index.vue';
 import { emitterChannel, emitterSource } from '@/config/emitterChannel';
 import { attachContent } from '@/config/global';
+import { useHistory } from '@/hooks/useHistory';
 import { t } from '@/locales';
 import { usePlayerStore } from '@/store';
 import emitter from '@/utils/emitter';
@@ -109,9 +109,9 @@ type IChannel = IModels['channel'] & {
   ipMark?: number;
 };
 
-const storePlayer = usePlayerStore();
-
 const renderDefaultLazy = () => <LazyBg class="render-icon" />;
+
+const storePlayer = usePlayerStore();
 
 const queues = {
   delay: new PQueue({ concurrency: 5 }),
@@ -139,6 +139,8 @@ const config = ref({
     thumbnail: false,
   },
 });
+
+const infoConf = ref({} as IChannel);
 const channelList = ref<IChannel[]>([]);
 const classList = ref<Array<{ type_id: string; type_name: string }>>([]);
 
@@ -148,6 +150,32 @@ const active = ref({
   class: '',
   lazyload: false,
   loading: false,
+});
+
+const { historyData, getHistoryData, saveHistoryData, resetHistoryData } = useHistory({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: config.value.default.key,
+    videoId: info.id,
+    type: 2,
+  }),
+  createDoc: (info) => {
+    const h = historyData.value;
+    return {
+      type: 2,
+      relateId: config.value.default.key,
+      siteSource: info.group,
+      playEnd: h?.playEnd ?? false,
+      videoId: info.id,
+      videoImage: info.logo,
+      videoName: info.name,
+      videoIndex: `${info.name}$${info.api}`,
+      watchTime: isPositiveFiniteNumber(h.watchTime) ? h.watchTime : 0,
+      duration: isPositiveFiniteNumber(h.duration) ? h.duration : 0,
+      skipTimeInStart: isPositiveFiniteNumber(h.skipTimeInStart) ? h.skipTimeInStart : 0,
+      skipTimeInEnd: isPositiveFiniteNumber(h.skipTimeInEnd) ? h.skipTimeInEnd : 0,
+    };
+  },
 });
 
 const navList = computed(() => config.value.list.map((t) => ({ id: t.id, name: t.name })));
@@ -191,10 +219,12 @@ const resetPagination = () => {
 const getSetting = async () => {
   try {
     const resp = await fetchIptvActive();
+
     if (resp?.default?.id) {
       config.value.default = resp.default;
       active.value.nav = resp.default.id;
     }
+
     if (resp?.list) config.value.list = resp.list;
     if (resp?.extra) config.value.extra = resp.extra;
 
@@ -349,31 +379,34 @@ const onClassChange = (id: string) => {
   infiniteId.value = Date.now();
 };
 
-const createHistoryDoc = (item: IChannel, siteKey: string) => ({
-  type: 2,
-  relateId: siteKey,
-  siteSource: item.group,
-  playEnd: false,
-  videoId: item.id,
-  videoImage: item.logo,
-  videoName: item.name,
-  videoIndex: `${item.name}$${item.api}`,
-  watchTime: 0,
-  duration: 0,
-  skipTimeInStart: 0,
-  skipTimeInEnd: 0,
-});
+const playWithExternalPlayer = async (item: IChannel, _active: IModels['iptv']) => {
+  const player = storePlayer.player;
+  window.electron.ipcRenderer.invoke(IPC_CHANNEL.CALL_PLAYER, player.external, item.api);
 
-const saveHistoryData = async (doc: ReturnType<typeof createHistoryDoc>, relateId: string, videoId: string) => {
-  const resp = await findHistory({ relateId, videoId, type: 2 });
+  infoConf.value = item;
+  try {
+    await getHistoryData();
+    await saveHistoryData();
+  } finally {
+    infoConf.value = {} as IChannel;
+    resetHistoryData();
+  }
+};
 
-  const id = resp?.id;
-  if (!isNil(id) && isPositiveFiniteNumber(resp.watchTime)) doc.watchTime = resp.watchTime;
-  if (!isNil(id) && isPositiveFiniteNumber(resp.duration)) doc.duration = resp.duration;
-  if (!isNil(id) && isPositiveFiniteNumber(resp.skipTimeInStart)) doc.skipTimeInStart = resp.skipTimeInStart;
-  if (!isNil(id) && isPositiveFiniteNumber(resp.skipTimeInEnd)) doc.skipTimeInEnd = resp.skipTimeInEnd;
+const playWithInternalPlayer = async (item: IChannel, active: IModels['iptv']) => {
+  storePlayer.updateConfig({
+    type: 'live',
+    status: true,
+    data: {
+      info: item,
+      extra: {
+        active,
+        site: config.value.list,
+      },
+    },
+  });
 
-  isNil(id) ? await addHistory(doc) : await putHistory({ id: [id], doc });
+  window.electron.ipcRenderer.invoke(IPC_CHANNEL.WINDOW_PLAYER);
 };
 
 const playEvent = async (item: IChannel) => {
@@ -384,9 +417,9 @@ const playEvent = async (item: IChannel) => {
     const player = storePlayer.player;
 
     if (player.type === 'custom') {
-      playWithExternalPlayer(item, site);
+      await playWithExternalPlayer(item, site);
     } else {
-      playWithInternalPlayer(item, site);
+      await playWithInternalPlayer(item, site);
     }
   } catch (error) {
     console.error('Failed to play:', error);
@@ -394,25 +427,6 @@ const playEvent = async (item: IChannel) => {
   } finally {
     active.value.loading = false;
   }
-};
-
-const playWithExternalPlayer = async (item: IChannel, active: IModels['iptv']) => {
-  const player = storePlayer.player;
-
-  window.electron.ipcRenderer.invoke(IPC_CHANNEL.CALL_PLAYER, player.external, item.api);
-
-  const historyDoc = createHistoryDoc(item, active.key);
-  await saveHistoryData(historyDoc, active.key, item.id);
-};
-
-const playWithInternalPlayer = (item: IChannel, active: IModels['iptv']) => {
-  storePlayer.updateConfig({
-    type: 'live',
-    status: true,
-    data: { info: item, extra: { active, site: config.value.list } },
-  });
-
-  window.electron.ipcRenderer.invoke(IPC_CHANNEL.WINDOW_PLAYER);
 };
 
 const defaultConfig = () => {

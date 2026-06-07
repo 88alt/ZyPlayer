@@ -19,6 +19,8 @@
  *
  */
 
+import JSON5 from 'json5';
+
 const STRINGS = /'(\\.|[^'])*'|"(\\.|[^"'])*"/g;
 const IDENTS_AND_NUMS = /([$_a-z][$\w]*)|([+-]?\d+(\.\d+)?)/g;
 const NUMBER = /^[+-]?\d+(?:\.\d+)?$/;
@@ -316,7 +318,7 @@ class Parser {
       str = `"${str}"`;
     }
     // todo: try/catch or deal with invalid characters (linebreaks, control characters)
-    return JSON.parse(str);
+    return JSON5.parse(str);
   }
 }
 

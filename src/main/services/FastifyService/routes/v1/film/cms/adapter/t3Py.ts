@@ -52,9 +52,9 @@ const createGrpcClientCtor = (): ISpiderGrpcClientConstructor => {
       requestStream: false,
       responseStream: false,
       requestSerialize: (value: IGrpcRequest): Buffer => Buffer.from(JSON.stringify(value), 'utf-8'),
-      requestDeserialize: (buffer: Buffer): IGrpcRequest => JSON.parse(buffer.toString('utf-8')),
+      requestDeserialize: (buffer: Buffer): IGrpcRequest => JSON5.parse(buffer.toString('utf-8')),
       responseSerialize: (value: IGrpcResponse): Buffer => Buffer.from(JSON.stringify(value), 'utf-8'),
-      responseDeserialize: (buffer: Buffer): IGrpcResponse => JSON.parse(buffer.toString('utf-8')),
+      responseDeserialize: (buffer: Buffer): IGrpcResponse => JSON5.parse(buffer.toString('utf-8')),
       originalName: 'Exec',
     },
   };

@@ -1,4 +1,5 @@
 import { base64 } from '@zy/crypto';
+import JSON5 from 'json5';
 
 export const splitWithEscapedDelimiter = (str, delimiter) => {
   const parts: string[] = [];
@@ -304,7 +305,7 @@ export const getJson = (obj, path) => {
 export const getJsonArray = (json: string | object, rule: string) => {
   if (!rule || !json) return [];
   try {
-    const parsedJson = typeof json === 'string' ? JSON.parse(json) : json;
+    const parsedJson = typeof json === 'string' ? JSON5.parse(json) : json;
     return getJson(parsedJson, rule);
   } catch {
     return [];
@@ -314,7 +315,7 @@ export const getJsonArray = (json: string | object, rule: string) => {
 export const getJsonStr = (json: string | object, rule: string) => {
   if (!rule || !json) return '';
   try {
-    const parsedJson = typeof json === 'string' ? JSON.parse(json) : json;
+    const parsedJson = typeof json === 'string' ? JSON5.parse(json) : json;
     return splitWithEscapedDelimiter(rule, '+').reduce((result, part) => {
       if ((part.startsWith('"') && part.endsWith('"')) || (part.startsWith("'") && part.endsWith("'"))) {
         // 直接添加字符串内容

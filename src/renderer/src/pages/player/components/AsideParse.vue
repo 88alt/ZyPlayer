@@ -96,10 +96,9 @@
   </div>
 </template>
 <script setup lang="tsx">
-import { isArray, isArrayEmpty, isHttp, isNil, isPositiveFiniteNumber } from '@shared/modules/validate';
+import { isArray, isArrayEmpty, isHttp, isPositiveFiniteNumber } from '@shared/modules/validate';
 import type { ICmsInfo } from '@shared/types/cms';
 import type { IModels } from '@shared/types/db';
-import { throttle } from 'es-toolkit';
 import { DownloadIcon, HeartFilledIcon, HeartIcon, MoreIcon, SettingIcon, Share1Icon } from 'tdesign-icons-vue-next';
 import type { ListInstanceFunctions } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
@@ -107,11 +106,12 @@ import type { PropType } from 'vue';
 import { computed, onMounted, ref, toRaw, useTemplateRef, watch } from 'vue';
 
 import { fetchRecBarrage } from '@/api/film';
-import { addHistory, addStar, delStar, findHistory, findStar, putHistory, putStar } from '@/api/moment';
 import { fetchParse } from '@/api/parse';
 import sharePopup from '@/components/share/index.vue';
 import TagNav from '@/components/tag-nav/index.vue';
 import type { IStorePlayer } from '@/config/player';
+import { useHistory } from '@/hooks/useHistory';
+import { useStar } from '@/hooks/useStar';
 import { t } from '@/locales';
 import type { IVideoOptions, IVideoProcess } from '@/types/player';
 
@@ -131,7 +131,9 @@ const props = defineProps({
 
 const emits = defineEmits(['update', 'barrage', 'create', 'pause', 'seek']);
 
-// @ts-expect-error 已声明“listRef”，但从未读取其值。
+const DEFAULT_SKIP_TIME = 90;
+
+// @ts-expect-error ts-plugin(6133)
 const listRef = useTemplateRef<ListInstanceFunctions>('listRef');
 
 const infoConf = ref(props.store.data.info);
@@ -141,12 +143,13 @@ const processConf = ref(props.process);
 
 const parseList = ref(extraConf.value.site || []);
 
-const active = ref({
-  watch: true,
-  nav: 'line',
-  share: false,
-  download: false,
-  setting: false,
+const videoData = ref<IVideoOptions>({
+  url: '',
+  playEnd: false,
+  watchTime: 0,
+  duration: 0,
+  skipTimeInStart: DEFAULT_SKIP_TIME,
+  skipTimeInEnd: DEFAULT_SKIP_TIME,
 });
 
 const downloadFormData = ref({
@@ -160,23 +163,77 @@ const shareFormData = ref({
 });
 const settingFormData = ref({
   skipHeadAndEnd: false,
-  skipTimeInStart: 30,
-  skipTimeInEnd: 30,
+  skipTimeInStart: DEFAULT_SKIP_TIME,
+  skipTimeInEnd: DEFAULT_SKIP_TIME,
   skipAd: false,
 });
 
-const navOptions = computed(() => [{ value: 'line', label: t('pages.parse.title') }]);
-
-const starData = ref({} as IModels['star']);
-const historyData = ref({} as IModels['history']);
-const videoData = ref<IVideoOptions>({
-  url: '',
-  playEnd: false,
-  watchTime: 0,
-  duration: 0,
-  skipTimeInStart: 0,
-  skipTimeInEnd: 0,
+const active = ref({
+  watch: true,
+  nav: 'line',
+  share: false,
+  download: false,
+  setting: false,
 });
+
+const { starData, getStarData, handleSwitchStar, resetStarData } = useStar({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: extraConf.value.active.key,
+    videoId: info.id,
+    type: 3,
+  }),
+  createDoc: (info) => ({
+    type: 3,
+    relateId: extraConf.value.active.key,
+    videoId: info.id,
+    videoImage: '',
+    videoName: info.name,
+    videoType: '',
+    videoRemarks: '',
+  }),
+});
+
+const { getHistoryData, throttleSaveHistory, resetHistoryData } = useHistory({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: extraConf.value.active.key,
+    videoId: info.id,
+    type: 3,
+  }),
+  createDoc: (info) => ({
+    type: 3,
+    relateId: extraConf.value.active.key,
+    siteSource: '',
+    playEnd: videoData.value.playEnd,
+    videoId: info.id,
+    videoImage: '',
+    videoName: info.name,
+    videoIndex: `${info.name}$${info.api}`,
+    watchTime: isPositiveFiniteNumber(videoData.value.watchTime) ? videoData.value.watchTime : 0,
+    duration: isPositiveFiniteNumber(videoData.value.duration) ? videoData.value.duration : 0,
+    skipTimeInStart: videoData.value.skipTimeInStart,
+    skipTimeInEnd: videoData.value.skipTimeInEnd,
+  }),
+  onLoaded: (history) => {
+    const { skipHeadAndEnd } = playerConf.value;
+    const skipTimeInStart = history.skipTimeInStart ?? DEFAULT_SKIP_TIME;
+    const skipTimeInEnd = history.skipTimeInEnd ?? DEFAULT_SKIP_TIME;
+    const duration = history.duration ?? 0;
+    const rawWatchTime = history.watchTime ?? 0;
+    const playEnd = history.playEnd ?? false;
+    videoData.value = {
+      ...videoData.value,
+      skipTimeInStart,
+      skipTimeInEnd,
+      duration,
+      watchTime: skipHeadAndEnd ? Math.max(rawWatchTime, skipTimeInStart) : rawWatchTime,
+      playEnd,
+    };
+  },
+});
+
+const navOptions = computed(() => [{ value: 'line', label: t('pages.parse.title') }]);
 
 watch(
   () => props.store,
@@ -193,7 +250,9 @@ watch(
 );
 watch(
   () => processConf.value,
-  (val) => active.value.watch && timerUpdatePlayProcess(val.currentTime, val.duration),
+  (val) => {
+    if (active.value.watch) timerUpdatePlayProcess(val.currentTime, val.duration);
+  },
 );
 // watch(
 //   () => active.value.nav,
@@ -202,133 +261,19 @@ watch(
 
 onMounted(() => setup());
 
-const createStarDoc = (item: IModels['analyze'], siteKey: string) => ({
-  type: 3,
-  relateId: siteKey,
-  videoId: item.id,
-  videoImage: '',
-  videoName: item.name,
-  videoType: '',
-  videoRemarks: '',
-});
-
-const getStarData = async () => {
-  try {
-    const resp = await findStar({ relateId: extraConf.value.active.key, videoId: infoConf.value.id, type: 3 });
-    starData.value = isNil(resp?.id) ? {} : resp;
-  } catch (error) {
-    console.error('Get Star Data Error:', error);
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const saveStarData = async () => {
-  const id = starData.value?.id;
-  const doc = createStarDoc(infoConf.value as IModels['analyze'], extraConf.value.active.key);
-
-  try {
-    const resp = isNil(id) ? await addStar(doc) : await putStar({ id: [id], doc });
-    if (isArray(resp) && !isArrayEmpty(resp) && !isNil(resp[0]?.id)) {
-      starData.value = resp[0];
-    } else {
-      starData.value = {} as IModels['star'];
-    }
-  } catch (error) {
-    console.error('Save Star Data Error:', error);
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const delStarDate = async () => {
-  const id = starData.value?.id;
-
-  try {
-    await delStar({ id: [id] });
-  } catch (error) {
-    console.error('Delete Star Data Error:', error);
-  } finally {
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const handleSwitchStar = async () => {
-  const id = starData.value?.id;
-
-  isNil(id) ? await saveStarData() : await delStarDate();
-};
-
-const createHistoryDoc = (item: IModels['analyze'], siteKey: string, videoData: IVideoOptions) => ({
-  type: 3,
-  relateId: siteKey,
-  siteSource: '',
-  playEnd: videoData.playEnd,
-  videoId: item.id,
-  videoImage: '',
-  videoName: item.name,
-  videoIndex: `${item.name}$${item.api}`,
-  watchTime: isPositiveFiniteNumber(videoData.watchTime) ? videoData.watchTime : 0,
-  duration: isPositiveFiniteNumber(videoData.duration) ? videoData.duration : 0,
-  skipTimeInStart: videoData.skipTimeInStart,
-  skipTimeInEnd: videoData.skipTimeInEnd,
-});
-
-const getHistoryData = async () => {
-  try {
-    const resp = await findHistory({ relateId: extraConf.value.active.key, videoId: infoConf.value.id, type: 3 });
-
-    const history = isNil(resp?.id) ? {} : resp;
-    historyData.value = history;
-
-    const { skipHeadAndEnd } = playerConf.value;
-
-    const skipTimeInStart = history.skipTimeInStart ?? 30;
-    const skipTimeInEnd = history.skipTimeInEnd ?? 30;
-    const duration = history.duration ?? 0;
-    const watchTime = history.watchTime ?? 0;
-    const playEnd = history.playEnd ?? false;
-
-    videoData.value = {
-      ...videoData.value,
-      skipTimeInStart,
-      skipTimeInEnd,
-      duration,
-      watchTime: skipHeadAndEnd ? Math.max(watchTime, skipTimeInStart) : watchTime,
-      playEnd,
-    };
-  } catch (error) {
-    console.error('Get History Data Error:', error);
-    historyData.value = {} as IModels['history'];
-  }
-};
-
-const saveHistoryData = async () => {
-  const id = historyData.value?.id;
-  const doc = createHistoryDoc(infoConf.value as IModels['analyze'], extraConf.value.active.key, videoData.value);
-
-  try {
-    const resp = isNil(id) ? await addHistory(doc) : await putHistory({ id: [id], doc });
-    if (isArray(resp) && !isArrayEmpty(resp) && !isNil(resp[0]?.id)) {
-      historyData.value = resp[0];
-    } else {
-      historyData.value = {} as IModels['history'];
-    }
-  } catch (error) {
-    console.error('Save History Data Error:', error);
-    historyData.value = {} as IModels['history'];
-  }
-};
-
-const throttleSaveHistory = throttle(saveHistoryData, 3000, { edges: ['leading', 'trailing'] });
-
 const handleSwitchParseItem = async (item: IModels['analyze']) => {
-  historyData.value = {} as IModels['history'];
-  starData.value = {} as IModels['star'];
+  resetHistoryData();
+  resetStarData();
 
   videoData.value = { url: '', playEnd: false, watchTime: 0, duration: 0, skipTimeInStart: 0, skipTimeInEnd: 0 };
 
   await emits('update', {
-    data: toRaw({ info: infoConf.value, extra: { ...extraConf.value, active: item } }),
+    data: toRaw({
+      info: infoConf.value,
+      extra: { ...extraConf.value, active: item },
+    }),
   });
+
   setup();
 };
 
@@ -343,6 +288,7 @@ const handleDownloadDialog = () => {
     },
     current: videoData.value.url,
   };
+
   active.value.download = true;
 };
 
@@ -350,6 +296,7 @@ const handleSharePopup = () => {
   const name = infoConf.value.name;
 
   shareFormData.value = { ...shareFormData.value, name, url: videoData.value.url };
+
   active.value.share = true;
 };
 
@@ -357,7 +304,11 @@ const callBarrage = async (item: { url: string }) => {
   try {
     const res = await fetchRecBarrage({ id: item.url });
     if (!isArray(res.list) || isArrayEmpty(res.list)) return;
-    emits('barrage', { list: res.list, id: res.id });
+
+    emits('barrage', {
+      list: res.list,
+      id: res.id,
+    });
   } catch {}
 };
 
@@ -372,8 +323,8 @@ const handleSettingDialog = () => {
   active.value.setting = true;
 };
 
-const onSettingChange = (item) => {
-  const { skipTimeInStart = 30, skipTimeInEnd = 30, skipHeadAndEnd, skipAd } = item;
+const onSettingChange = (item: typeof settingFormData.value) => {
+  const { skipTimeInStart = DEFAULT_SKIP_TIME, skipTimeInEnd = DEFAULT_SKIP_TIME, skipHeadAndEnd, skipAd } = item;
 
   /** sync skip time */
   videoData.value.skipTimeInStart = skipTimeInStart;
@@ -383,7 +334,9 @@ const onSettingChange = (item) => {
   playerConf.value.skipHeadAndEnd = skipHeadAndEnd;
   playerConf.value.skipAd = skipAd;
 
-  emits('update', { setting: playerConf.value });
+  emits('update', {
+    setting: playerConf.value,
+  });
 };
 
 const callPlay = async (item: { url: string }) => {

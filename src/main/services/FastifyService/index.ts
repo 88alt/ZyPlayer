@@ -16,6 +16,7 @@ import { LOG_MODULE } from '@shared/config/logger';
 import { CacheService } from '@shared/modules/cache';
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fastify from 'fastify';
+import JSON5 from 'json5';
 import qs from 'qs';
 
 import routeModules from './routes';
@@ -218,7 +219,7 @@ export class FastifyService {
     return new Writable({
       write: (chunk: Buffer, _encoding, callback) => {
         try {
-          const logData = JSON.parse(chunk.toString());
+          const logData = JSON5.parse(chunk.toString());
 
           // Pino: trace=10, debug=20, info=30, warn=40, error=50, fatal=60
           const level = logData.level as number;

@@ -1,5 +1,6 @@
 const { execSync } = require('node:child_process');
 const fs = require('node:fs');
+const JSON5 = require('json5');
 
 // 执行命令并返回输出
 function exec(command) {
@@ -21,7 +22,7 @@ if (!['patch', 'minor', 'major'].includes(versionType)) {
 exec(`pnpm version ${versionType}`);
 
 // 读取更新后的 package.json 获取新版本号
-const updatedPackageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const updatedPackageJson = JSON5.parse(fs.readFileSync('package.json', 'utf8'));
 const newVersion = updatedPackageJson.version;
 
 // Git 操作

@@ -280,7 +280,7 @@ class T3XyqAdapter {
         html = XBPQParse.getHasRuleSplitStr(html, XYQRULE['分类Json数据二次截取'], undefined, true) || html;
       }
 
-      const json = JSON.parse(html);
+      const json = JSON5.parse(html);
       const vlist = getValueByPath(json, XYQRULE['分类列表数组规则']);
 
       vlist.forEach((it) => {

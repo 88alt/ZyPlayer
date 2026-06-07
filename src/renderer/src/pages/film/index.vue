@@ -568,6 +568,31 @@ const loadMore = async ($state: ILoadStateHdandler) => {
   }
 };
 
+const playWithExternalPlayer = async (item: ICmsInfo, current: IModels['site']) => {
+  detailFormData.value = {
+    info: item,
+    extra: { active: current },
+  };
+
+  active.value.detailDialog = true;
+};
+
+const playWithInternalPlayer = async (item: ICmsInfo, active: IModels['site']) => {
+  storePlayer.updateConfig({
+    type: 'film',
+    status: true,
+    data: {
+      info: item,
+      extra: {
+        active,
+        site: config.value.list,
+      },
+    },
+  });
+
+  window.electron.ipcRenderer.invoke(IPC_CHANNEL.WINDOW_PLAYER);
+};
+
 const playEvent = async (item) => {
   active.value.loading = true;
 
@@ -601,9 +626,9 @@ const playEvent = async (item) => {
     const player = storePlayer.player;
 
     if (player.type === 'custom') {
-      playWithExternalPlayer(info, site);
+      await playWithExternalPlayer(info, site);
     } else {
-      playWithInternalPlayer(info, site);
+      await playWithInternalPlayer(info, site);
     }
   } catch (error) {
     console.error('Failed to play:', error);
@@ -611,28 +636,6 @@ const playEvent = async (item) => {
   } finally {
     active.value.loading = false;
   }
-};
-
-const playWithExternalPlayer = async (item: ICmsInfo, current: IModels['site']) => {
-  detailFormData.value = {
-    info: item,
-    extra: { active: current },
-  };
-
-  active.value.detailDialog = true;
-};
-
-const playWithInternalPlayer = (item: ICmsInfo, active: IModels['site']) => {
-  storePlayer.updateConfig({
-    type: 'film',
-    status: true,
-    data: {
-      info: item,
-      extra: { active, site: config.value.list },
-    },
-  });
-
-  window.electron.ipcRenderer.invoke(IPC_CHANNEL.WINDOW_PLAYER);
 };
 
 const handleCmsTag = (type: 'folder' | 'action', doc: ICmsInfo) => {

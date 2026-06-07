@@ -237,7 +237,6 @@ import {
 } from '@shared/modules/validate';
 import type { ICmsInfo, ICmsInfoEpisode, IRecMatch } from '@shared/types/cms';
 import type { IModels } from '@shared/types/db';
-import { throttle } from 'es-toolkit';
 import {
   ChevronDownIcon,
   ChevronRightSIcon,
@@ -263,7 +262,6 @@ import {
   fetchRecBarrage,
   fetchRecMatch,
 } from '@/api/film';
-import { addHistory, addStar, delStar, findHistory, findStar, putHistory, putStar } from '@/api/moment';
 import { fetchAnalyzeActive, fetchParse } from '@/api/parse';
 import { setProxy } from '@/api/proxy';
 import { cdpSnifferMedia } from '@/api/system';
@@ -274,6 +272,8 @@ import TagNav from '@/components/tag-nav/index.vue';
 import TitleMenu from '@/components/title-menu/index.vue';
 import { emitterChannel } from '@/config/emitterChannel';
 import type { IStorePlayer } from '@/config/player';
+import { useHistory } from '@/hooks/useHistory';
+import { useStar } from '@/hooks/useStar';
 import { t } from '@/locales';
 import type { IVideoOptions, IVideoProcess } from '@/types/player';
 import emitter from '@/utils/emitter';
@@ -294,28 +294,32 @@ const props = defineProps({
 
 const emits = defineEmits(['update', 'barrage', 'create', 'pause', 'seek']);
 
+const renderDefaultLazy = () => <LazyBg class="render-icon" />;
+
+const DEFAULT_SKIP_TIME = 90;
+const PRELOAD_TIME = 90;
+
 const infoConf = ref(props.store.data.info as ICmsInfo);
 const extraConf = ref(props.store.data.extra);
 const playerConf = ref(props.store.setting);
 const processConf = ref(props.process);
 
 const lineList = ref<{ type_id: string; type_name: string }[]>([]);
+const recommendList = ref<IRecMatch[]>([]);
+
 const analyzeConfig = ref({
   default: {} as IModels['analyze'],
   list: [] as IModels['analyze'][],
 });
 
-const starData = ref({} as IModels['star']);
-const historyData = ref({} as IModels['history']);
 const videoData = ref<IVideoOptions>({
   url: '',
   playEnd: false,
   watchTime: 0,
   duration: 0,
-  skipTimeInStart: 30,
-  skipTimeInEnd: 30,
+  skipTimeInStart: DEFAULT_SKIP_TIME,
+  skipTimeInEnd: DEFAULT_SKIP_TIME,
 });
-const recommendList = ref<IRecMatch[]>([]);
 
 const downloadFormData = ref({
   episode: {} as ICmsInfo['vod_episode'],
@@ -328,8 +332,8 @@ const shareFormData = ref({
 });
 const settingFormData = ref({
   skipHeadAndEnd: false,
-  skipTimeInStart: 30,
-  skipTimeInEnd: 30,
+  skipTimeInStart: DEFAULT_SKIP_TIME,
+  skipTimeInEnd: DEFAULT_SKIP_TIME,
   playNextPreload: false,
   playNextEnabled: true,
   skipAd: false,
@@ -346,6 +350,7 @@ const active = ref({
   analyzeId: '',
   filmIndex: '',
   filmSource: '',
+  transitioning: false,
 });
 
 const preload = ref({
@@ -357,6 +362,63 @@ const preload = ref({
   mediaType: '',
 });
 
+const { starData, getStarData, handleSwitchStar, resetStarData } = useStar({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: extraConf.value.active.key,
+    videoId: info.vod_id,
+    type: 1,
+  }),
+  createDoc: (info) => ({
+    type: 1,
+    relateId: extraConf.value.active.key,
+    videoId: info.vod_id,
+    videoImage: info.vod_pic,
+    videoName: info.vod_name,
+    videoType: info.type_name,
+    videoRemarks: info.vod_remarks,
+  }),
+});
+
+const { historyData, getHistoryData, throttleSaveHistory, resetHistoryData } = useHistory({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: extraConf.value.active.key,
+    videoId: info.vod_id,
+    type: 1,
+  }),
+  createDoc: (info) => ({
+    type: 1,
+    relateId: extraConf.value.active.key,
+    siteSource: active.value.filmSource,
+    playEnd: videoData.value.playEnd,
+    videoId: info.vod_id,
+    videoImage: info.vod_pic,
+    videoName: info.vod_name,
+    videoIndex: active.value.filmIndex,
+    watchTime: isPositiveFiniteNumber(videoData.value.watchTime) ? videoData.value.watchTime : 0,
+    duration: isPositiveFiniteNumber(videoData.value.duration) ? videoData.value.duration : 0,
+    skipTimeInStart: videoData.value.skipTimeInStart,
+    skipTimeInEnd: videoData.value.skipTimeInEnd,
+  }),
+  onLoaded: (history) => {
+    const { skipHeadAndEnd } = playerConf.value;
+    const skipTimeInStart = history.skipTimeInStart ?? DEFAULT_SKIP_TIME;
+    const skipTimeInEnd = history.skipTimeInEnd ?? DEFAULT_SKIP_TIME;
+    const duration = history.duration ?? 0;
+    const rawWatchTime = history.watchTime ?? 0;
+    const playEnd = history.playEnd ?? false;
+    videoData.value = {
+      ...videoData.value,
+      skipTimeInStart,
+      skipTimeInEnd,
+      duration,
+      watchTime: skipHeadAndEnd ? Math.max(rawWatchTime, skipTimeInStart) : rawWatchTime,
+      playEnd,
+    };
+  },
+});
+
 const navOptions = computed(() => [
   { value: 'episode', label: t('pages.player.film.anthology') },
   ...(recommendList.value.length ? [{ value: 'recommend', label: t('pages.player.film.recommend') }] : []),
@@ -364,14 +426,12 @@ const navOptions = computed(() => [
 
 const activeAnalyzeList = computed(() => {
   const flag = active.value.filmSource;
-  const resp = analyzeConfig.value.list.filter((item: IModels['analyze']) => (item.flag || []).includes(flag));
-  return resp;
+  return analyzeConfig.value.list.filter((item) => (item.flag || []).includes(flag));
 });
 
 const activeSessionList = computed(() => {
   const flag = active.value.filmSource;
-  const resp = infoConf.value.vod_episode?.[flag] || [];
-  return resp;
+  return infoConf.value.vod_episode?.[flag] || [];
 });
 
 watch(
@@ -385,134 +445,18 @@ watch(
 );
 watch(
   () => props.process,
-  (val) => (processConf.value = val),
+  (val) => {
+    if (!active.value.transitioning) processConf.value = val;
+  },
 );
 watch(
   () => processConf.value,
-  (val) => active.value.watch && timerUpdatePlayProcess(val.currentTime, val.duration),
+  (val) => {
+    if (active.value.watch) timerUpdatePlayProcess(val.currentTime, val.duration);
+  },
 );
 
-const renderDefaultLazy = () => <LazyBg class="render-icon" />;
-
 onMounted(() => setup());
-
-const createStarDoc = (item: ICmsInfo, siteKey: string) => ({
-  type: 1,
-  relateId: siteKey,
-  videoId: item.vod_id,
-  videoImage: item.vod_pic,
-  videoName: item.vod_name,
-  videoType: item.type_name,
-  videoRemarks: item.vod_remarks,
-});
-
-const getStarData = async () => {
-  try {
-    const resp = await findStar({ relateId: extraConf.value.active.key, videoId: infoConf.value.vod_id, type: 1 });
-    starData.value = isNil(resp?.id) ? {} : resp;
-  } catch (error) {
-    console.error('Get Star Data Error:', error);
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const saveStarData = async () => {
-  const id = starData.value?.id;
-  const doc = createStarDoc(infoConf.value as ICmsInfo, extraConf.value.active.key);
-
-  try {
-    const resp = isNil(id) ? await addStar(doc) : await putStar({ id: [id], doc });
-    if (isArray(resp) && !isArrayEmpty(resp) && !isNil(resp[0]?.id)) {
-      starData.value = resp[0];
-    } else {
-      starData.value = {} as IModels['star'];
-    }
-  } catch (error) {
-    console.error('Save Star Data Error:', error);
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const delStarDate = async () => {
-  const id = starData.value?.id;
-
-  try {
-    await delStar({ id: [id] });
-  } catch (error) {
-    console.error('Delete Star Data Error:', error);
-  } finally {
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const handleSwitchStar = async () => {
-  const id = starData.value?.id;
-
-  isNil(id) ? await saveStarData() : await delStarDate();
-};
-
-const createHistoryDoc = (item: ICmsInfo, siteKey: string, videoData: IVideoOptions) => ({
-  type: 1,
-  relateId: siteKey,
-  siteSource: active.value.filmSource,
-  playEnd: false,
-  videoId: item.vod_id,
-  videoImage: item.vod_pic,
-  videoName: item.vod_name,
-  videoIndex: active.value.filmIndex,
-  watchTime: isPositiveFiniteNumber(videoData.watchTime) ? videoData.watchTime : 0,
-  duration: isPositiveFiniteNumber(videoData.duration) ? videoData.duration : 0,
-  skipTimeInStart: videoData.skipTimeInStart,
-  skipTimeInEnd: videoData.skipTimeInEnd,
-});
-
-const getHistoryData = async () => {
-  try {
-    const resp = await findHistory({ relateId: extraConf.value.active.key, videoId: infoConf.value.vod_id, type: 1 });
-
-    const history = isNil(resp?.id) ? {} : resp;
-    historyData.value = history;
-
-    const { skipHeadAndEnd } = playerConf.value;
-
-    const skipTimeInStart = history.skipTimeInStart ?? 30;
-    const skipTimeInEnd = history.skipTimeInEnd ?? 30;
-    const duration = history.duration ?? 0;
-    const rawWatchTime = history.watchTime ?? 0;
-    const playEnd = history.playEnd ?? false;
-
-    videoData.value = {
-      ...videoData.value,
-      skipTimeInStart,
-      skipTimeInEnd,
-      duration,
-      watchTime: skipHeadAndEnd ? Math.max(rawWatchTime, skipTimeInStart) : rawWatchTime,
-      playEnd,
-    };
-  } catch (error) {
-    console.error('[player][getHistoryData]', error);
-    historyData.value = {} as IModels['history'];
-  }
-};
-
-const saveHistoryData = async () => {
-  const id = historyData.value?.id;
-  const doc = createHistoryDoc(infoConf.value as ICmsInfo, extraConf.value.active.key, videoData.value);
-
-  try {
-    const resp = isNil(id) ? await addHistory(doc) : await putHistory({ id: [id], doc });
-    if (isArray(resp) && !isArrayEmpty(resp) && !isNil(resp[0]?.id)) {
-      historyData.value = resp[0];
-    } else {
-      historyData.value = {} as IModels['history'];
-    }
-  } catch (error) {
-    console.error('Save History Data Error:', error);
-    historyData.value = {} as IModels['history'];
-  }
-};
-
-const throttleSaveHistory = throttle(saveHistoryData, 3000, { edges: ['leading', 'trailing'] });
 
 const defaultPreloadConfig = () => {
   preload.value = {
@@ -534,15 +478,20 @@ const handleDownloadDialog = () => {
     episode: infoConf.value.vod_episode,
     current: videoData.value.url,
   };
+
   active.value.download = true;
 };
 
 const handleSharePopup = () => {
-  let name = infoConf.value.vod_name!;
-  const index = active.value.filmIndex.includes('$') ? active.value.filmIndex.split('$')[0] : '';
-  if (index) name = `${name}-${index}`;
+  const [episodeName] = active.value.filmIndex.includes('$') ? active.value.filmIndex.split('$') : [''];
+  const name = episodeName ? `${infoConf.value.vod_name}-${episodeName}` : infoConf.value.vod_name!;
 
-  shareFormData.value = { ...shareFormData.value, name, url: videoData.value.url };
+  shareFormData.value = {
+    ...shareFormData.value,
+    name,
+    url: videoData.value.url,
+  };
+
   active.value.share = true;
 };
 
@@ -559,8 +508,15 @@ const handleSettingDialog = () => {
   active.value.setting = true;
 };
 
-const onSettingChange = (item) => {
-  const { skipTimeInStart = 30, skipTimeInEnd = 30, skipHeadAndEnd, playNextPreload, playNextEnabled, skipAd } = item;
+const onSettingChange = (item: typeof settingFormData.value) => {
+  const {
+    skipTimeInStart = DEFAULT_SKIP_TIME,
+    skipTimeInEnd = DEFAULT_SKIP_TIME,
+    skipHeadAndEnd,
+    playNextPreload,
+    playNextEnabled,
+    skipAd,
+  } = item;
 
   /** sync skip time */
   videoData.value.skipTimeInStart = skipTimeInStart;
@@ -572,24 +528,88 @@ const onSettingChange = (item) => {
   playerConf.value.playNextEnabled = playNextEnabled;
   playerConf.value.skipAd = skipAd;
 
-  emits('update', { setting: playerConf.value });
+  emits('update', {
+    setting: playerConf.value,
+  });
 };
 
 const reverseOrderIndex = (current: number) => {
   const total = activeSessionList.value.length;
-  const type = active.value.reverseOrder;
 
   if (!isPositiveFiniteNumber(current) || !isPositiveFiniteNumber(total)) return 1;
   if (current >= total) return 1;
 
-  return type ? current + 1 : total - current;
+  return active.value.reverseOrder ? current + 1 : total - current;
 };
 
 const handleSwitchLine = (id: string) => {
   active.value.filmSource = id;
 };
 
+const reverseOrderEvent = () => {
+  const episodes = infoConf.value.vod_episode;
+  if (!episodes) return;
+
+  infoConf.value.vod_episode = Object.fromEntries(
+    Object.entries(episodes).map(([key, arr]) => [key, arr.toReversed()]),
+  );
+
+  active.value.reverseOrder = !active.value.reverseOrder;
+};
+
+const getEpisodePlayState = (): {
+  currIndex: number;
+  nextIndex: number;
+  isLast: boolean;
+  reverseOrder: boolean;
+  currentInfo: ICmsInfoEpisode;
+  nextInfo: ICmsInfoEpisode;
+} | null => {
+  const { filmSource, filmIndex, reverseOrder } = active.value;
+  const episode = infoConf.value.vod_episode;
+
+  if (
+    isNil(filmSource) ||
+    isNil(filmIndex) ||
+    !isBoolean(reverseOrder) ||
+    !isObject(episode) ||
+    isObjectEmpty(episode)
+  ) {
+    return null;
+  }
+
+  const currentEpisode = episode?.[filmSource];
+
+  if (!isArray(currentEpisode) || isArrayEmpty(currentEpisode)) {
+    return null;
+  }
+
+  const currIndex = currentEpisode.findIndex((item) => `${item.text}$${item.link}` === filmIndex);
+  if (currIndex === -1) return null;
+
+  const isLast = reverseOrder ? currIndex === currentEpisode.length - 1 : currIndex === 0;
+  const nextIndex = isLast ? -1 : reverseOrder ? currIndex + 1 : currIndex - 1;
+  const currentInfo = currentEpisode[currIndex];
+  const nextInfo = isLast ? ({} as ICmsInfoEpisode) : currentEpisode[nextIndex];
+
+  return {
+    currIndex,
+    nextIndex,
+    isLast,
+    reverseOrder,
+    currentInfo,
+    nextInfo,
+  };
+};
+
 const handleSwitchSeason = async (item: ICmsInfoEpisode) => {
+  active.value.transitioning = true;
+
+  processConf.value = {
+    currentTime: 0,
+    duration: 0,
+  };
+
   active.value.filmIndex = `${item.text}$${item.link}`;
   active.value.watch = false;
 
@@ -603,6 +623,14 @@ const handleSwitchSeason = async (item: ICmsInfoEpisode) => {
   }
 
   await callPlay(item);
+
+  /**
+   * 解锁需要延迟到下一个 Task。
+   * 避免 pause 排入的过期 timeupdate 在切集后再次同步。
+   */
+  setTimeout(() => {
+    active.value.transitioning = false;
+  }, 0);
 };
 
 const handleSwitchParse = async (id: string) => {
@@ -614,35 +642,32 @@ const handleSwitchParse = async (id: string) => {
   }
 };
 
-const reverseOrderEvent = () => {
-  infoConf.value.vod_episode = Object.fromEntries(
-    Object.entries(infoConf.value.vod_episode!).map(([key, arr]) => [key, arr.toReversed()]),
-  );
-
-  active.value.reverseOrder = !active.value.reverseOrder;
-};
-
 const getAnalyzeConfig = async () => {
   try {
     const resp = await fetchAnalyzeActive();
+
     if (resp?.default?.id) {
       analyzeConfig.value.default = resp.default;
       active.value.analyzeId = resp.default.id;
     }
+
     if (resp?.list) {
       analyzeConfig.value.list = resp.list;
     }
   } catch (error) {
-    console.error(`Failed to get analyze config:`, error);
+    console.error('[player][getAnalyzeConfig]', error);
   }
 };
 
 const fetchRecommend = async () => {
   try {
-    let { vod_name: name, vod_year: year } = infoConf.value;
-    if (!year) year = new Date().getFullYear();
+    const { vod_name: name } = infoConf.value;
+    const year = infoConf.value.vod_year || new Date().getFullYear();
 
-    const res = await fetchRecMatch({ name, year });
+    const res = await fetchRecMatch({
+      name,
+      year,
+    });
 
     recommendList.value = res || [];
   } catch {
@@ -653,13 +678,22 @@ const fetchRecommend = async () => {
 const handleSwitchRecommendItem = async (item: IRecMatch) => {
   const site = extraConf.value.active;
 
-  const searchResp = await fetchCmsSearch({ uuid: site.id, wd: item.vod_name, page: 1 });
+  const searchResp = await fetchCmsSearch({
+    uuid: site.id,
+    wd: item.vod_name,
+    page: 1,
+  });
+
   if (!isArray(searchResp.list) || isArrayEmpty(searchResp.list) || isNil(searchResp.list[0]?.vod_id)) {
     MessagePlugin.warning(t('pages.player.message.noRecMatch'));
     return;
   }
 
-  const detailResp = await fetchCmsDetail({ uuid: site.id, ids: searchResp.list[0].vod_id });
+  const detailResp = await fetchCmsDetail({
+    uuid: site.id,
+    ids: searchResp.list[0].vod_id,
+  });
+
   if (
     !isArray(detailResp.list) ||
     isArrayEmpty(detailResp.list) ||
@@ -670,53 +704,40 @@ const handleSwitchRecommendItem = async (item: IRecMatch) => {
     return;
   }
 
+  const detail = detailResp.list[0];
+  const searchItem = searchResp.list[0];
+
   const info = {
-    ...detailResp.list[0],
-    ...(detailResp.list[0]?.vod_id ? {} : { vod_id: searchResp.list[0]?.vod_id }),
-    ...(detailResp.list[0]?.vod_name ? {} : { vod_name: searchResp.list[0]?.vod_name }),
-    ...(detailResp.list[0]?.vod_pic ? {} : { vod_pic: searchResp.list[0]?.vod_pic }),
+    ...detail,
+    ...(detail?.vod_id ? {} : { vod_id: searchItem?.vod_id }),
+    ...(detail?.vod_name ? {} : { vod_name: searchItem?.vod_name }),
+    ...(detail?.vod_pic ? {} : { vod_pic: searchItem?.vod_pic }),
   };
 
   recommendList.value = [];
-  historyData.value = {} as IModels['history'];
-  starData.value = {} as IModels['star'];
+  resetStarData();
+  resetHistoryData();
+
   active.value.reverseOrder = true;
   active.value.nav = 'episode';
 
-  videoData.value = { url: '', playEnd: false, watchTime: 0, duration: 0, skipTimeInStart: 30, skipTimeInEnd: 30 };
+  videoData.value = {
+    url: '',
+    playEnd: false,
+    watchTime: 0,
+    duration: 0,
+    skipTimeInStart: DEFAULT_SKIP_TIME,
+    skipTimeInEnd: DEFAULT_SKIP_TIME,
+  };
 
   await emits('update', {
-    data: toRaw({ info, extra: extraConf.value }),
+    data: toRaw({
+      info,
+      extra: extraConf.value,
+    }),
   });
+
   setup();
-};
-
-const setup = async () => {
-  const episode = infoConf.value.vod_episode;
-  if (!isObject(episode) || isObjectEmpty(episode)) return;
-
-  const episodeKeys = Object.keys(episode);
-  let filmSource = episodeKeys[0];
-  let flimEpisode = episode[filmSource]?.[0];
-
-  if (!isObject(flimEpisode) || isObjectEmpty(flimEpisode)) return;
-  let filmIndex = `${flimEpisode.text}$${flimEpisode.link}`;
-
-  lineList.value = episodeKeys.map((key) => ({ type_id: key, type_name: key }));
-
-  await getHistoryData();
-  if (historyData.value.siteSource && episode[historyData.value.siteSource]) filmSource = historyData.value.siteSource;
-  if (historyData.value.videoIndex) filmIndex = historyData.value.videoIndex;
-  active.value.filmSource = filmSource;
-  active.value.filmIndex = filmIndex;
-
-  flimEpisode = { text: filmIndex.split('$')[0], link: filmIndex.split('$')[1] };
-
-  await getAnalyzeConfig();
-  await callPlay(flimEpisode);
-
-  getStarData();
-  fetchRecommend();
 };
 
 const getDirectPlayUrl = async (
@@ -746,7 +767,13 @@ const getDirectPlayUrl = async (
   } | null> => {
     const mediaType = await mediaUtils.checkMediaType(url, headers);
     if (mediaType === 'unknown') return null;
-    return { url, headers, mediaType, quality: [] };
+
+    return {
+      url,
+      headers,
+      mediaType,
+      quality: [],
+    };
   };
 
   // Direct play
@@ -754,18 +781,36 @@ const getDirectPlayUrl = async (
     if (playRes.url.startsWith(PROXY_API)) {
       const { searchParams } = new URL(playRes.url);
       const proxyParams = Object.fromEntries(searchParams.entries());
-      const proxyData = await fetchCmsProxy({ uuid: extraConf.value.active.id, ...proxyParams });
-      await setProxy({ url: proxyParams.url, text: proxyData });
+
+      const proxyData = await fetchCmsProxy({
+        uuid: extraConf.value.active.id,
+        ...proxyParams,
+      });
+
+      await setProxy({
+        url: proxyParams.url,
+        text: proxyData,
+      });
     }
 
     const directed = await checkPlayable(playRes.url, playRes.headers);
-    if (!isNil(directed)) return { ...directed, quality: playRes.quality };
+    if (!isNil(directed)) {
+      return {
+        ...directed,
+        quality: playRes.quality,
+      };
+    }
   }
 
   // Parse play
   if (playRes.parse === 1 && playRes.jx !== 1) {
     const parsed = await checkPlayable(playRes.url, playRes.headers);
-    if (!isNil(parsed)) return { ...parsed, quality: playRes.quality };
+    if (!isNil(parsed)) {
+      return {
+        ...parsed,
+        quality: playRes.quality,
+      };
+    }
   }
 
   // Jx play
@@ -773,7 +818,11 @@ const getDirectPlayUrl = async (
     const parse = activeAnalyzeList.value.find((item: IModels['analyze']) => item.id === active.value.analyzeId);
     if (isNil(parse)) throw new Error('No Active Analyze');
 
-    const jxResp = await fetchParse({ id: parse.id, url: playRes.url });
+    const jxResp = await fetchParse({
+      id: parse.id,
+      url: playRes.url,
+    });
+
     const jxed = await checkPlayable(jxResp.url, jxResp.headers);
     if (jxed) return jxed;
   }
@@ -790,6 +839,7 @@ const getDirectPlayUrl = async (
         headers: playRes.headers,
       },
     });
+
     const sniffed = await checkPlayable(sniffResp.url, playRes.headers);
     if (!isNil(sniffed)) return sniffed;
   }
@@ -801,7 +851,11 @@ const callBarrage = async (item: ICmsInfoEpisode) => {
   try {
     const res = await fetchRecBarrage({ id: item.link });
     if (!isArray(res.list) || isArrayEmpty(res.list)) return;
-    emits('barrage', { list: res.list, id: res.id });
+
+    emits('barrage', {
+      list: res.list,
+      id: res.id,
+    });
   } catch {}
 };
 
@@ -819,6 +873,7 @@ const callPlay = async (item: ICmsInfoEpisode) => {
       : await getDirectPlayUrl(item);
 
     videoData.value.url = res.url;
+
     if (isPreload) videoData.value.watchTime = playerConf.value.skipHeadAndEnd ? videoData.value.skipTimeInStart : 0;
 
     await emits('create', {
@@ -829,6 +884,7 @@ const callPlay = async (item: ICmsInfoEpisode) => {
       skipAd: playerConf.value.skipAd,
       next: !getEpisodePlayState()?.isLast,
     });
+
     callBarrage(item);
 
     active.value.watch = true;
@@ -876,7 +932,13 @@ const timerUpdatePlayProcess = async (currentTime: number, duration: number) => 
   // });
 
   /** update history */
-  videoData.value = { ...videoData.value, watchTime, duration, playEnd: isPlayEnd };
+  videoData.value = {
+    ...videoData.value,
+    watchTime,
+    duration,
+    playEnd: isPlayEnd,
+  };
+
   throttleSaveHistory();
 
   /** play next episode */
@@ -887,7 +949,6 @@ const timerUpdatePlayProcess = async (currentTime: number, duration: number) => 
   }
 
   /** preload next episode */
-  const PRELOAD_TIME = 30;
   const preloadWatchTime = skipHeadAndEnd ? currentTime + PRELOAD_TIME + skipTimeInEnd : currentTime + PRELOAD_TIME;
   if (playNextPreload && !state.isLast && preload.value.status === 'idle' && preloadWatchTime >= duration) {
     preload.value.status = 'loading';
@@ -909,41 +970,38 @@ const timerUpdatePlayProcess = async (currentTime: number, duration: number) => 
   }
 };
 
-const getEpisodePlayState = (): {
-  currIndex: number;
-  nextIndex: number;
-  isLast: boolean;
-  reverseOrder: boolean;
-  currentInfo: ICmsInfoEpisode;
-  nextInfo: ICmsInfoEpisode;
-} | null => {
-  const { filmSource, filmIndex, reverseOrder } = active.value;
+const setup = async () => {
   const episode = infoConf.value.vod_episode;
+  if (!isObject(episode) || isObjectEmpty(episode)) return;
 
-  if (
-    isNil(filmSource) ||
-    isNil(filmIndex) ||
-    !isBoolean(reverseOrder) ||
-    !isObject(episode) ||
-    isObjectEmpty(episode)
-  ) {
-    return null;
-  }
+  const episodeKeys = Object.keys(episode);
+  let filmSource = episodeKeys[0];
+  let flimEpisode = episode[filmSource]?.[0];
 
-  const currentEpisode = episode?.[filmSource];
-  if (!isArray(currentEpisode) || isArrayEmpty(currentEpisode)) {
-    return null;
-  }
+  if (!isObject(flimEpisode) || isObjectEmpty(flimEpisode)) return;
 
-  const index = currentEpisode.findIndex((item) => `${item.text}$${item.link}` === filmIndex);
-  if (index === -1) return null;
+  let filmIndex = `${flimEpisode.text}$${flimEpisode.link}`;
 
-  const currentInfo = currentEpisode[index];
-  const isLast = reverseOrder ? index === currentEpisode.length - 1 : index === 0;
-  const nextIndex = isLast ? -1 : reverseOrder ? index + 1 : index - 1;
-  const nextInfo = isLast ? ({} as ICmsInfoEpisode) : currentEpisode[nextIndex];
+  lineList.value = episodeKeys.map((key) => ({
+    type_id: key,
+    type_name: key,
+  }));
 
-  return { currIndex: index, nextIndex, isLast, reverseOrder, currentInfo, nextInfo };
+  await getHistoryData();
+
+  if (historyData.value.siteSource && episode[historyData.value.siteSource]) filmSource = historyData.value.siteSource;
+  if (historyData.value.videoIndex) filmIndex = historyData.value.videoIndex;
+
+  active.value.filmSource = filmSource;
+  active.value.filmIndex = filmIndex;
+
+  flimEpisode = { text: filmIndex.split('$')[0], link: filmIndex.split('$')[1] };
+
+  await getAnalyzeConfig();
+  await callPlay(flimEpisode);
+
+  getStarData();
+  fetchRecommend();
 };
 
 emitter.on(emitterChannel.COMP_MULTI_PLAYER_PLAYNEXT, async () => {

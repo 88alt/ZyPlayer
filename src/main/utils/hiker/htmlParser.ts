@@ -1,6 +1,7 @@
 import { urlResolve } from '@shared/modules/headers';
 import type { Cheerio, CheerioAPI } from 'cheerio';
 import * as cheerio from 'cheerio';
+import JSON5 from 'json5';
 import { JSONPath } from 'jsonpath-plus';
 
 const PARSE_CACHE = true; // 解析缓存
@@ -314,7 +315,7 @@ class Jsoup {
     if (!html || !parse) return '';
 
     try {
-      html = typeof html === 'string' ? JSON.parse(html) : html;
+      html = typeof html === 'string' ? JSON5.parse(html) : html;
     } catch {
       console.log('字符串转json失败');
       return '';
@@ -342,7 +343,7 @@ class Jsoup {
     if (!html || !parse) return [];
 
     try {
-      html = typeof html === 'string' ? JSON.parse(html) : html;
+      html = typeof html === 'string' ? JSON5.parse(html) : html;
     } catch {
       return [];
     }

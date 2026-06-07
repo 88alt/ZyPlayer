@@ -1,4 +1,5 @@
 import { isJsonStr } from '@shared/modules/validate';
+import JSON5 from 'json5';
 
 class BaseSpider {
   public home: () => Promise<any>;
@@ -25,7 +26,7 @@ class BaseSpider {
     return {
       ...resp,
       get data() {
-        return isJsonStr(resp.content) ? JSON.parse(resp.content) : resp.content;
+        return isJsonStr(resp.content) ? JSON5.parse(resp.content) : resp.content;
       },
     };
   }

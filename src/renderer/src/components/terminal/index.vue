@@ -172,7 +172,7 @@ const connectWebSocket = () => {
   };
 
   websocketInstance.value.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+    const data = JSON5.parse(event.data);
 
     if (data.type === 'data') {
       xtermInstance.value?.write(data.data);
@@ -186,7 +186,7 @@ const connectWebSocket = () => {
       xtermInstance.value?.focus();
       requestAnimationFrame(() => handleResize());
     } else if (data.type === 'resize') {
-      const { col, row } = JSON.parse(data.data);
+      const { col, row } = JSON5.parse(data.data);
       xtermInstance.value?.resize(col, row);
     } else if (data.type === 'error') {
       MessagePlugin.error(`t('common.error'): ${data.data}`);

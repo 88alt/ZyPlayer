@@ -1,3 +1,5 @@
+import JSON5 from 'json5';
+
 export default class Storage {
   private name: string;
   private settings: Record<string, any>;
@@ -11,7 +13,7 @@ export default class Storage {
   get(key: string): any;
   get(key?: string): any {
     try {
-      const storage: Record<string, any> = JSON.parse(window.localStorage.getItem(this.name)!) || {};
+      const storage: Record<string, any> = JSON5.parse(window.localStorage.getItem(this.name)!) || {};
       return key ? storage[key] : storage;
     } catch {
       return key ? this.settings[key] : this.settings;

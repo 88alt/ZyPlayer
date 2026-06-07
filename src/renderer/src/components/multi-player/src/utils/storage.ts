@@ -1,3 +1,5 @@
+import JSON5 from 'json5';
+
 class Storage {
   name: string;
   settings: { [key: string]: any };
@@ -8,7 +10,7 @@ class Storage {
 
   get(key: string) {
     try {
-      const storage = JSON.parse(localStorage.getItem(this.name) || '{}');
+      const storage = JSON5.parse(localStorage.getItem(this.name) || '{}');
       return key ? storage[key] : storage;
     } catch (error) {
       console.error(`[Storage][get] Error: ${error}`);

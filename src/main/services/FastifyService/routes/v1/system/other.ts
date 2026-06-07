@@ -19,10 +19,12 @@ import { LEVEL_MAP, LOG_MODULE } from '@shared/config/logger';
 import type { IReqEncode } from '@shared/config/req';
 import { reqEncodes } from '@shared/config/req';
 import { toUnix, toYMD } from '@shared/modules/date';
-import { isHttp, isJsonStr, isNil } from '@shared/modules/validate';
+import { convertHeaders, isLocalhostURI } from '@shared/modules/headers';
+import { isHttp, isNil, isUndefined } from '@shared/modules/validate';
 import type { AxiosRequestConfig } from 'axios';
 import type { FastifyPluginAsync } from 'fastify';
 import iconv from 'iconv-lite';
+import JSON5 from 'json5';
 
 import { checkM3u8, fixAdM3u8Ai } from './utils/m3u8';
 
@@ -98,12 +100,20 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
     },
     async (req, reply) => {
       try {
-        const { url, headers: rawHeaders = '{}' } = req.query;
-        const headers = isJsonStr(rawHeaders) ? JSON.parse(rawHeaders) : {};
+        const { url } = req.query;
 
         if (!isHttp(url)) {
-          return reply.code(400).send();
+          return reply.code(400).send({ code: -1, msg: 'Invalid m3u8 URL', data: null });
         }
+
+        const headers = Object.entries(convertHeaders(req.headers)).reduce<Record<string, string>>(
+          (acc, [key, value]) => {
+            if (isUndefined(value) || isLocalhostURI(value)) return acc;
+            acc[key] = value;
+            return acc;
+          },
+          {},
+        );
 
         try {
           if (!(await checkM3u8(url, headers))) {
@@ -128,12 +138,20 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
     },
     async (req, reply) => {
       try {
-        const { url, headers: rawHeaders = '{}' } = req.query;
-        const headers = isJsonStr(rawHeaders) ? JSON.parse(rawHeaders) : {};
+        const { url } = req.query;
 
         if (!isHttp(url)) {
           return reply.code(400).send({ code: -1, msg: 'Invalid m3u8 URL', data: null });
         }
+
+        const headers = Object.entries(convertHeaders(req.headers)).reduce<Record<string, string>>(
+          (acc, [key, value]) => {
+            if (isUndefined(value) || isLocalhostURI(value)) return acc;
+            acc[key] = value;
+            return acc;
+          },
+          {},
+        );
 
         try {
           if (!(await checkM3u8(url, headers))) {
@@ -208,7 +226,7 @@ const api: FastifyPluginAsync = async (fastify): Promise<void> => {
       const linesplitter = readline.createInterface({ input: tail });
       linesplitter.on('line', (line) => {
         try {
-          const obj = JSON.parse(line);
+          const obj = JSON5.parse(line);
           if (LEVEL_MAP[obj.level] < minLevel) return;
           if (!type.includes(obj.module) && type.length !== 0) return;
 

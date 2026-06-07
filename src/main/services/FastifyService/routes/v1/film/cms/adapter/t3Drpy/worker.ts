@@ -1,4 +1,5 @@
 import { isJsonStr, isNil } from '@shared/modules/validate';
+import JSON5 from 'json5';
 import workerpool from 'workerpool';
 
 import drpy from './drpy2.min';
@@ -19,47 +20,47 @@ const { action, category, detail, home, homeVod, init, play, proxy, search } = d
 const handlers: Record<string, (options?: Record<string, any>) => Promise<any>> = {
   async init(options) {
     const resp = init(options);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async home() {
     const resp = home();
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async homeVod() {
     const resp = homeVod();
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async category(options) {
     const { tid, page, extend } = options!;
     const resp = category(tid, page, Object.keys(extend).length > 0, Object.keys(extend).length > 0 ? extend : {});
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async detail(options) {
     const { ids } = options!;
     const resp = detail(ids);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async play(options) {
     const { flag, play: input } = options!;
     const resp = play(flag, input, []);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async search(options) {
     const { wd, page } = options!;
     const resp = search(wd, false, page);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
@@ -68,13 +69,13 @@ const handlers: Record<string, (options?: Record<string, any>) => Promise<any>> 
     if (timeout && timeout > 0) globalThis.variable = { timeout };
     else delete globalThis.variable?.timeout;
     const resp = action(method, value);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async proxy(options) {
     const resp = proxy(options);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 };

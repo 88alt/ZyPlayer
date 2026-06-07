@@ -1,6 +1,7 @@
 import type { ILangWithoutSystem } from '@shared/locales';
 import { defaultLocale, fallbackLocale, lang, langCode, messages } from '@shared/locales';
 import { usePreferredLanguages } from '@vueuse/core';
+import JSON5 from 'json5';
 import { computed } from 'vue';
 import type { Composer } from 'vue-i18n';
 import { createI18n } from 'vue-i18n';
@@ -14,7 +15,7 @@ export const defaultLang = (value?: ILangWithoutSystem | 'system'): ILangWithout
     try {
       const store = localStorage.getItem('setting');
       if (store) {
-        const parsed = JSON.parse(store);
+        const parsed = JSON5.parse(store);
         lang = parsed.lang;
       }
     } catch {}

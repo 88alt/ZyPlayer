@@ -43,7 +43,7 @@
                 <span class="role">{{ infoConf.vod_area || $t('common.unknown') }}</span>
               </p>
             </div>
-            <div class="add-box" @click="switchStar">
+            <div class="add-box" @click="handleSwitchStar">
               <div class="add">
                 <heart-filled-icon v-if="starData.id" class="icon" />
                 <heart-icon v-else class="icon" />
@@ -115,15 +115,7 @@
 <script setup lang="tsx">
 import { PROXY_API } from '@shared/config/env';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
-import {
-  isArray,
-  isArrayEmpty,
-  isHttp,
-  isNil,
-  isObject,
-  isObjectEmpty,
-  isPositiveFiniteNumber,
-} from '@shared/modules/validate';
+import { isArrayEmpty, isHttp, isNil, isObject, isObjectEmpty, isPositiveFiniteNumber } from '@shared/modules/validate';
 import type { ICmsInfo, ICmsInfoEpisode } from '@shared/types/cms';
 import type { IModels } from '@shared/types/db';
 import {
@@ -138,7 +130,6 @@ import type { PropType } from 'vue';
 import { computed, ref, watch } from 'vue';
 
 import { fetchCmsPlay, fetchCmsProxy } from '@/api/film';
-import { addHistory, addStar, delStar, findHistory, findStar, putHistory, putStar } from '@/api/moment';
 import { fetchAnalyzeActive, fetchParse } from '@/api/parse';
 import { setProxy } from '@/api/proxy';
 import { cdpSnifferMedia } from '@/api/system';
@@ -146,6 +137,8 @@ import LazyBg from '@/components/lazy-bg/index.vue';
 import { mediaUtils } from '@/components/multi-player';
 import TitleMenu from '@/components/title-menu/index.vue';
 import { attachContent } from '@/config/global';
+import { useHistory } from '@/hooks/useHistory';
+import { useStar } from '@/hooks/useStar';
 import { t } from '@/locales';
 import { usePlayerStore } from '@/store';
 
@@ -166,15 +159,14 @@ const props = defineProps({
 
 const emits = defineEmits(['update:visible']);
 
+const renderDefaultLazy = () => <LazyBg class="render-icon" />;
+
 const storePlayer = usePlayerStore();
 
 const formVisible = ref(false);
 
 const infoConf = ref(props.info);
 const extraConf = ref(props.extra);
-
-const starData = ref({} as IModels['star']);
-const historyData = ref({} as IModels['history']);
 
 const lineList = ref<{ type_id: string; type_name: string }[]>([]);
 
@@ -191,16 +183,58 @@ const active = ref({
   loading: false,
 });
 
+const { starData, getStarData, handleSwitchStar, resetStarData } = useStar({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: extraConf.value.active.key,
+    videoId: info.vod_id,
+    type: 1,
+  }),
+  createDoc: (info) => ({
+    type: 1,
+    relateId: extraConf.value.active.key,
+    videoId: info.vod_id,
+    videoImage: info.vod_pic,
+    videoName: info.vod_name,
+    videoType: info.type_name,
+    videoRemarks: info.vod_remarks,
+  }),
+});
+
+const { historyData, getHistoryData, saveHistoryData, resetHistoryData } = useHistory({
+  source: infoConf,
+  getQuery: (info) => ({
+    relateId: extraConf.value.active.key,
+    videoId: info.vod_id,
+    type: 1,
+  }),
+  createDoc: (info) => {
+    const h = historyData.value;
+    return {
+      type: 1,
+      relateId: extraConf.value.active.key,
+      siteSource: active.value.filmSource,
+      playEnd: h?.playEnd ?? false,
+      videoId: info.vod_id,
+      videoImage: info.vod_pic,
+      videoName: info.vod_name,
+      videoIndex: active.value.filmIndex,
+      watchTime: isPositiveFiniteNumber(h.watchTime) ? h.watchTime : 0,
+      duration: isPositiveFiniteNumber(h.duration) ? h.duration : 0,
+      skipTimeInStart: isPositiveFiniteNumber(h.skipTimeInStart) ? h.skipTimeInStart : 90,
+      skipTimeInEnd: isPositiveFiniteNumber(h.skipTimeInEnd) ? h.skipTimeInEnd : 90,
+    };
+  },
+});
+
 const activeAnalyzeList = computed(() => {
   const flag = active.value.filmSource;
-  const resp = analyzeConfig.value.list.filter((item: IModels['analyze']) => (item.flag || []).includes(flag));
-  return resp;
+  return analyzeConfig.value.list.filter((item) => (item.flag || []).includes(flag));
 });
 
 const activeSessionList = computed(() => {
   const flag = active.value.filmSource;
-  const resp = infoConf.value.vod_episode?.[flag] || [];
-  return resp;
+  return infoConf.value.vod_episode?.[flag] || [];
 });
 
 watch(
@@ -227,188 +261,60 @@ watch(
   { deep: true },
 );
 
-const renderDefaultLazy = () => <LazyBg class="render-icon" />;
-
-const createStarDoc = (item: ICmsInfo, siteKey: string) => ({
-  type: 1,
-  relateId: siteKey,
-  videoId: item.vod_id,
-  videoImage: item.vod_pic,
-  videoName: item.vod_name,
-  videoType: item.type_name,
-  videoRemarks: item.vod_remarks,
-});
-
-const getStarData = async () => {
-  try {
-    const resp = await findStar({ relateId: extraConf.value.active.key, videoId: infoConf.value.vod_id, type: 1 });
-    starData.value = isNil(resp?.id) ? {} : resp;
-  } catch (error) {
-    console.error('Get Star Data Error:', error);
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const saveStarData = async () => {
-  const id = starData.value?.id;
-  const doc = createStarDoc(infoConf.value as ICmsInfo, extraConf.value.active.key);
-
-  try {
-    const resp = isNil(id) ? await addStar(doc) : await putStar({ id: [id], doc });
-    if (isArray(resp) && !isArrayEmpty(resp) && !isNil(resp[0]?.id)) {
-      starData.value = resp[0];
-    } else {
-      starData.value = {} as IModels['star'];
-    }
-  } catch (error) {
-    console.error('Save Star Data Error:', error);
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const delStarDate = async () => {
-  const id = starData.value?.id;
-
-  try {
-    await delStar({ id: [id] });
-  } catch (error) {
-    console.error('Delete Star Data Error:', error);
-  } finally {
-    starData.value = {} as IModels['star'];
-  }
-};
-
-const switchStar = async () => {
-  const id = starData.value?.id;
-
-  isNil(id) ? await saveStarData() : await delStarDate();
-};
-
-const createHistoryDoc = (item: ICmsInfo, siteKey: string) => ({
-  type: 1,
-  relateId: siteKey,
-  siteSource: active.value.filmSource,
-  playEnd: false,
-  videoId: item.vod_id,
-  videoImage: item.vod_pic,
-  videoName: item.vod_name,
-  videoIndex: active.value.filmIndex,
-  watchTime: 0,
-  duration: 0,
-  skipTimeInStart: 90,
-  skipTimeInEnd: 90,
-});
-
-const getHistoryData = async () => {
-  try {
-    const resp = await findHistory({ relateId: extraConf.value.active.key, videoId: infoConf.value.vod_id, type: 1 });
-    historyData.value = isNil(resp?.id) ? {} : resp;
-  } catch (error) {
-    console.error('Get History Data Error:', error);
-    historyData.value = {} as IModels['history'];
-  }
-};
-
-const saveHistoryData = async () => {
-  const doc = createHistoryDoc(infoConf.value as ICmsInfo, extraConf.value.active.key);
-
-  const id = historyData.value?.id;
-  if (!isNil(id) && isPositiveFiniteNumber(historyData.value.watchTime)) doc.watchTime = historyData.value.watchTime!;
-  if (!isNil(id) && isPositiveFiniteNumber(historyData.value.duration)) doc.duration = historyData.value.duration!;
-  if (!isNil(id) && isPositiveFiniteNumber(historyData.value.skipTimeInStart))
-    doc.skipTimeInStart = historyData.value.skipTimeInStart!;
-  if (!isNil(id) && isPositiveFiniteNumber(historyData.value.skipTimeInEnd))
-    doc.skipTimeInEnd = historyData.value.skipTimeInEnd!;
-
-  try {
-    const resp = isNil(id) ? await addHistory(doc) : await putHistory({ id: [id], doc });
-    if (isArray(resp) && !isArrayEmpty(resp) && !isNil(resp[0]?.id)) {
-      historyData.value = resp[0];
-    } else {
-      historyData.value = {} as IModels['history'];
-    }
-  } catch (error) {
-    console.error('Save History Data Error:', error);
-    historyData.value = {} as IModels['history'];
-  }
-};
-
 const reverseOrderIndex = (current: number) => {
   const total = activeSessionList.value.length;
-  const type = active.value.reverseOrder;
 
   if (!isPositiveFiniteNumber(current) || !isPositiveFiniteNumber(total)) return 1;
   if (current >= total) return 1;
 
-  return type ? current + 1 : total - current;
+  return active.value.reverseOrder ? current + 1 : total - current;
 };
 
 const handleSwitchLine = (id: string) => {
   active.value.filmSource = id;
 };
 
-const handleSwitchSeason = (item: ICmsInfoEpisode) => {
-  active.value.filmIndex = `${item.text}$${item.link}`;
-
-  callPlay(item);
-};
-
-const handleSwitchParse = (id: string) => {
-  active.value.analyzeId = id;
-
-  if (active.value.filmIndex) {
-    const [text, link] = active.value.filmIndex.split('$');
-    callPlay({ text, link });
-  }
-};
-
 const reverseOrderEvent = () => {
+  const episodes = infoConf.value.vod_episode;
+  if (!episodes) return;
+
   infoConf.value.vod_episode = Object.fromEntries(
-    Object.entries(infoConf.value.vod_episode!).map(([key, arr]) => [key, arr.toReversed()]),
+    Object.entries(episodes).map(([key, arr]) => [key, arr.toReversed()]),
   );
 
   active.value.reverseOrder = !active.value.reverseOrder;
 };
 
+const handleSwitchSeason = async (item: ICmsInfoEpisode) => {
+  active.value.filmIndex = `${item.text}$${item.link}`;
+
+  await callPlay(item);
+};
+
+const handleSwitchParse = async (id: string) => {
+  active.value.analyzeId = id;
+
+  if (active.value.filmIndex) {
+    const [text, link] = active.value.filmIndex.split('$');
+    await callPlay({ text, link });
+  }
+};
+
 const getAnalyzeConfig = async () => {
   try {
     const resp = await fetchAnalyzeActive();
+
     if (resp?.default?.id) {
       analyzeConfig.value.default = resp.default;
       active.value.analyzeId = resp.default.id;
     }
+
     if (resp?.list) {
       analyzeConfig.value.list = resp.list;
     }
   } catch (error) {
     console.error(`Failed to get analyze config:`, error);
   }
-};
-
-const setup = async () => {
-  const episode = infoConf.value.vod_episode;
-  if (!isObject(episode) || isObjectEmpty(episode)) return;
-
-  const episodeKeys = Object.keys(episode);
-  let filmSource = episodeKeys[0];
-  let flimEpisode = episode[filmSource]?.[0];
-
-  if (!isObject(flimEpisode) || isObjectEmpty(flimEpisode)) return;
-  let filmIndex = `${flimEpisode.text}$${flimEpisode.link}`;
-
-  lineList.value = episodeKeys.map((key) => ({ type_id: key, type_name: key }));
-
-  await getHistoryData();
-  if (historyData.value.siteSource && episode[historyData.value.siteSource]) filmSource = historyData.value.siteSource;
-  if (historyData.value.videoIndex) filmIndex = historyData.value.videoIndex;
-  active.value.filmSource = filmSource;
-  active.value.filmIndex = filmIndex;
-
-  flimEpisode = { text: filmIndex.split('$')[0], link: filmIndex.split('$')[1] };
-
-  await getAnalyzeConfig();
-
-  getStarData();
 };
 
 const getDirectPlayUrl = async (
@@ -437,7 +343,12 @@ const getDirectPlayUrl = async (
   } | null> => {
     const mediaType = await mediaUtils.checkMediaType(url, headers);
     if (mediaType === 'unknown') return null;
-    return { url, headers, mediaType };
+
+    return {
+      url,
+      headers,
+      mediaType,
+    };
   };
 
   // Direct play
@@ -445,12 +356,25 @@ const getDirectPlayUrl = async (
     if (playRes.url.startsWith(PROXY_API)) {
       const { searchParams } = new URL(playRes.url);
       const proxyParams = Object.fromEntries(searchParams.entries());
-      const proxyData = await fetchCmsProxy({ uuid: extraConf.value.active.id, ...proxyParams });
-      await setProxy({ url: proxyParams.url, text: proxyData });
+
+      const proxyData = await fetchCmsProxy({
+        uuid: extraConf.value.active.id,
+        ...proxyParams,
+      });
+
+      await setProxy({
+        url: proxyParams.url,
+        text: proxyData,
+      });
     }
 
     const direct = await checkPlayable(playRes.url, playRes.headers);
-    if (!isNil(direct)) return { ...direct, quality: playRes.quality };
+    if (!isNil(direct)) {
+      return {
+        ...direct,
+        quality: playRes.quality,
+      };
+    }
   }
 
   // Parse play
@@ -458,7 +382,11 @@ const getDirectPlayUrl = async (
     const parse = activeAnalyzeList.value.find((item: IModels['analyze']) => item.id === active.value.analyzeId);
     if (isNil(parse)) throw new Error('No Active Analyze');
 
-    const parseResp = await fetchParse({ id: parse.id, url: item.link });
+    const parseResp = await fetchParse({
+      id: parse.id,
+      url: item.link,
+    });
+
     const parsed = await checkPlayable(parseResp.url, parseResp.headers);
     if (parsed) return parsed;
   }
@@ -475,6 +403,7 @@ const getDirectPlayUrl = async (
         headers: playRes.headers,
       },
     });
+
     const sniffed = await checkPlayable(sniffResp.url, playRes.headers);
     if (!isNil(sniffed)) return sniffed;
   }
@@ -508,14 +437,46 @@ const callPlay = async (item: ICmsInfoEpisode) => {
   }
 };
 
+const setup = async () => {
+  const episode = infoConf.value.vod_episode;
+  if (!isObject(episode) || isObjectEmpty(episode)) return;
+
+  const episodeKeys = Object.keys(episode);
+  let filmSource = episodeKeys[0];
+  let flimEpisode = episode[filmSource]?.[0];
+
+  if (!isObject(flimEpisode) || isObjectEmpty(flimEpisode)) return;
+
+  let filmIndex = `${flimEpisode.text}$${flimEpisode.link}`;
+
+  lineList.value = episodeKeys.map((key) => ({
+    type_id: key,
+    type_name: key,
+  }));
+
+  await getHistoryData();
+
+  if (historyData.value.siteSource && episode[historyData.value.siteSource]) filmSource = historyData.value.siteSource;
+  if (historyData.value.videoIndex) filmIndex = historyData.value.videoIndex;
+
+  active.value.filmSource = filmSource;
+  active.value.filmIndex = filmIndex;
+
+  flimEpisode = { text: filmIndex.split('$')[0], link: filmIndex.split('$')[1] };
+
+  await getAnalyzeConfig();
+
+  getStarData();
+};
+
 const defaultConfig = () => {
   active.value.filmSource = '';
   active.value.filmIndex = '';
   active.value.analyzeId = '';
   active.value.reverseOrder = true;
 
-  historyData.value = {} as IModels['history'];
-  starData.value = {} as IModels['star'];
+  resetStarData();
+  resetHistoryData();
 
   analyzeConfig.value = { default: {} as IModels['analyze'], list: [] };
 };

@@ -2,6 +2,7 @@ import { pathToFileURL } from 'node:url';
 
 import { isArray, isFunction, isJsonStr, isNil } from '@shared/modules/validate';
 import { base64 } from '@zy/crypto';
+import JSON5 from 'json5';
 import workerpool from 'workerpool';
 
 import { aesX, BaseSpider, desX, getProxy, local, md5X, req, rsaX } from './inject';
@@ -57,13 +58,13 @@ const handlers: Record<string, (options?: Record<string, any>) => Promise<any>> 
 
   async home() {
     const resp = await spider.home(true);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async homeVod() {
     const resp = await spider.homeVod();
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
@@ -75,7 +76,7 @@ const handlers: Record<string, (options?: Record<string, any>) => Promise<any>> 
       Object.keys(extend).length > 0,
       Object.keys(extend).length > 0 ? extend : {},
     );
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
@@ -87,21 +88,21 @@ const handlers: Record<string, (options?: Record<string, any>) => Promise<any>> 
     } else {
       resp = await spider.detail(ids);
     }
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async play(options) {
     const { flag, play: input } = options!;
     const resp = await spider.play(flag, input, []);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
   async search(options) {
     const { wd, page } = options!;
     const resp = await spider.search(wd, false, page);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 
@@ -115,7 +116,7 @@ const handlers: Record<string, (options?: Record<string, any>) => Promise<any>> 
 
   async proxy(options) {
     const resp = await spider.proxy(options);
-    const res = isJsonStr(resp) ? JSON.parse(resp) : resp;
+    const res = isJsonStr(resp) ? JSON5.parse(resp) : resp;
     return res;
   },
 };

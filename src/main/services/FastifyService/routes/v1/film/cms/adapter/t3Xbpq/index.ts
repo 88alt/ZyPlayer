@@ -500,7 +500,7 @@ class T3XbpqAdapter {
       logger.info(`获取远程分类url: ${分类}`);
       const tmp = await this.req(分类);
       try {
-        const json = JSON.parse(tmp);
+        const json = JSON5.parse(tmp);
         if (Object.hasOwn(json, 'class')) {
           分类 = json.class
             .map((x) => {

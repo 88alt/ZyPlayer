@@ -111,7 +111,6 @@ export const m3u8AdRemoveSchema = {
   description: 'Remove ad from m3u8 segment.',
   querystring: Type.Object({
     url: Type.String({ format: 'uri', description: 'm3u8 url' }),
-    headers: Type.Optional(Type.String({ description: 'request headers' })),
   }),
   response: {
     200: {

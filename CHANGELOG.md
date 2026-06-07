@@ -2,15 +2,16 @@
 
 > All notable changes to this project will be documented in this file.
 
-## v3.4.7 (2026-06-06)
+## v3.4.7 (2026-06-07)
 
 - 特性: 实验室-编码工具 支持rsa长文本计算(worker不阻塞主线程), 并增加@zy/crypto-playground, 修复传参默认参数错误
 - 特性: 直播频道支持单独请求头(取#EXTVLCOPT) [issue #533]
 - 优化: 快捷配置和数据导入接口解耦; ui侧合并
 - 优化: 统一请求头处理工具，格式化为Chromium标准; 增加sec-ch/sec-fetch头处理
-- 优化: hls去广优化匹配算法; 新增SSAI动态帧率指纹算法 [pr #533]
+- 优化: hls去广优化匹配算法; 新增SSAI动态帧率指纹算法 [pr #534]
 - 优化: 媒体文件类型识别
-- 优化: proxy和adremove接口对head方法的处理
+- 优化: 后端proxy和adremove接口对head方法的处理
+- 优化: 前端history和star改为hooks处理
 - 修复: site接口一处缺失默认值导致自动化初始debug数据失败
 - 修复: 自动提升机器安装的静默更新
 - 修复: win11全屏下左右存在白边 [issue #529 #532]
@@ -18,8 +19,11 @@
 - 修复: T3Py代理路径参数缺失
 - 修复: multi-player组件 已知问题(详见该组件CHANGELOG)
 - 修复: @zy/crypto打包配置参数错误
+- 修复: 播放页 影视或解析场景开启跳进度导致直播场景也触发; 同时开启进度跳过、自动下集、预载下集条件时触发播放下下集 [issue #488]
+- 修复: adremove接口针对请求头的处理
 - 变动: 数据库字段(注意备份)
 - 变动: shared模块 packages/shared -> src/shared
+- 变动: JSON解析 JSON -> JSON5
 - 变动: 日志模块名(注意查看日志变动)
 - 变动: 后端接口部分路径和参数(注意及时调整)
 - 变动: 依赖库升级
@@ -31,7 +35,7 @@
 - 优化: 默认ui参数调整
 - 优化: 独立crypto模块: rsa支持非标模式(私加公解), 优化分块计算; sm4参数名同步
 - 优化: 视频类型识别加入数据头识别
-- 修复: 影视类只有一个时整体隐藏(导致筛选隐藏); 数据冲突(旧数据没加载完触发新数据); 启动应用时初始化环境; T3Catopen适配器兼容性; T3Py重构(zeromq -> grpc)
+- 修复: 影视类只有一个时整体隐藏(导致筛选隐藏); 数据冲突(旧数据没加载完触发新数据); 启动应用时初始化环境; T3Catopen适配器兼容性; T3Py重构(zeromq -> grpc) [issue #462]
 - 修复: python项目重复检测uv环境和pip依赖问题
 - 修复: terminal组件触发applyTheme但搜索框dom未创建时报错; 未调用onLinkClickCallback
 - 修复: 实验室ui插件预览按钮不生效

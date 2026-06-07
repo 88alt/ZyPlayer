@@ -2,6 +2,7 @@ import { request } from '@main/utils/request';
 import { buildUrl } from '@shared/modules/headers';
 import type { ICmsParams, ICmsResultPromise, IConstructorOptions } from '@shared/types/cms';
 import { aes } from '@zy/crypto';
+import JSON5 from 'json5';
 
 class T3AppGetAdapter {
   private host: string = '';
@@ -54,7 +55,7 @@ class T3AppGetAdapter {
           headers: this.headers,
         });
 
-        const userInfo = JSON.parse(this.decrypt(JSON.parse(resp).data)).user;
+        const userInfo = JSON5.parse(this.decrypt(JSON5.parse(resp).data)).user;
         this.headers['app-user-token'] = userInfo.auth_token;
       } catch {}
     }
@@ -67,7 +68,7 @@ class T3AppGetAdapter {
       headers: this.headers,
     });
 
-    const srcList = JSON.parse(this.decrypt(JSON.parse(resp).data)).type_list;
+    const srcList = JSON5.parse(this.decrypt(JSON5.parse(resp).data)).type_list;
     const rawList = Array.isArray(srcList) ? srcList : [];
 
     const classes = rawList
@@ -131,7 +132,7 @@ class T3AppGetAdapter {
       headers: this.headers,
     });
 
-    const srcList = JSON.parse(this.decrypt(JSON.parse(resp).data)).recommend_list;
+    const srcList = JSON5.parse(this.decrypt(JSON5.parse(resp).data)).recommend_list;
     const rawList = Array.isArray(srcList) ? srcList : [];
 
     const list: ICmsHomeVod['list'] = rawList
@@ -160,7 +161,7 @@ class T3AppGetAdapter {
           headers: this.headers,
         });
 
-        const data = JSON.parse(this.decrypt(resp)).data.vod;
+        const data = JSON5.parse(this.decrypt(resp)).data.vod;
         return data;
       }),
     );
@@ -224,7 +225,7 @@ class T3AppGetAdapter {
       headers: this.headers,
     });
 
-    const srcList = JSON.parse(this.decrypt(JSON.parse(resp).data)).search_list;
+    const srcList = JSON5.parse(this.decrypt(JSON5.parse(resp).data)).search_list;
     const rawList = Array.isArray(srcList) ? srcList : [];
 
     const list: ICmsHomeVod['list'] = rawList
@@ -243,7 +244,7 @@ class T3AppGetAdapter {
   async play(doc: ICmsParams['play']): ICmsResultPromise['play'] {
     const { play } = doc;
 
-    const json = JSON.parse(play);
+    const json = JSON5.parse(play);
     const url = json.url;
     const headers = this.appConfig.lazyheader || {};
     let parse_api_url = json.parse_api_url;
@@ -281,7 +282,7 @@ class T3AppGetAdapter {
             token,
           },
         });
-        const parsejson = JSON.parse(JSON.parse(this.decrypt(resp.data)).json);
+        const parsejson = JSON5.parse(JSON5.parse(this.decrypt(resp.data)).json);
         let play = parsejson.url;
         if (play) {
           if (!/m3u8|mp4|mkv/.test(play)) {
@@ -349,7 +350,7 @@ class T3AppGetAdapter {
         method: 'POST',
         headers: this.headers,
       });
-      mineInfo = JSON.parse(this.decrypt(mineInfo.data));
+      mineInfo = JSON5.parse(this.decrypt(mineInfo.data));
       if (!mineInfo.user) {
         this.init();
         mineInfo = await request.request({
@@ -357,7 +358,7 @@ class T3AppGetAdapter {
           method: 'POST',
           headers: this.headers,
         });
-        mineInfo = JSON.parse(this.decrypt(mineInfo.data));
+        mineInfo = JSON5.parse(this.decrypt(mineInfo.data));
       }
       if (mineInfo.user.is_vip) {
         const user_end_time = new Date(mineInfo.user.user_end_time * 1000).toLocaleString();
