@@ -34,7 +34,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { APP_NAME } from '@shared/config/appinfo';
+import { APP_NAME } from '@shared/config/appInfo';
 import { SYSTEM_M3U8_AD_REMOVE_API } from '@shared/config/env';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { WINDOW_NAME } from '@shared/config/window';

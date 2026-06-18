@@ -1,4 +1,4 @@
-import type { IPlatform } from '@shared/types/systeminfo';
+import type { IPlatform } from '@shared/types/systemInfo';
 
 export const platformNavigator: IPlatform = (() => {
   const plat = (navigator as any).userAgentData?.platform || navigator.platform;

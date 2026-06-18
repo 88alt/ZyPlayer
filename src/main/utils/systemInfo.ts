@@ -1,8 +1,8 @@
 import os from 'node:os';
 import process from 'node:process';
 
-import { APP_NAME, APP_VERSION } from '@shared/config/appinfo';
-import type { IArch, IPlatform, ISystemInfo } from '@shared/types/systeminfo';
+import { APP_NAME, APP_VERSION } from '@shared/config/appInfo';
+import type { IArch, IPlatform, ISystemInfo } from '@shared/types/systemInfo';
 import { app } from 'electron';
 import macosRelease from 'macos-release';
 

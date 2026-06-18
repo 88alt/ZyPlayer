@@ -4,8 +4,8 @@ import { loggerService } from '@logger';
 import { createDir, saveFile } from '@main/utils/file';
 import { APP_EXE_PATH, APP_HOME_PATH } from '@main/utils/path';
 import { execAsync } from '@main/utils/shell';
-import { isLinux } from '@main/utils/systeminfo';
-import { APP_NAME, APP_NAME_ALIAS } from '@shared/config/appinfo';
+import { isLinux } from '@main/utils/systemInfo';
+import { APP_NAME, APP_NAME_ALIAS } from '@shared/config/appInfo';
 import { LOG_MODULE } from '@shared/config/logger';
 
 import { handleSubProtocolUrl } from './schemaSub';

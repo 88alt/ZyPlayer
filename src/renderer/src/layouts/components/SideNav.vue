@@ -62,7 +62,7 @@ import { prefix } from '@/config/global';
 import { useLocale } from '@/locales/useLocale';
 import { getActive } from '@/router';
 import type { MenuRoute } from '@/types/interface';
-import { isMacOS } from '@/utils/systeminfo';
+import { isMacOS } from '@/utils/systemInfo';
 
 type ListItemType = MenuRoute & { icon?: string };
 

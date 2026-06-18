@@ -65,7 +65,7 @@ import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { CloseIcon, CopyIcon, PinFilledIcon, PinIcon, RectangleIcon, RemoveIcon } from 'tdesign-icons-vue-next';
 import { onMounted, ref } from 'vue';
 
-import { isMacOS } from '@/utils/systeminfo';
+import { isMacOS } from '@/utils/systemInfo';
 
 const active = ref({
   isPinned: false,

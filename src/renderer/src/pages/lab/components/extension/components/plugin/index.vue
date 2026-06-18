@@ -69,7 +69,7 @@
   </div>
 </template>
 <script lang="tsx" setup>
-import { PLUGIN_STORE_URL } from '@shared/config/appinfo';
+import { PLUGIN_STORE_URL } from '@shared/config/appInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { isArray, isArrayEmpty } from '@shared/modules/validate';
 import type { IModels } from '@shared/types/db';

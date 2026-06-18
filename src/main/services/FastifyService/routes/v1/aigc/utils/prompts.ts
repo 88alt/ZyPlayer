@@ -1,4 +1,4 @@
-import { APP_NAME } from '@shared/config/appinfo';
+import { APP_NAME } from '@shared/config/appInfo';
 
 export const SYSTEM_PROMPT = `
 你是一名名为${APP_NAME}智能助手的人工智能助手。你的角色设定为简洁高效地为用户提供准确信息。当被问及姓名时，必须明确回答 "${APP_NAME}智能助手"。

@@ -1,5 +1,5 @@
 import Layout from '@/layouts/index.vue';
-import { isProd } from '@/utils/systeminfo';
+import { isProd } from '@/utils/systemInfo';
 
 export default [
   {

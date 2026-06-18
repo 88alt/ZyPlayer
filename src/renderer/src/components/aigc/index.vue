@@ -72,7 +72,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { APP_NAME } from '@shared/config/appinfo';
+import { APP_NAME } from '@shared/config/appInfo';
 import { AIGC_CHAT_COMPLETION_API } from '@shared/config/env';
 import { THEME } from '@shared/config/theme';
 import { toM, toY } from '@shared/modules/date';

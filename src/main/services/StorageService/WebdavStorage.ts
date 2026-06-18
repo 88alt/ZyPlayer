@@ -3,7 +3,7 @@ import { posix } from 'node:path';
 import type { Stream } from 'node:stream';
 
 import { loggerService } from '@logger';
-import { APP_NAME_ALIAS } from '@shared/config/appinfo';
+import { APP_NAME_ALIAS } from '@shared/config/appInfo';
 import { LOG_MODULE } from '@shared/config/logger';
 import { isHttp, isStrEmpty } from '@shared/modules/validate';
 import type {

@@ -1,8 +1,8 @@
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { isPackaged } from '@main/utils/systeminfo';
-import { APP_NAME_ALIAS, APP_NAME_PROTOCOL } from '@shared/config/appinfo';
+import { isPackaged } from '@main/utils/systemInfo';
+import { APP_NAME_ALIAS, APP_NAME_PROTOCOL } from '@shared/config/appInfo';
 import { isStrEmpty } from '@shared/modules/validate';
 import { app } from 'electron';
 

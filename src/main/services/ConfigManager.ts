@@ -1,5 +1,5 @@
 import { APP_DATABASE_PATH } from '@main/utils/path';
-import { generateUserAgent } from '@main/utils/systeminfo';
+import { generateUserAgent } from '@main/utils/systemInfo';
 import { PROXY_TYPE } from '@shared/config/setting';
 import type { ITheme } from '@shared/config/theme';
 import { THEME } from '@shared/config/theme';

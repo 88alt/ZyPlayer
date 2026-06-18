@@ -52,7 +52,7 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { ref, useTemplateRef, watch } from 'vue';
 
 import { attachContent } from '@/config/global';
-import { delimiter } from '@/utils/systeminfo';
+import { delimiter } from '@/utils/systemInfo';
 
 const props = defineProps({
   visible: {

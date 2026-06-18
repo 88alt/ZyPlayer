@@ -59,7 +59,7 @@ import type { PropType } from 'vue';
 import { nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { SearchBarAddon } from 'xterm-addon-search-bar';
 
-import { isMacOS } from '@/utils/systeminfo';
+import { isMacOS } from '@/utils/systemInfo';
 
 import themes from './utils/theme';
 

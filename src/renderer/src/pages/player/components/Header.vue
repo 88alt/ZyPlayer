@@ -25,7 +25,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { APP_NAME } from '@shared/config/appinfo';
+import { APP_NAME } from '@shared/config/appInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { BrowseIcon, BrowseOffIcon, HomeIcon } from 'tdesign-icons-vue-next';
 import { onMounted, ref, watch } from 'vue';

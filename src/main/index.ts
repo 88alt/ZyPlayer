@@ -21,8 +21,8 @@ import { handleProtocolUrl, setupAppImageDeepLink } from '@main/services/Protoco
 import { proxyManager } from '@main/services/ProxyManager';
 import { trayService } from '@main/services/TrayService';
 import { windowService } from '@main/services/WindowService';
-import { isDev, isLinux, isMacOS, isWindows } from '@main/utils/systeminfo';
-import { APP_NAME, APP_NAME_PROTOCOL } from '@shared/config/appinfo';
+import { isDev, isLinux, isMacOS, isWindows } from '@main/utils/systemInfo';
+import { APP_NAME, APP_NAME_PROTOCOL } from '@shared/config/appInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { LOG_MODULE } from '@shared/config/logger';
 import { CacheService } from '@shared/modules/cache';

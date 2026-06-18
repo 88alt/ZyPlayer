@@ -20,7 +20,7 @@ import { createDir, fileDelete, pathExist, readDirFaster, readFile, saveFile } f
 import type { IHomePath, ISystemPath, IUserPath } from '@main/utils/path';
 import { getHomePath, getSystemPath, getUserPath } from '@main/utils/path';
 import { execAsync } from '@main/utils/shell';
-import { arch, generateUserAgent, isLinux, isMacOS, isPortable, isWindows, platform } from '@main/utils/systeminfo';
+import { arch, generateUserAgent, isLinux, isMacOS, isPortable, isWindows, platform } from '@main/utils/systemInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { LOG_MODULE } from '@shared/config/logger';
 import type { INotification } from '@shared/config/notification';

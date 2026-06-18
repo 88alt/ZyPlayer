@@ -2,9 +2,9 @@ import { dirname, resolve } from 'node:path';
 
 import { loggerService } from '@logger';
 import { getSystemPath } from '@main/utils/path';
-import { isPackaged, isWindows } from '@main/utils/systeminfo';
+import { isPackaged, isWindows } from '@main/utils/systemInfo';
 import { getUserAgent } from '@main/utils/tool';
-import { APP_VERSION } from '@shared/config/appinfo';
+import { APP_VERSION } from '@shared/config/appInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { LOG_MODULE } from '@shared/config/logger';
 import { isArray, isArrayEmpty, isStrEmpty, isString } from '@shared/modules/validate';

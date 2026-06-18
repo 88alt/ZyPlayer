@@ -13,7 +13,7 @@ import type {
   SystemReqBody,
 } from '@server/schemas/v1/system/other';
 import { healthSchema, ipSchema, logSchema, m3u8AdRemoveSchema, reqSchema } from '@server/schemas/v1/system/other';
-import { APP_VERSION } from '@shared/config/appinfo';
+import { APP_VERSION } from '@shared/config/appInfo';
 import type { ILogModuleType, LogLevel } from '@shared/config/logger';
 import { LEVEL_MAP, LOG_MODULE } from '@shared/config/logger';
 import type { IReqEncode } from '@shared/config/req';

@@ -249,7 +249,7 @@ import { getSettingDetail, putSetting } from '@/api/setting';
 import { emitterChannel, emitterSource } from '@/config/emitterChannel';
 import { t } from '@/locales';
 import emitter from '@/utils/emitter';
-import { isMacOS } from '@/utils/systeminfo';
+import { isMacOS } from '@/utils/systemInfo';
 
 const TABLE_OPTIONS = computed(() => [
   { label: t('pages.film.title'), value: 'site' },

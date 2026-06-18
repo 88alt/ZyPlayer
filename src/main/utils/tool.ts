@@ -1,5 +1,5 @@
 import { configManager } from '@main/services/ConfigManager';
-import { generateUserAgent } from '@main/utils/systeminfo';
+import { generateUserAgent } from '@main/utils/systemInfo';
 import { isPositiveFiniteNumber, isUndefined } from '@shared/modules/validate';
 
 /**

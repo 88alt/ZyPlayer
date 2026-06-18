@@ -2,6 +2,13 @@
 
 > All notable changes to this project will be documented in this file.
 
+## v3.4.8
+
+- 修复: 已知文件名驼峰命名
+- 变动: 依赖库升级
+
+[View on GitHub](https://github.com/Hiram-Wong/zyfun/releases/tag/v3.4.8)
+
 ## v3.4.7 (2026-06-07)
 
 - 特性: 实验室-编码工具 支持rsa长文本计算(worker不阻塞主线程), 并增加@zy/crypto-playground, 修复传参默认参数错误

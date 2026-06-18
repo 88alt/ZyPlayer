@@ -89,7 +89,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 import RenderMd from '@/components/render-markdown/index.vue';
 import { attachContent } from '@/config/global';
-import { isWindows } from '@/utils/systeminfo';
+import { isWindows } from '@/utils/systemInfo';
 
 const formVisible = ref(false);
 

@@ -1,6 +1,6 @@
 import { appLocale } from '@main/services/AppLocale';
 import { configManager } from '@main/services/ConfigManager';
-import { generateUserAgent } from '@main/utils/systeminfo';
+import { generateUserAgent } from '@main/utils/systemInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { app, session, webContents } from 'electron';
 

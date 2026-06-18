@@ -1,4 +1,4 @@
-import { isElectron, platform } from '@/utils/systeminfo';
+import { isElectron, platform } from '@/utils/systemInfo';
 
 export const dom = () => {
   document.documentElement.setAttribute('platform', platform);

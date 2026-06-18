@@ -22,7 +22,7 @@ const emit = defineEmits(['update:modelValue']);
 import type { Input, InputProps } from 'tdesign-vue-next';
 import { computed, onMounted, ref, useAttrs, useSlots, watch } from 'vue';
 
-import { isMacOS } from '@/utils/systeminfo';
+import { isMacOS } from '@/utils/systemInfo';
 
 const attrs = useAttrs() as InputProps;
 const slots = useSlots();

@@ -1,7 +1,7 @@
 import { configManager } from '@main/services/ConfigManager';
 import { dbService } from '@main/services/DbService';
 import { windowService } from '@main/services/WindowService';
-import { titleBarOverlayDark, titleBarOverlayLight } from '@shared/config/appinfo';
+import { titleBarOverlayDark, titleBarOverlayLight } from '@shared/config/appInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import type { ITheme } from '@shared/config/theme';
 import { THEME } from '@shared/config/theme';

@@ -4,8 +4,8 @@ import { dirname, join } from 'node:path';
 import { loggerService } from '@logger';
 import { createDir, fileDelete, pathExist, readDirFaster, readFile, saveFile } from '@main/utils/file';
 import { APP_HOME_PATH } from '@main/utils/path';
-import { isMacOS } from '@main/utils/systeminfo';
-import { APP_NAME_ALIAS } from '@shared/config/appinfo';
+import { isMacOS } from '@main/utils/systemInfo';
+import { APP_NAME_ALIAS } from '@shared/config/appInfo';
 import { LOG_MODULE } from '@shared/config/logger';
 
 const logger = loggerService.withContext(LOG_MODULE.SYNC_STORAGE);

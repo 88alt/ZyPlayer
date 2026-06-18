@@ -150,7 +150,7 @@
   </div>
 </template>
 <script setup lang="tsx">
-import { APP_NAME } from '@shared/config/appinfo';
+import { APP_NAME } from '@shared/config/appInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { WINDOW_NAME } from '@shared/config/window';
 import { isSecurityScheme } from '@shared/modules/validate';

@@ -13,7 +13,7 @@ import {
   pathExistSync,
 } from '@main/utils/file';
 import { execAsync } from '@main/utils/shell';
-import { isWindows, linebreak } from '@main/utils/systeminfo';
+import { isWindows, linebreak } from '@main/utils/systemInfo';
 import { LOG_MODULE } from '@shared/config/logger';
 import { isArray, isArrayEmpty, isPositiveFiniteNumber, isStrEmpty, isString } from '@shared/modules/validate';
 

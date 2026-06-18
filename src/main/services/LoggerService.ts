@@ -3,8 +3,8 @@ import path from 'node:path';
 import { isMainThread } from 'node:worker_threads';
 
 import { APP_LOG_PATH } from '@main/utils/path';
-import { isDev } from '@main/utils/systeminfo';
-import { APP_VERSION } from '@shared/config/appinfo';
+import { isDev } from '@main/utils/systemInfo';
+import { APP_VERSION } from '@shared/config/appInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import type { LogContextData, LogLevel, LogSourceWithContext } from '@shared/config/logger';
 import { ANSICOLORS, LEVEL, LEVEL_MAP } from '@shared/config/logger';

@@ -14,8 +14,8 @@ import {
   isPackaged,
   isWindows,
   isWindows22H2,
-} from '@main/utils/systeminfo';
-import { APP_NAME_PROTOCOL, titleBarOverlayDark, titleBarOverlayLight } from '@shared/config/appinfo';
+} from '@main/utils/systemInfo';
+import { APP_NAME_PROTOCOL, titleBarOverlayDark, titleBarOverlayLight } from '@shared/config/appInfo';
 import { IPC_CHANNEL } from '@shared/config/ipcChannel';
 import { LOG_MODULE } from '@shared/config/logger';
 import type { ISize } from '@shared/config/window';

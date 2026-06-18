@@ -7,7 +7,7 @@ import { loggerService } from '@logger';
 import { fileChmod, filePermission, pathExist } from '@main/utils/file';
 import { HOME_BIN_PATH } from '@main/utils/path';
 import { getBinaryName } from '@main/utils/process';
-import { isWindows } from '@main/utils/systeminfo';
+import { isWindows } from '@main/utils/systemInfo';
 import { getTimeout, getUserAgent } from '@main/utils/tool';
 import { LOG_MODULE } from '@shared/config/logger';
 import { convertHeaders } from '@shared/modules/headers';
