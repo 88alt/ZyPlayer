@@ -84,7 +84,6 @@ files:
   - '!node_modules/rollup-plugin-visualizer'
 
 asarUnpack:
-  - out/proxy/**
   - resources/**
   - node_modules/7zip-bin-full/**
   - node_modules/@zy/vlc/**

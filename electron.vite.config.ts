@@ -11,7 +11,6 @@ import viteVueDevTools from 'vite-plugin-vue-devtools';
 import viteSvgLoader from 'vite-svg-loader';
 
 import pkg from './package.json';
-import { buildProxyBootstrapPlugin } from './scripts/buildProxyBootstrapPlugin';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -22,13 +21,7 @@ const isProd = process.env.NODE_ENV === 'production';
  */
 export default defineConfig({
   main: {
-    plugins: [
-      buildProxyBootstrapPlugin({
-        dependencies: Object.keys(pkg.dependencies),
-        isProd,
-        rootDir: __dirname,
-      }),
-    ],
+    plugins: [],
     resolve: {
       alias: {
         '@main': resolve('src/main'),
